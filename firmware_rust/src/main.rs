@@ -8,8 +8,8 @@ fn read_inputs(dp: &Peripherals) -> u8 {
     dp.PORTB.pinb.read().bits()
 }
 
-fn write_outputs(dp: &Peripherals, x: u8) {
-    dp.PORTB.portb.modify(|_, w| w.pb3().set_bit());
+fn write_outputs(dp: &Peripherals) {
+    dp.PORTA.porta.modify(|r, w| w.pa7().bit(!r.pa7().bit()));
 //    dp.PORTB.portb.modify(|r, w| w.bits(r.bits() | x));
 }
 
@@ -17,9 +17,10 @@ fn write_outputs(dp: &Peripherals, x: u8) {
 fn main() -> ! {
     let dp = Peripherals::take().unwrap();
 
+    dp.PORTA.ddra.modify(|_, w| w.pa7().set_bit());
     loop {
-        let x = read_inputs(&dp);
-        write_outputs(&dp, x);
+//        let x = read_inputs(&dp);
+        write_outputs(&dp);
     }
 }
 
