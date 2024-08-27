@@ -2,7 +2,11 @@
 #![no_main]
 
 use avr_device::attiny26::Peripherals;
+use attiny_hal::delay::Delay;
+use embedded_hal::delay::DelayNs;
 use panic_halt as _;
+
+type Fcpu = attiny_hal::clock::MHz16;
 
 fn read_inputs(dp: &Peripherals) -> u8 {
     dp.PORTB.pinb.read().bits()
@@ -10,7 +14,7 @@ fn read_inputs(dp: &Peripherals) -> u8 {
 
 fn write_outputs(dp: &Peripherals) {
     dp.PORTA.porta.modify(|r, w| w.pa7().bit(!r.pa7().bit()));
-//    dp.PORTB.portb.modify(|r, w| w.bits(r.bits() | x));
+    Delay::<Fcpu>::new().delay_ms(10);
 }
 
 #[avr_device::entry]

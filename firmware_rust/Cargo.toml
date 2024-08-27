@@ -13,7 +13,8 @@ bench = false
 [dependencies]
 panic-halt = "0.2.0"
 avr-device = { version = "0.5", features = [ "attiny26", "rt" ] }
-#attiny-hal = { version = "0.1", features = [ "attiny26" ] }
+attiny-hal = { version = "0.1", features = [ "attiny26" ] }
+embedded-hal = "1"
 
 # The latest releases of `proc-macro2` do not support the rust toolchain that
 # we use.  Thus, we must fix this dependency to an older version where our
