@@ -3,13 +3,15 @@
 
 mod analog;
 mod hw;
+mod mutex;
 mod system;
 
-use crate::hw::{ports_init, Peripherals};
+use crate::{
+    hw::{ports_init, Peripherals},
+    system::System,
+};
 
-//TODO system-statemachine:
-//  - time based, if not synced, yet.
-//  - nsync
+static SYSTEM: System = System::new();
 
 use panic_halt as _;
 
@@ -28,7 +30,9 @@ fn main() -> ! {
     let dp = Peripherals::take().unwrap();
 
     ports_init(&dp);
+    SYSTEM.init(&dp);
     loop {
+        SYSTEM.run(&dp);
     }
 }
 

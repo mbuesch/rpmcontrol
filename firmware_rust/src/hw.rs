@@ -1,4 +1,7 @@
-pub use avr_device::attiny26::Peripherals;
+pub use avr_device::{
+    attiny26::Peripherals,
+    interrupt::{self, Mutex},
+};
 
 pub fn ports_init(dp: &Peripherals) {
     fn pin_input(_bit: usize) -> u8 {
@@ -13,7 +16,7 @@ pub fn ports_init(dp: &Peripherals) {
     fn pin_high(bit: usize) -> u8 {
         1 << bit
     }
-    fn pin_floating(bit: usize) -> u8 {
+    fn pin_floating(_bit: usize) -> u8 {
         0
     }
 
