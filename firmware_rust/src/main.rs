@@ -8,32 +8,28 @@ mod system;
 
 use crate::{
     hw::{ports_init, Peripherals},
+    mutex::{fence, CriticalSection},
     system::System,
 };
+use panic_halt as _;
 
 static SYSTEM: System = System::new();
 
-use panic_halt as _;
-
-/*
-fn read_inputs(dp: &Peripherals) -> u8 {
-    dp.PORTB.pinb.read().bits()
-}
-
-fn write_outputs(dp: &Peripherals) {
-    dp.PORTA.porta.modify(|r, w| w.pa7().bit(!r.pa7().bit()));
-}
-*/
-
 #[avr_device::entry]
 fn main() -> ! {
+    // SAFETY: We never enable interrupts.
+    let cs = unsafe { CriticalSection::new() };
+    fence();
+
     let dp = Peripherals::take().unwrap();
 
     ports_init(&dp);
-    SYSTEM.init(&dp);
+    SYSTEM.init(cs, &dp);
+
     loop {
-        SYSTEM.run(&dp);
+        SYSTEM.run(cs, &dp);
     }
+    //fence();
 }
 
 // vim: ts=4 sw=4 expandtab

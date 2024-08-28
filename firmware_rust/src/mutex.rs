@@ -1,11 +1,16 @@
 use crate::hw::Mutex;
-use avr_device::interrupt::CriticalSection;
+pub use avr_device::interrupt::CriticalSection;
 use core::{
     cell::UnsafeCell,
     marker::PhantomData,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
+
+#[inline(always)]
+pub fn fence() {
+    core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
+}
 
 pub struct Ref<'cs, T> {
     inner: NonNull<T>,

@@ -1,4 +1,4 @@
-use crate::{analog::Adc, hw::Peripherals};
+use crate::{analog::Adc, hw::Peripherals, mutex::CriticalSection};
 
 enum SysState {
     /// Initial POR state.
@@ -24,12 +24,12 @@ impl System {
         }
     }
 
-    pub fn init(&self, dp: &Peripherals) {
-        self.adc.init(dp)
+    pub fn init(&self, cs: CriticalSection<'_>, dp: &Peripherals) {
+        self.adc.init(cs, dp)
     }
 
-    pub fn run(&self, dp: &Peripherals) {
-        self.adc.run(dp)
+    pub fn run(&self, cs: CriticalSection<'_>, dp: &Peripherals) {
+        self.adc.run(cs, dp)
     }
 }
 

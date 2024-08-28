@@ -1,6 +1,6 @@
 use crate::{
-    hw::{interrupt, Peripherals},
-    mutex::MutexRefCell,
+    hw::Peripherals,
+    mutex::{CriticalSection, MutexRefCell},
 };
 
 #[derive(Clone, Copy)]
@@ -130,13 +130,12 @@ impl Adc {
         }
     }
 
-    pub fn init(&self, dp: &Peripherals) {
-        interrupt::free(|cs| self.inner.borrow_mut(cs).init(dp));
+    pub fn init(&self, cs: CriticalSection<'_>, dp: &Peripherals) {
+        self.inner.borrow_mut(cs).init(dp);
     }
 
-    #[inline(never)]
-    pub fn run(&self, dp: &Peripherals) {
-        interrupt::free(|cs| self.inner.borrow_mut(cs).run(dp));
+    pub fn run(&self, cs: CriticalSection<'_>, dp: &Peripherals) {
+        self.inner.borrow_mut(cs).run(dp);
     }
 }
 
