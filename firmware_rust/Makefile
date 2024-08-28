@@ -36,6 +36,9 @@ $(ELF):
 $(DASM): $(HEX)
 	$(OBJDUMP) --disassemble $(ELF) > $(DASM)
 
+dasm: $(DASM)
+	less $(DASM)
+
 clean:
 	cargo clean
 

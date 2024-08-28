@@ -4332,15 +4332,15 @@
 		)
 		(uuid "6b878983-c53b-40bd-9c00-617c3e6fcd89")
 	)
-	(text "TODO: op diff amplifier"
+	(text "TODO REMOVE R7?"
 		(exclude_from_sim no)
-		(at 41.656 159.258 0)
+		(at 95.758 53.34 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 		)
-		(uuid "9044b235-123d-442a-8c96-a5f23d871480")
+		(uuid "ab809c5f-3549-4131-84d2-a841530004c2")
 	)
 	(text "power supply"
 		(exclude_from_sim no)
@@ -4414,7 +4414,7 @@
 			)
 		)
 	)
-	(global_label "v0_raw"
+	(global_label "shunt_hi_raw"
 		(shape input)
 		(at 124.46 30.48 270)
 		(fields_autoplaced yes)
@@ -4426,7 +4426,7 @@
 		)
 		(uuid "2e8c463e-adcd-439e-8c80-5d707e708489")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 124.46 39.8756 90)
+			(at 124.46 45.6207 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4480,7 +4480,7 @@
 			)
 		)
 	)
-	(global_label "v1_raw"
+	(global_label "shunt_lo_raw"
 		(shape input)
 		(at 134.62 30.48 270)
 		(fields_autoplaced yes)
@@ -4492,7 +4492,7 @@
 		)
 		(uuid "49847de4-978b-4665-95e5-e5b0b5b2962d")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 134.62 39.8756 90)
+			(at 134.62 45.6811 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4524,7 +4524,7 @@
 			)
 		)
 	)
-	(global_label "v0_raw"
+	(global_label "shunt_hi_raw"
 		(shape input)
 		(at 31.75 140.97 180)
 		(fields_autoplaced yes)
@@ -4536,7 +4536,7 @@
 		)
 		(uuid "61e7c510-dec1-4f90-b40e-f0d9f3c7d65f")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 22.3544 140.97 0)
+			(at 16.6093 140.97 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4568,7 +4568,7 @@
 			)
 		)
 	)
-	(global_label "v1"
+	(global_label "shunt_hi"
 		(shape input)
 		(at 137.16 135.89 90)
 		(fields_autoplaced yes)
@@ -4580,7 +4580,7 @@
 		)
 		(uuid "71546f86-e4ca-4d0e-9f17-b60308588958")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 137.16 130.7277 90)
+			(at 137.16 124.9826 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4722,7 +4722,7 @@
 			)
 		)
 	)
-	(global_label "v0"
+	(global_label "shunt_lo"
 		(shape input)
 		(at 134.62 135.89 90)
 		(fields_autoplaced yes)
@@ -4734,7 +4734,7 @@
 		)
 		(uuid "8fb899c0-fb36-462d-9429-a5ca2fe7668e")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 134.62 130.7277 90)
+			(at 134.62 124.9222 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4788,7 +4788,7 @@
 			)
 		)
 	)
-	(global_label "v1_raw"
+	(global_label "shunt_lo_raw"
 		(shape input)
 		(at 31.75 177.8 180)
 		(fields_autoplaced yes)
@@ -4800,7 +4800,7 @@
 		)
 		(uuid "a806bdf8-7017-4888-aac3-fb8e5c53e6ec")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 22.3544 177.8 0)
+			(at 16.5489 177.8 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4810,7 +4810,7 @@
 			)
 		)
 	)
-	(global_label "v1"
+	(global_label "shunt_lo"
 		(shape input)
 		(at 68.58 177.8 0)
 		(fields_autoplaced yes)
@@ -4822,7 +4822,7 @@
 		)
 		(uuid "c988b4af-a0bf-4886-9441-2d7e7cd7ea69")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 73.7423 177.8 0)
+			(at 79.5478 177.8 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4854,7 +4854,7 @@
 			)
 		)
 	)
-	(global_label "v0"
+	(global_label "shunt_hi"
 		(shape input)
 		(at 68.58 140.97 0)
 		(fields_autoplaced yes)
@@ -4866,7 +4866,7 @@
 		)
 		(uuid "dcfe75c9-41f4-4669-b2a3-a72e84a401cd")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 73.7423 140.97 0)
+			(at 79.4874 140.97 0)
 			(effects
 				(font
 					(size 1.27 1.27)
