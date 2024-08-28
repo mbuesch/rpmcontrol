@@ -1,4 +1,7 @@
-pub use avr_device::{attiny26::Peripherals, interrupt::Mutex};
+pub use avr_device::{
+    attiny26::Peripherals,
+    interrupt::{self, Mutex},
+};
 
 pub fn ports_init(dp: &Peripherals) {
     fn pin_input(_bit: usize) -> u8 {

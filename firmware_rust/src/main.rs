@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![feature(abi_avr_interrupt)]
 
 mod analog;
 mod hw;
@@ -7,7 +8,8 @@ mod mutex;
 mod system;
 
 use crate::{
-    hw::{ports_init, Peripherals},
+    analog::AC_CAPTURE,
+    hw::{interrupt, ports_init, Peripherals},
     mutex::{fence, CriticalSection},
     system::System,
 };
@@ -17,17 +19,29 @@ static SYSTEM: System = System::new();
 
 #[avr_device::entry]
 fn main() -> ! {
-    // SAFETY: We never enable interrupts.
-    let cs = unsafe { CriticalSection::new() };
+    // SAFETY: Everything, except for the AC_CAPTURE access,
+    //         can use this central critical section.
+    //         We allow interruptions of `system_cs` by `ANA_COMP` ISR.
+    let system_cs = unsafe { CriticalSection::new() };
     fence();
 
     let dp = Peripherals::take().unwrap();
 
     ports_init(&dp);
-    SYSTEM.init(cs, &dp);
+    SYSTEM.init(system_cs, &dp);
 
+    unsafe {
+        interrupt::enable();
+    }
     loop {
-        SYSTEM.run(cs, &dp);
+        let ac_capture = interrupt::free(|_cs| {
+            // SAFETY: Interrupts are disabled,
+            //         therefore it is safe to access the analog comparator
+            //         interrupt data.
+            unsafe { AC_CAPTURE.clone_and_reset() }
+        });
+
+        SYSTEM.run(system_cs, &dp, ac_capture);
     }
     //fence();
 }

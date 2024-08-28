@@ -1,11 +1,12 @@
-use crate::hw::Mutex;
-pub use avr_device::interrupt::CriticalSection;
 use core::{
-    cell::UnsafeCell,
+    cell::{Cell, UnsafeCell},
     marker::PhantomData,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
+
+pub use crate::hw::Mutex;
+pub use avr_device::interrupt::CriticalSection;
 
 #[inline(always)]
 pub fn fence() {
@@ -149,6 +150,29 @@ impl<T> MutexRefCell<T> {
             global_refcnt_inc_mut();
             RefMut::new(NonNull::new_unchecked(self.inner.borrow(cs).get()))
         }
+    }
+}
+
+pub struct MutexCell<T: Copy> {
+    inner: Mutex<Cell<T>>,
+}
+
+impl<T: Copy> MutexCell<T> {
+    #[inline]
+    pub const fn new(inner: T) -> Self {
+        Self {
+            inner: Mutex::new(Cell::new(inner)),
+        }
+    }
+
+    #[inline]
+    pub fn get(&self, cs: CriticalSection<'_>) -> T {
+        self.inner.borrow(cs).get()
+    }
+
+    #[inline]
+    pub fn set(&self, cs: CriticalSection<'_>, inner: T) {
+        self.inner.borrow(cs).set(inner);
     }
 }
 
