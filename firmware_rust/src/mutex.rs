@@ -91,7 +91,8 @@ const GLOBAL_REFCNT_WRITE: i8 = -1;
 unsafe fn global_refcnt_inc() {
     let count = GLOBAL_REFCNT;
     if count < 0 {
-        panic!("MutexRefCell: Already mutably borrowed or too many shared borrows.");
+        // Already mutably borrowed or too many shared borrows.
+        reset_system();
     }
     unsafe {
         GLOBAL_REFCNT = count.wrapping_add(1);
@@ -102,7 +103,8 @@ unsafe fn global_refcnt_inc() {
 unsafe fn global_refcnt_inc_mut() {
     let count = GLOBAL_REFCNT;
     if count != 0 {
-        panic!("MutexRefCell (mut): Already borrowed.");
+        // "MutexRefCell (mut): Already borrowed.
+        reset_system();
     }
     unsafe {
         GLOBAL_REFCNT = GLOBAL_REFCNT_WRITE;
@@ -200,11 +202,21 @@ impl<T: Copy> MutexCell<T> {
 /// This is cheaper, because it doesn't call into the panic unwind path.
 /// Therefore, it does not impose caller-saves overhead onto the calling function.
 #[inline(always)]
-#[allow(clippy::empty_loop)]
 pub fn unwrap_option<T>(value: Option<T>) -> T {
     match value {
         Some(value) => value,
-        None => loop { /* infinite */ },
+        None => reset_system(),
+    }
+}
+
+/// Reset the system.
+#[inline(always)]
+#[allow(clippy::empty_loop)]
+pub fn reset_system() -> ! {
+    loop {
+        // Wait for the watchdog timer to trigger and reset the system.
+        // We don't need to disable interrupts here.
+        // No interrupt will reset the watchdog timer.
     }
 }
 
