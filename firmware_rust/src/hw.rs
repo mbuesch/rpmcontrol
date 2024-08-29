@@ -1,5 +1,5 @@
 pub use avr_device::{
-    attiny26::Peripherals,
+    attiny26::{self as mcu, Peripherals},
     interrupt::{self, Mutex},
 };
 
@@ -55,7 +55,7 @@ pub fn ports_init(dp: &Peripherals) {
             pin_high(3) | // trig, active low
             pin_floating(4) | // XTAL1
             pin_floating(5) | // XTAL2
-            pin_low(6) | // DNC
+            pin_low(6) | // Debug
             pin_floating(7), // RESET, active low
         )
     });
@@ -67,7 +67,7 @@ pub fn ports_init(dp: &Peripherals) {
             pin_output(3) | // trig, active low
             pin_input(4) | // XTAL1
             pin_input(5) | // XTAL2
-            pin_output(6) | // DNC
+            pin_output(6) | // Debug
             pin_input(7), // RESET, active low
         )
     });

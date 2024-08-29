@@ -153,11 +153,11 @@ impl<T> MutexRefCell<T> {
     }
 }
 
-pub struct MutexCell<T: Copy> {
+pub struct MutexCell<T> {
     inner: Mutex<Cell<T>>,
 }
 
-impl<T: Copy> MutexCell<T> {
+impl<T> MutexCell<T> {
     #[inline]
     pub const fn new(inner: T) -> Self {
         Self {
@@ -166,6 +166,25 @@ impl<T: Copy> MutexCell<T> {
     }
 
     #[inline]
+    pub fn replace(&self, cs: CriticalSection<'_>, inner: T) -> T {
+        self.inner.borrow(cs).replace(inner)
+    }
+
+    #[inline]
+    pub fn as_ref<'cs>(&self, cs: CriticalSection<'cs>) -> &'cs T {
+        unsafe { &*self.inner.borrow(cs).as_ptr() as _ }
+    }
+}
+
+impl<T> MutexCell<Option<T>> {
+    #[inline]
+    pub fn as_ref_unwrap<'cs>(&self, cs: CriticalSection<'cs>) -> &'cs T {
+        unwrap_option(self.as_ref(cs).as_ref())
+    }
+}
+
+impl<T: Copy> MutexCell<T> {
+    #[inline]
     pub fn get(&self, cs: CriticalSection<'_>) -> T {
         self.inner.borrow(cs).get()
     }
@@ -173,6 +192,19 @@ impl<T: Copy> MutexCell<T> {
     #[inline]
     pub fn set(&self, cs: CriticalSection<'_>, inner: T) {
         self.inner.borrow(cs).set(inner);
+    }
+}
+
+/// Cheaper Option::unwrap() alternative.
+///
+/// This is cheaper, because it doesn't call into the panic unwind path.
+/// Therefore, it does not impose caller-saves overhead onto the calling function.
+#[inline(always)]
+#[allow(clippy::empty_loop)]
+pub fn unwrap_option<T>(value: Option<T>) -> T {
+    match value {
+        Some(value) => value,
+        None => loop { /* infinite */ },
     }
 }
 

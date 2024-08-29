@@ -1,6 +1,7 @@
 use crate::{
-    hw::Peripherals,
     mutex::{CriticalSection, MutexRefCell},
+    system::SysPeriph,
+    timer::timer_get,
 };
 
 #[derive(Clone, Copy)]
@@ -46,19 +47,19 @@ impl AdcInner {
         }
     }
 
-    fn update_mux(&self, dp: &Peripherals) {
+    fn update_mux(&self, sp: &SysPeriph) {
         match self.chan {
             AdcChannel::Setpoint => {
-                dp.ADC.admux.write(|w| w.refs().vcc().mux().adc0());
+                sp.ADC.admux.write(|w| w.refs().vcc().mux().adc0());
             }
             AdcChannel::Vsense => {
-                dp.ADC.admux.write(|w| w.refs().vcc().mux().adc1());
+                sp.ADC.admux.write(|w| w.refs().vcc().mux().adc1());
             }
             AdcChannel::ShuntDiff => {
-                dp.ADC.admux.write(|w| w.refs().vcc().mux().adc4_adc3_20x());
+                sp.ADC.admux.write(|w| w.refs().vcc().mux().adc4_adc3_20x());
             }
             AdcChannel::ShuntHi => {
-                dp.ADC.admux.write(|w| w.refs().vcc().mux().adc4());
+                sp.ADC.admux.write(|w| w.refs().vcc().mux().adc4());
             }
         }
 
@@ -67,21 +68,21 @@ impl AdcInner {
 
     #[rustfmt::skip]
     #[inline]
-    fn start_conversion(&mut self, dp: &Peripherals) {
-        dp.ADC.adcsr.modify(|_, w| {
+    fn start_conversion(&mut self, sp: &SysPeriph) {
+        sp.ADC.adcsr.modify(|_, w| {
             w.adif().set_bit()
              .adsc().set_bit()
         });
     }
 
     #[inline]
-    fn conversion_done(&self, dp: &Peripherals) -> bool {
-        dp.ADC.adcsr.read().adif().bit_is_set()
+    fn conversion_done(&self, sp: &SysPeriph) -> bool {
+        sp.ADC.adcsr.read().adif().bit_is_set()
     }
 
     #[rustfmt::skip]
-    pub fn init(&mut self, dp: &Peripherals) {
-        dp.ADC.adcsr.write(|w| {
+    pub fn init(&mut self, sp: &SysPeriph) {
+        sp.ADC.adcsr.write(|w| {
             w.adps().prescaler_128()
              .adie().clear_bit()
              .adfr().clear_bit()
@@ -90,30 +91,30 @@ impl AdcInner {
              .aden().set_bit()
         });
 
-        self.update_mux(dp);
-        self.start_conversion(dp);
-        while !self.conversion_done(dp) {}
+        self.update_mux(sp);
+        self.start_conversion(sp);
+        while !self.conversion_done(sp) {}
 
         //TODO offset compensation
     }
 
-    pub fn run(&mut self, dp: &Peripherals) {
+    pub fn run(&mut self, sp: &SysPeriph) {
         if !self.is_enabled(self.chan) {
             self.ok &= !self.chan.mask();
             self.chan.select_next();
             self.running = false;
         }
 
-        if self.running && self.is_enabled(self.chan) && self.conversion_done(dp) {
-            self.result[self.chan as usize] = dp.ADC.adc.read().bits();
+        if self.running && self.is_enabled(self.chan) && self.conversion_done(sp) {
+            self.result[self.chan as usize] = sp.ADC.adc.read().bits();
             self.ok |= self.chan.mask();
             self.chan.select_next();
             self.running = false;
         }
 
         if !self.running && self.is_enabled(self.chan) {
-            self.update_mux(dp);
-            self.start_conversion(dp);
+            self.update_mux(sp);
+            self.start_conversion(sp);
             self.running = true;
         }
     }
@@ -146,12 +147,12 @@ impl Adc {
         }
     }
 
-    pub fn init(&self, cs: CriticalSection<'_>, dp: &Peripherals) {
-        self.inner.borrow_mut(cs).init(dp);
+    pub fn init(&self, cs: CriticalSection<'_>, sp: &SysPeriph) {
+        self.inner.borrow_mut(cs).init(sp);
     }
 
-    pub fn run(&self, cs: CriticalSection<'_>, dp: &Peripherals) {
-        self.inner.borrow_mut(cs).run(dp);
+    pub fn run(&self, cs: CriticalSection<'_>, sp: &SysPeriph) {
+        self.inner.borrow_mut(cs).run(sp);
     }
 
     pub fn enable(&self, cs: CriticalSection<'_>, chan_mask: u8) {
@@ -191,10 +192,17 @@ pub static mut AC_CAPTURE: AcCapture = AcCapture::new();
 #[avr_device::interrupt(attiny26)]
 fn ANA_COMP() {
     // SAFETY: This interrupt shall not call into anything and not modify anything,
-    //         except for the stored time stamp.
-    //         The rest of the system safety depends on this. See main.rs.
+    //         except for timer and the stored time stamp.
+    //         The rest of the system safety depends on this due to the system
+    //         wide creation of the `system_cs` CriticalSection.
+    //         See main.rs.
+
+    // SAFETY: Creating a CS manually is safe, because
+    //         we are in interrupt context with interrupts disabled.
+    let cs = unsafe { CriticalSection::new() };
+
     unsafe {
-        AC_CAPTURE.stamp = 0; //TODO
+        AC_CAPTURE.stamp = timer_get(cs);
         if AC_CAPTURE.flags == 0 {
             AC_CAPTURE.flags = AcCapture::FLAG_NEW;
         } else {

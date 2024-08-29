@@ -1,8 +1,16 @@
 use crate::{
     analog::{AcCapture, Adc, AdcChannel},
-    hw::Peripherals,
+    hw::mcu,
     mutex::{CriticalSection, MutexCell},
 };
+
+#[allow(non_snake_case)]
+pub struct SysPeriph {
+    pub AC: mcu::AC,
+    pub ADC: mcu::ADC,
+    pub PORTA: mcu::PORTA,
+    pub PORTB: mcu::PORTB,
+}
 
 #[derive(Copy, Clone)]
 enum SysState {
@@ -27,8 +35,8 @@ impl System {
         }
     }
 
-    pub fn init(&self, cs: CriticalSection<'_>, dp: &Peripherals) {
-        self.adc.init(cs, dp);
+    pub fn init(&self, cs: CriticalSection<'_>, sp: &SysPeriph) {
+        self.adc.init(cs, sp);
         self.adc.enable(
             cs,
             AdcChannel::Setpoint.mask()
@@ -39,7 +47,7 @@ impl System {
         //TODO more inits for SysState::Check needed?
     }
 
-    fn run_state_check(&self, cs: CriticalSection<'_>, _dp: &Peripherals, _ac: &AcCapture) {
+    fn run_state_check(&self, cs: CriticalSection<'_>, _sp: &SysPeriph, _ac: &AcCapture) {
         let Some(_setpoint) = self.adc.get_result(cs, AdcChannel::Setpoint) else {
             return;
         };
@@ -63,21 +71,26 @@ impl System {
         self.state.set(cs, SysState::Syncing);
     }
 
-    fn run_state_syncing(&self, _cs: CriticalSection<'_>, _dp: &Peripherals, _ac: &AcCapture) {
+    fn run_state_syncing(&self, _cs: CriticalSection<'_>, _sp: &SysPeriph, _ac: &AcCapture) {
         //TODO
     }
 
-    fn run_state_synced(&self, _cs: CriticalSection<'_>, _dp: &Peripherals, _ac: &AcCapture) {
+    fn run_state_synced(&self, _cs: CriticalSection<'_>, _sp: &SysPeriph, _ac: &AcCapture) {
         //TODO
     }
 
-    pub fn run(&self, cs: CriticalSection<'_>, dp: &Peripherals, ac: AcCapture) {
+    fn debug(&self, _cs: CriticalSection<'_>, sp: &SysPeriph) {
+        sp.PORTB.portb.modify(|r, w| w.pb6().bit(!r.pb6().bit()));
+    }
+
+    pub fn run(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ac: AcCapture) {
+        self.debug(cs, sp);
         match self.state.get(cs) {
-            SysState::Check => self.run_state_check(cs, dp, &ac),
-            SysState::Syncing => self.run_state_syncing(cs, dp, &ac),
-            SysState::Synced => self.run_state_synced(cs, dp, &ac),
+            SysState::Check => self.run_state_check(cs, sp, &ac),
+            SysState::Syncing => self.run_state_syncing(cs, sp, &ac),
+            SysState::Synced => self.run_state_synced(cs, sp, &ac),
         }
-        self.adc.run(cs, dp)
+        self.adc.run(cs, sp)
     }
 }
 
