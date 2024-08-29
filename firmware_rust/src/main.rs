@@ -1,6 +1,8 @@
 #![no_std]
 #![no_main]
 #![feature(abi_avr_interrupt)]
+#![feature(asm_experimental_arch)]
+#![feature(asm_const)]
 
 mod analog;
 mod hw;
@@ -19,8 +21,19 @@ use panic_halt as _;
 
 static SYSTEM: System = System::new();
 
-fn wdt_init(wp: &mcu::WDT) {
-    //TODO
+fn wdt_init() {
+    unsafe {
+        // Enable WDT with timeout 0.13 s
+        core::arch::asm!(
+            "ldi {tmp}, 0x10", // WDCE=1
+            "out {WDTCR}, {tmp}",
+            "ldi {tmp}, 0x1B", // WDCE=1, WDE=1, WDP2=0, WDP1=1, WDP0=1
+            "out {WDTCR}, {tmp}",
+            tmp = out(reg_upper) _,
+            WDTCR = const 0x21,
+            options(nostack, preserves_flags)
+        );
+    }
 }
 
 fn wdt_poke(_wp: &mcu::WDT) {
@@ -29,6 +42,8 @@ fn wdt_poke(_wp: &mcu::WDT) {
 
 #[avr_device::entry]
 fn main() -> ! {
+    wdt_init();
+
     // SAFETY: Everything, except for the AC_CAPTURE access,
     //         can use this central critical section.
     //         We allow interruptions of `system_cs` by `ANA_COMP` ISR.
@@ -37,7 +52,6 @@ fn main() -> ! {
 
     let dp = unwrap_option(Peripherals::take());
 
-    wdt_init(&dp.WDT);
     ports_init(&dp);
 
     let sp = SysPeriph {
