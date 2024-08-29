@@ -23,12 +23,13 @@ static SYSTEM: System = System::new();
 
 fn wdt_init() {
     unsafe {
-        // Enable WDT with timeout 0.13 s
+        // Enable WDT with timeout 32.5 ms
         core::arch::asm!(
             "ldi {tmp}, 0x10", // WDCE=1
             "out {WDTCR}, {tmp}",
-            "ldi {tmp}, 0x1B", // WDCE=1, WDE=1, WDP2=0, WDP1=1, WDP0=1
+            "ldi {tmp}, 0x19", // WDCE=1, WDE=1, WDP2=0, WDP1=0, WDP0=1
             "out {WDTCR}, {tmp}",
+            "wdr",
             tmp = out(reg_upper) _,
             WDTCR = const 0x21,
             options(nostack, preserves_flags)
