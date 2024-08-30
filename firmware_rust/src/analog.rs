@@ -1,7 +1,8 @@
 use crate::{
+    hw::interrupt,
     mutex::{CriticalSection, MutexRefCell},
     system::SysPeriph,
-    timer::timer_get,
+    timer::{timer_get, Timestamp},
 };
 
 #[derive(Clone, Copy)]
@@ -168,16 +169,26 @@ pub struct Ac {}
 
 #[derive(Clone)]
 pub struct AcCapture {
-    stamp: u8,
+    stamp: Timestamp,
     flags: u8,
 }
 
 impl AcCapture {
     pub const FLAG_NEW: u8 = 0x01;
-    pub const FLAG_LOST: u8 = 0x02;
 
     const fn new() -> Self {
-        Self { stamp: 0, flags: 0 }
+        Self {
+            stamp: Timestamp(0),
+            flags: 0,
+        }
+    }
+
+    pub fn is_new(&self) -> bool {
+        self.flags & Self::FLAG_NEW != 0
+    }
+
+    pub fn stamp(&self) -> Timestamp {
+        self.stamp
     }
 
     pub fn clone_and_reset(&mut self) -> Self {
@@ -202,13 +213,22 @@ fn ANA_COMP() {
     let cs = unsafe { CriticalSection::new() };
 
     unsafe {
-        AC_CAPTURE.stamp = timer_get(cs);
-        if AC_CAPTURE.flags == 0 {
-            AC_CAPTURE.flags = AcCapture::FLAG_NEW;
-        } else {
-            AC_CAPTURE.flags = AcCapture::FLAG_NEW | AcCapture::FLAG_LOST;
+        if AC_CAPTURE.flags != 0 {
+            // ac_capture_get() has not been called frequently enough.
+            //TODO?
         }
+        AC_CAPTURE.stamp = timer_get(cs);
+        AC_CAPTURE.flags = AcCapture::FLAG_NEW;
     }
+}
+
+pub fn ac_capture_get() -> AcCapture {
+    interrupt::free(|_cs| {
+        // SAFETY: Interrupts are disabled.
+        //         Therefore, it is safe to access the analog comparator
+        //         interrupt data.
+        unsafe { AC_CAPTURE.clone_and_reset() }
+    })
 }
 
 // vim: ts=4 sw=4 expandtab

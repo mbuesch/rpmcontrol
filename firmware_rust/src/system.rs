@@ -1,7 +1,8 @@
 use crate::{
     analog::{AcCapture, Adc, AdcChannel},
     hw::mcu,
-    mutex::{CriticalSection, MutexCell},
+    mutex::{CriticalSection, MutexCell, MutexRefCell},
+    speedo::Speedo,
 };
 
 #[allow(non_snake_case)]
@@ -25,6 +26,7 @@ enum SysState {
 pub struct System {
     state: MutexCell<SysState>,
     adc: Adc,
+    speedo: MutexRefCell<Speedo>,
 }
 
 impl System {
@@ -32,6 +34,7 @@ impl System {
         Self {
             state: MutexCell::new(SysState::Check),
             adc: Adc::new(),
+            speedo: MutexRefCell::new(Speedo::new()),
         }
     }
 
@@ -47,7 +50,7 @@ impl System {
         //TODO more inits for SysState::Check needed?
     }
 
-    fn run_state_check(&self, cs: CriticalSection<'_>, _sp: &SysPeriph, _ac: &AcCapture) {
+    fn run_state_check(&self, cs: CriticalSection<'_>, _sp: &SysPeriph) {
         let Some(_setpoint) = self.adc.get_result(cs, AdcChannel::Setpoint) else {
             return;
         };
@@ -68,14 +71,15 @@ impl System {
         };
         //TODO
 
+        self.speedo.borrow_mut(cs).reset();
         self.state.set(cs, SysState::Syncing);
     }
 
-    fn run_state_syncing(&self, _cs: CriticalSection<'_>, _sp: &SysPeriph, _ac: &AcCapture) {
+    fn run_state_syncing(&self, _cs: CriticalSection<'_>, _sp: &SysPeriph) {
         //TODO
     }
 
-    fn run_state_synced(&self, _cs: CriticalSection<'_>, _sp: &SysPeriph, _ac: &AcCapture) {
+    fn run_state_synced(&self, _cs: CriticalSection<'_>, _sp: &SysPeriph) {
         //TODO
     }
 
@@ -85,10 +89,11 @@ impl System {
 
     pub fn run(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ac: AcCapture) {
         self.debug(cs, sp);
+        self.speedo.borrow_mut(cs).update(cs, &ac);
         match self.state.get(cs) {
-            SysState::Check => self.run_state_check(cs, sp, &ac),
-            SysState::Syncing => self.run_state_syncing(cs, sp, &ac),
-            SysState::Synced => self.run_state_synced(cs, sp, &ac),
+            SysState::Check => self.run_state_check(cs, sp),
+            SysState::Syncing => self.run_state_syncing(cs, sp),
+            SysState::Synced => self.run_state_synced(cs, sp),
         }
         self.adc.run(cs, sp)
     }

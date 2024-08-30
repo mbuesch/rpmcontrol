@@ -6,12 +6,14 @@
 
 mod analog;
 mod hw;
+mod mains;
 mod mutex;
+mod speedo;
 mod system;
 mod timer;
 
 use crate::{
-    analog::AC_CAPTURE,
+    analog::ac_capture_get,
     hw::{interrupt, mcu, ports_init, Peripherals},
     mutex::{fence, unwrap_option, CriticalSection},
     system::{SysPeriph, System},
@@ -69,13 +71,7 @@ fn main() -> ! {
 
     unsafe { interrupt::enable() };
     loop {
-        let ac_capture = interrupt::free(|_cs| {
-            // SAFETY: Interrupts are disabled.
-            //         Therefore, it is safe to access the analog comparator
-            //         interrupt data.
-            unsafe { AC_CAPTURE.clone_and_reset() }
-        });
-
+        let ac_capture = ac_capture_get();
         SYSTEM.run(system_cs, &sp, ac_capture);
         wdt_poke(&dp.WDT);
     }
