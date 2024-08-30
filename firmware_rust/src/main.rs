@@ -62,8 +62,9 @@ fn main() -> ! {
         ADC: dp.ADC,
         PORTA: dp.PORTA,
         PORTB: dp.PORTB,
+        TC1: dp.TC1,
     };
-    let tp = TimerPeriph { TC1: dp.TC1 };
+    let tp = TimerPeriph { TC0: dp.TC0 };
 
     timer_init(&tp);
     TIMER_PERIPH.replace(system_cs, Some(tp));

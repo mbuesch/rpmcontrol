@@ -3,6 +3,7 @@ use crate::{
     hw::mcu,
     mutex::{CriticalSection, MutexCell, MutexRefCell},
     speedo::Speedo,
+    mains::Mains,
 };
 
 #[allow(non_snake_case)]
@@ -11,6 +12,7 @@ pub struct SysPeriph {
     pub ADC: mcu::ADC,
     pub PORTA: mcu::PORTA,
     pub PORTB: mcu::PORTB,
+    pub TC1: mcu::TC1,
 }
 
 #[derive(Copy, Clone)]
@@ -27,6 +29,7 @@ pub struct System {
     state: MutexCell<SysState>,
     adc: Adc,
     speedo: MutexRefCell<Speedo>,
+    mains: MutexRefCell<Mains>,
 }
 
 impl System {
@@ -35,6 +38,7 @@ impl System {
             state: MutexCell::new(SysState::Check),
             adc: Adc::new(),
             speedo: MutexRefCell::new(Speedo::new()),
+            mains: MutexRefCell::new(Mains::new()),
         }
     }
 
