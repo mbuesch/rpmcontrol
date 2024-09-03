@@ -1,10 +1,15 @@
 use crate::{
     analog::{AcCapture, Adc, AdcChannel},
+    fixpt::Fixpt,
     hw::mcu,
-    mutex::{CriticalSection, MutexCell, MutexRefCell},
-    speedo::Speedo,
     mains::Mains,
+    mutex::{CriticalSection, MutexCell, MutexRefCell},
+    pi::Pi,
+    speedo::Speedo,
 };
+
+const RPMPI_KP: Fixpt = Fixpt::new(10);
+const RPMPI_KI: Fixpt = Fixpt::new(1);
 
 #[allow(non_snake_case)]
 pub struct SysPeriph {
@@ -15,76 +20,66 @@ pub struct SysPeriph {
     pub TC1: mcu::TC1,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
+#[repr(u8)]
 enum SysState {
     /// POR system check.
     Check,
-    /// Synchronizing to line phase.
-    Syncing,
-    /// Synchronized.
-    Synced,
+    /// Up and running.
+    Run,
 }
 
 pub struct System {
     state: MutexCell<SysState>,
-    adc: Adc,
+    adc: MutexRefCell<Adc>,
     speedo: MutexRefCell<Speedo>,
     mains: MutexRefCell<Mains>,
+    rpm_pi: MutexRefCell<Pi>,
 }
+
+//TODO read setpoint
+//TODO read speedo
 
 impl System {
     pub const fn new() -> Self {
         Self {
             state: MutexCell::new(SysState::Check),
-            adc: Adc::new(),
+            adc: MutexRefCell::new(Adc::new()),
             speedo: MutexRefCell::new(Speedo::new()),
             mains: MutexRefCell::new(Mains::new()),
+            rpm_pi: MutexRefCell::new(Pi::new(RPMPI_KP, RPMPI_KI)),
         }
     }
 
     pub fn init(&self, cs: CriticalSection<'_>, sp: &SysPeriph) {
-        self.adc.init(cs, sp);
-        self.adc.enable(
-            cs,
-            AdcChannel::Setpoint.mask()
-                | AdcChannel::Vsense.mask()
-                | AdcChannel::ShuntDiff.mask()
-                | AdcChannel::ShuntHi.mask(),
+        let mut adc = self.adc.borrow_mut(cs);
+        adc.init(sp);
+        adc.enable(
+            AdcChannel::Setpoint.mask() | AdcChannel::ShuntDiff.mask() | AdcChannel::ShuntHi.mask(),
         );
         //TODO more inits for SysState::Check needed?
     }
 
-    fn run_state_check(&self, cs: CriticalSection<'_>, _sp: &SysPeriph) {
-        let Some(_setpoint) = self.adc.get_result(cs, AdcChannel::Setpoint) else {
+    fn run_initial_check(&self, cs: CriticalSection<'_>, _sp: &SysPeriph) {
+        let adc = self.adc.borrow(cs);
+
+        let Some(_setpoint) = adc.get_result(AdcChannel::Setpoint) else {
             return;
         };
         //TODO
 
-        let Some(_vsense) = self.adc.get_result(cs, AdcChannel::Vsense) else {
+        let Some(_shuntdiff) = adc.get_result(AdcChannel::ShuntDiff) else {
             return;
         };
         //TODO
 
-        let Some(_shuntdiff) = self.adc.get_result(cs, AdcChannel::ShuntDiff) else {
-            return;
-        };
-        //TODO
-
-        let Some(_shunthi) = self.adc.get_result(cs, AdcChannel::ShuntHi) else {
+        let Some(_shunthi) = adc.get_result(AdcChannel::ShuntHi) else {
             return;
         };
         //TODO
 
         self.speedo.borrow_mut(cs).reset();
-        self.state.set(cs, SysState::Syncing);
-    }
-
-    fn run_state_syncing(&self, _cs: CriticalSection<'_>, _sp: &SysPeriph) {
-        //TODO
-    }
-
-    fn run_state_synced(&self, _cs: CriticalSection<'_>, _sp: &SysPeriph) {
-        //TODO
+        self.state.set(cs, SysState::Run);
     }
 
     fn debug(&self, _cs: CriticalSection<'_>, sp: &SysPeriph) {
@@ -94,12 +89,28 @@ impl System {
     pub fn run(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ac: AcCapture) {
         self.debug(cs, sp);
         self.speedo.borrow_mut(cs).update(cs, &ac);
+
         match self.state.get(cs) {
-            SysState::Check => self.run_state_check(cs, sp),
-            SysState::Syncing => self.run_state_syncing(cs, sp),
-            SysState::Synced => self.run_state_synced(cs, sp),
+            SysState::Check => {
+                self.run_initial_check(cs, sp);
+            }
+            SysState::Run => {
+                self.mains.borrow_mut(cs).run(cs, sp);
+            }
         }
-        self.adc.run(cs, sp)
+
+        core::hint::black_box(self.rpm_pi.borrow_mut(cs).run(
+            core::hint::black_box(10.into()),
+            core::hint::black_box(10.into()),
+        ));
+
+        let setpoint = {
+            let mut adc = self.adc.borrow_mut(cs);
+            adc.run(sp);
+            adc.get_result(AdcChannel::Setpoint)
+        };
+
+        if let Some(setpoint) = setpoint {}
     }
 }
 

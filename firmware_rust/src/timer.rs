@@ -20,7 +20,7 @@ pub fn timer_init(tp: &TimerPeriph) {
 }
 
 // SAFETY: This function may only do atomic-read-only accesses, because it's
-//         called from interrupt context.
+//         called from all contexts, including interrupt context.
 #[rustfmt::skip]
 pub fn timer_get(cs: CriticalSection) -> Timestamp {
     TIMER_PERIPH.as_ref_unwrap(cs).TC0.tcnt0.read().bits().into()
@@ -45,7 +45,6 @@ pub fn timer_get_large(cs: CriticalSection) -> LargeTimestamp {
 
 macro_rules! impl_timestamp {
     ($name:ident, $type:ty) => {
-
         #[derive(PartialEq, Eq, Copy, Clone)]
         pub struct $name(pub $type);
 
@@ -74,7 +73,7 @@ macro_rules! impl_timestamp {
 
             #[inline]
             fn sub(self, other: Self) -> Self::Output {
-                self.0 - other.0
+                self.0.wrapping_sub(other.0)
             }
         }
 
@@ -91,7 +90,7 @@ macro_rules! impl_timestamp {
                 stamp.0
             }
         }
-    }
+    };
 }
 
 impl_timestamp!(Timestamp, u8);

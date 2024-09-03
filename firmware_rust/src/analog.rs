@@ -1,6 +1,6 @@
 use crate::{
     hw::interrupt,
-    mutex::{CriticalSection, MutexRefCell},
+    mutex::CriticalSection,
     system::SysPeriph,
     timer::{timer_get, Timestamp},
 };
@@ -9,7 +9,6 @@ use crate::{
 #[repr(u8)]
 pub enum AdcChannel {
     Setpoint,
-    Vsense,
     ShuntDiff,
     ShuntHi,
 }
@@ -21,29 +20,28 @@ impl AdcChannel {
 
     pub fn select_next(&mut self) {
         *self = match self {
-            Self::Setpoint => Self::Vsense,
-            Self::Vsense => Self::ShuntDiff,
+            Self::Setpoint => Self::ShuntDiff,
             Self::ShuntDiff => Self::ShuntHi,
             Self::ShuntHi => Self::Setpoint,
         };
     }
 }
 
-struct AdcInner {
+pub struct Adc {
     chan: AdcChannel,
     enabled: u8,
     running: bool,
-    result: [u16; 4],
+    result: [u16; 3],
     ok: u8,
 }
 
-impl AdcInner {
+impl Adc {
     pub const fn new() -> Self {
         Self {
             chan: AdcChannel::Setpoint,
             enabled: 0,
             running: false,
-            result: [0; 4],
+            result: [0; 3],
             ok: 0,
         }
     }
@@ -52,9 +50,6 @@ impl AdcInner {
         match self.chan {
             AdcChannel::Setpoint => {
                 sp.ADC.admux.write(|w| w.refs().vcc().mux().adc0());
-            }
-            AdcChannel::Vsense => {
-                sp.ADC.admux.write(|w| w.refs().vcc().mux().adc1());
             }
             AdcChannel::ShuntDiff => {
                 sp.ADC.admux.write(|w| w.refs().vcc().mux().adc4_adc3_20x());
@@ -135,33 +130,9 @@ impl AdcInner {
             Some(self.result[chan as usize])
         }
     }
-}
 
-pub struct Adc {
-    inner: MutexRefCell<AdcInner>,
-}
-
-impl Adc {
-    pub const fn new() -> Self {
-        Self {
-            inner: MutexRefCell::new(AdcInner::new()),
-        }
-    }
-
-    pub fn init(&self, cs: CriticalSection<'_>, sp: &SysPeriph) {
-        self.inner.borrow_mut(cs).init(sp);
-    }
-
-    pub fn run(&self, cs: CriticalSection<'_>, sp: &SysPeriph) {
-        self.inner.borrow_mut(cs).run(sp);
-    }
-
-    pub fn enable(&self, cs: CriticalSection<'_>, chan_mask: u8) {
-        self.inner.borrow_mut(cs).enable(chan_mask);
-    }
-
-    pub fn get_result(&self, cs: CriticalSection<'_>, chan: AdcChannel) -> Option<u16> {
-        self.inner.borrow(cs).get_result(chan)
+    pub fn current_chan(&self) -> AdcChannel {
+        self.chan
     }
 }
 
@@ -209,7 +180,7 @@ fn ANA_COMP() {
     //         See main.rs.
 
     // SAFETY: Creating a CS manually is safe, because
-    //         we are in interrupt context with interrupts disabled.
+    //         we are in atomic interrupt context with interrupts disabled.
     let cs = unsafe { CriticalSection::new() };
 
     unsafe {

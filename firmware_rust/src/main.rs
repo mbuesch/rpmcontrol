@@ -5,9 +5,11 @@
 #![feature(asm_const)]
 
 mod analog;
+mod fixpt;
 mod hw;
 mod mains;
 mod mutex;
+mod pi;
 mod speedo;
 mod system;
 mod timer;
