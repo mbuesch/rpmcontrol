@@ -48,6 +48,13 @@ macro_rules! impl_timestamp {
         #[derive(PartialEq, Eq, Copy, Clone)]
         pub struct $name(pub $type);
 
+        impl $name {
+            #[inline]
+            pub const fn new() -> Self {
+                $name(0)
+            }
+        }
+
         impl Ord for $name {
             #[inline]
             fn cmp(&self, other: &Self) -> core::cmp::Ordering {
@@ -65,6 +72,15 @@ macro_rules! impl_timestamp {
             #[inline]
             fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
                 Some(self.cmp(other))
+            }
+        }
+
+        impl core::ops::Add<$type> for $name {
+            type Output = Self;
+
+            #[inline]
+            fn add(self, other: $type) -> Self::Output {
+                self.0.wrapping_add(other).into()
             }
         }
 

@@ -1,6 +1,7 @@
 use crate::{
     analog::AcCapture,
-    mutex::{unwrap_option, CriticalSection},
+    fixpt::Fixpt,
+    mutex::{unwrap_option, unwrap_result, CriticalSection},
     timer::{timer_get, Timestamp, TIMER_TICK_US},
 };
 use core::num::NonZeroU16;
@@ -24,6 +25,13 @@ impl Speedo {
     pub fn reset(&mut self) {
         self.mot_hz = None;
         self.prev_stamp = None;
+    }
+
+    pub fn get_freq_hz(&mut self) -> Option<Fixpt> {
+        self.mot_hz.map(|hz| {
+            let hz: u16 = hz.into();
+            Fixpt::new(unwrap_result(hz.try_into()))
+        })
     }
 
     fn new_duration(&mut self, dur: u8) {

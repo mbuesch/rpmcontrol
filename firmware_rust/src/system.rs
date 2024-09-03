@@ -6,10 +6,27 @@ use crate::{
     mutex::{CriticalSection, MutexCell, MutexRefCell},
     pi::Pi,
     speedo::Speedo,
+    timer::{timer_get, Timestamp, TIMER_TICK_US},
+    triac::Triac,
 };
 
-const RPMPI_KP: Fixpt = Fixpt::new(10);
-const RPMPI_KI: Fixpt = Fixpt::new(1);
+const RPMPI_DT: u8 = (1000_u16 / TIMER_TICK_US as u16) as u8;
+const RPMPI_KP: Fixpt = Fixpt::new(10); //TODO
+const RPMPI_KI: Fixpt = Fixpt::new(1); //TODO
+
+fn setpoint_to_f(adc: u16) -> Fixpt {
+    let int = (adc >> 3) as i16;
+    let frac = (adc & 7) << (Fixpt::SHIFT - 3);
+    Fixpt::from_parts(int, frac)
+}
+
+fn f_to_trig_offs(f: Fixpt) -> Fixpt {
+    // Convert 0..128 Hz into pi..0 radians.
+    // Convert pi..0 radians into 20..0 ms.
+    const F_INT: i16 = 6;
+    const F_FRAC: u16 = 102;
+    (Fixpt::new(128) - f) / Fixpt::from_parts(F_INT, F_FRAC)
+}
 
 #[allow(non_snake_case)]
 pub struct SysPeriph {
@@ -35,10 +52,9 @@ pub struct System {
     speedo: MutexRefCell<Speedo>,
     mains: MutexRefCell<Mains>,
     rpm_pi: MutexRefCell<Pi>,
+    next_rpm_pi: MutexCell<Timestamp>,
+    triac: Triac,
 }
-
-//TODO read setpoint
-//TODO read speedo
 
 impl System {
     pub const fn new() -> Self {
@@ -48,6 +64,8 @@ impl System {
             speedo: MutexRefCell::new(Speedo::new()),
             mains: MutexRefCell::new(Mains::new()),
             rpm_pi: MutexRefCell::new(Pi::new(RPMPI_KP, RPMPI_KI)),
+            next_rpm_pi: MutexCell::new(Timestamp::new()),
+            triac: Triac::new(),
         }
     }
 
@@ -88,7 +106,12 @@ impl System {
 
     pub fn run(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ac: AcCapture) {
         self.debug(cs, sp);
-        self.speedo.borrow_mut(cs).update(cs, &ac);
+
+        let speedo_hz = {
+            let mut speedo = self.speedo.borrow_mut(cs);
+            speedo.update(cs, &ac);
+            speedo.get_freq_hz()
+        };
 
         match self.state.get(cs) {
             SysState::Check => {
@@ -99,18 +122,32 @@ impl System {
             }
         }
 
-        core::hint::black_box(self.rpm_pi.borrow_mut(cs).run(
-            core::hint::black_box(10.into()),
-            core::hint::black_box(10.into()),
-        ));
-
         let setpoint = {
             let mut adc = self.adc.borrow_mut(cs);
             adc.run(sp);
             adc.get_result(AdcChannel::Setpoint)
         };
 
-        if let Some(setpoint) = setpoint {}
+        let now = timer_get(cs);
+
+        if now >= self.next_rpm_pi.get(cs) {
+            self.next_rpm_pi.set(cs, now + RPMPI_DT);
+
+            if let Some(setpoint) = setpoint {
+                if let Some(speedo_hz) = speedo_hz {
+                    let setpoint = setpoint_to_f(setpoint);
+                    let y = {
+                        let mut rpm_pi = self.rpm_pi.borrow_mut(cs);
+                        rpm_pi.setpoint(setpoint);
+                        rpm_pi.run(1.into(), speedo_hz)
+                    };
+                    let phi_offs = f_to_trig_offs(y);
+                    self.triac.set_phi_offs(cs, phi_offs);
+                }
+            }
+        }
+
+        self.triac.run(cs, sp);
     }
 }
 

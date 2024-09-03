@@ -1,11 +1,15 @@
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Fixpt(i16);
 
 impl Fixpt {
-    const SHIFT: usize = 8;
+    pub const SHIFT: usize = 8;
 
-    pub const fn new(value: i16) -> Self {
-        Self(value << Self::SHIFT)
+    pub const fn new(int: i16) -> Self {
+        Self(int << Self::SHIFT)
+    }
+
+    pub const fn from_parts(int: i16, frac: u16) -> Self {
+        Self(int << Self::SHIFT | frac as i16)
     }
 }
 
@@ -43,8 +47,10 @@ impl core::ops::Div for Fixpt {
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
-        //FIXME overflows a
-        ((self.0 << Self::SHIFT) / other.0).into()
+        let mut tmp: i32 = self.0.into();
+        tmp <<= Self::SHIFT;
+        tmp /= other.0 as i32;
+        (tmp as i16).into()
     }
 }
 

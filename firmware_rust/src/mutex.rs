@@ -209,6 +209,18 @@ pub fn unwrap_option<T>(value: Option<T>) -> T {
     }
 }
 
+/// Cheaper Result::unwrap() alternative.
+///
+/// This is cheaper, because it doesn't call into the panic unwind path.
+/// Therefore, it does not impose caller-saves overhead onto the calling function.
+#[inline(always)]
+pub fn unwrap_result<T, E>(value: Result<T, E>) -> T {
+    match value {
+        Ok(value) => value,
+        Err(_) => reset_system(),
+    }
+}
+
 /// Reset the system.
 #[inline(always)]
 #[allow(clippy::empty_loop)]

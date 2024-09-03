@@ -13,6 +13,7 @@ mod pi;
 mod speedo;
 mod system;
 mod timer;
+mod triac;
 
 use crate::{
     analog::ac_capture_get,
