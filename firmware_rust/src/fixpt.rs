@@ -13,6 +13,18 @@ impl Fixpt {
     }
 }
 
+impl From<u8> for Fixpt {
+    fn from(value: u8) -> Self {
+        Self::new(value.into())
+    }
+}
+
+impl From<i8> for Fixpt {
+    fn from(value: i8) -> Self {
+        Self::new(value.into())
+    }
+}
+
 impl From<i16> for Fixpt {
     fn from(value: i16) -> Self {
         Self::new(value)

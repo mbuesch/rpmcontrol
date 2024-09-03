@@ -47,7 +47,6 @@ enum SysState {
 }
 
 pub struct System {
-    state: MutexCell<SysState>,
     adc: MutexRefCell<Adc>,
     speedo: MutexRefCell<Speedo>,
     mains: MutexRefCell<Mains>,
@@ -59,7 +58,6 @@ pub struct System {
 impl System {
     pub const fn new() -> Self {
         Self {
-            state: MutexCell::new(SysState::Check),
             adc: MutexRefCell::new(Adc::new()),
             speedo: MutexRefCell::new(Speedo::new()),
             mains: MutexRefCell::new(Mains::new()),
@@ -78,6 +76,7 @@ impl System {
         //TODO more inits for SysState::Check needed?
     }
 
+    /*
     fn run_initial_check(&self, cs: CriticalSection<'_>, _sp: &SysPeriph) {
         let adc = self.adc.borrow(cs);
 
@@ -99,6 +98,7 @@ impl System {
         self.speedo.borrow_mut(cs).reset();
         self.state.set(cs, SysState::Run);
     }
+    */
 
     fn debug(&self, _cs: CriticalSection<'_>, sp: &SysPeriph) {
         sp.PORTB.portb.modify(|r, w| w.pb6().bit(!r.pb6().bit()));
@@ -113,19 +113,16 @@ impl System {
             speedo.get_freq_hz()
         };
 
-        match self.state.get(cs) {
-            SysState::Check => {
-                self.run_initial_check(cs, sp);
-            }
-            SysState::Run => {
-                self.mains.borrow_mut(cs).run(cs, sp);
-            }
-        }
+        self.mains.borrow_mut(cs).run(cs, sp);
 
-        let setpoint = {
+        let (setpoint, _shuntdiff, _shunthi) = {
             let mut adc = self.adc.borrow_mut(cs);
             adc.run(sp);
-            adc.get_result(AdcChannel::Setpoint)
+            (
+                adc.get_result(AdcChannel::Setpoint),
+                adc.get_result(AdcChannel::ShuntDiff),
+                adc.get_result(AdcChannel::ShuntHi),
+            )
         };
 
         let now = timer_get(cs);
@@ -139,7 +136,7 @@ impl System {
                     let y = {
                         let mut rpm_pi = self.rpm_pi.borrow_mut(cs);
                         rpm_pi.setpoint(setpoint);
-                        rpm_pi.run(1.into(), speedo_hz)
+                        rpm_pi.run(RPMPI_DT.into(), speedo_hz)
                     };
                     let phi_offs = f_to_trig_offs(y);
                     self.triac.set_phi_offs(cs, phi_offs);
@@ -147,6 +144,7 @@ impl System {
             }
         }
 
+        //TODO pass the mains phase
         self.triac.run(cs, sp);
     }
 }

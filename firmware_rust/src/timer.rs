@@ -55,6 +55,13 @@ macro_rules! impl_timestamp {
             }
         }
 
+        impl Default for $name {
+            #[inline]
+            fn default() -> Self {
+                Self::new()
+            }
+        }
+
         impl Ord for $name {
             #[inline]
             fn cmp(&self, other: &Self) -> core::cmp::Ordering {
