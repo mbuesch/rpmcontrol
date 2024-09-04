@@ -1,41 +1,56 @@
-use crate::{mutex::CriticalSection, system::SysPeriph};
+use crate::{
+    mutex::CriticalSection,
+    system::SysPeriph,
+    timer::{timer_get_large, LargeTimestamp},
+};
 
-#[derive(Copy, Clone, PartialEq, Eq)]
-#[repr(u8)]
-enum MainsState {
-    /// Synchronizing to line phase.
-    Synchronize,
-    /// Wait to trigger.
-    Wait,
-    /// Trigger.
-    Trigger,
+const HALFWAVE_DUR: LargeTimestamp = LargeTimestamp::from_millis(10);
+
+#[derive(Clone)]
+pub enum Phase {
+    Notsync,
+    PosHalfwave(LargeTimestamp),
+    NegHalfwave(LargeTimestamp),
 }
 
 pub struct Mains {
-    state: MainsState,
-    cycle_count: u8,
+    prev_vsense: bool,
+    phase: Phase,
 }
 
 impl Mains {
     pub const fn new() -> Self {
         Self {
-            state: MainsState::Synchronize,
-            cycle_count: 0,
+            prev_vsense: false,
+            phase: Phase::Notsync,
         }
     }
 
+    fn read_vsense(&self, _cs: CriticalSection<'_>, sp: &SysPeriph) -> bool {
+        sp.PORTA.pina.read().pa1().bit()
+    }
+
     pub fn run(&mut self, cs: CriticalSection<'_>, sp: &SysPeriph) {
-        match self.state {
-            MainsState::Synchronize => {
-                //TODO read vsense from digital input
+        let vsense = self.read_vsense(cs, sp);
+        let now = timer_get_large(cs);
+        match self.phase {
+            Phase::Notsync | Phase::NegHalfwave(_) => {
+                if !self.prev_vsense && vsense {
+                    self.phase = Phase::PosHalfwave(now);
+                }
             }
-            MainsState::Wait => {
-                //TODO
-            }
-            MainsState::Trigger => {
-                //TODO
+            Phase::PosHalfwave(refstamp) => {
+                let nextref = refstamp + HALFWAVE_DUR.into();
+                if now >= nextref {
+                    self.phase = Phase::NegHalfwave(nextref);
+                }
             }
         }
+        self.prev_vsense = vsense;
+    }
+
+    pub fn get_phase(&self) -> Phase {
+        self.phase.clone()
     }
 }
 

@@ -113,7 +113,11 @@ impl System {
             speedo.get_freq_hz()
         };
 
-        self.mains.borrow_mut(cs).run(cs, sp);
+        let phase = {
+            let mut mains = self.mains.borrow_mut(cs);
+            mains.run(cs, sp);
+            mains.get_phase()
+        };
 
         let (setpoint, _shuntdiff, _shunthi) = {
             let mut adc = self.adc.borrow_mut(cs);
@@ -138,14 +142,13 @@ impl System {
                         rpm_pi.setpoint(setpoint);
                         rpm_pi.run(RPMPI_DT.into(), speedo_hz)
                     };
-                    let phi_offs = f_to_trig_offs(y);
-                    self.triac.set_phi_offs(cs, phi_offs);
+                    let phi_offs_ms = f_to_trig_offs(y);
+                    self.triac.set_phi_offs_ms(cs, phi_offs_ms);
                 }
             }
         }
 
-        //TODO pass the mains phase
-        self.triac.run(cs, sp);
+        self.triac.run(cs, sp, &phase);
     }
 }
 

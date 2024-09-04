@@ -53,6 +53,16 @@ macro_rules! impl_timestamp {
             pub const fn new() -> Self {
                 $name(0)
             }
+
+            #[inline]
+            pub const fn from_micros(us: $type) -> $name {
+                $name(us / TIMER_TICK_US as $type)
+            }
+
+            #[inline]
+            pub const fn from_millis(ms: $type) -> $name {
+                $name(((ms as u32 * 1000) / TIMER_TICK_US as u32) as $type)
+            }
         }
 
         impl Default for $name {
