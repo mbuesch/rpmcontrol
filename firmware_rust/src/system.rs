@@ -6,11 +6,11 @@ use crate::{
     mutex::{CriticalSection, MutexCell, MutexRefCell},
     pi::{Pi, PiParams},
     speedo::Speedo,
-    timer::{timer_get, Timestamp, TIMER_TICK_US},
+    timer::{timer_get, timer_get_large, LargeTimestamp, TIMER_TICK_US},
     triac::Triac,
 };
 
-const RPMPI_DT: u8 = (1000_u16 / TIMER_TICK_US as u16) as u8;
+const RPMPI_DT: u16 = 10_000_u16 / TIMER_TICK_US as u16;
 const RPMPI_KP: Fixpt = fixpt!(10 / 1); //TODO
 const RPMPI_KI: Fixpt = fixpt!(1 / 10); //TODO
 const RPMPI_ILIM: Fixpt = fixpt!(10 / 1);
@@ -57,7 +57,7 @@ pub struct System {
     speedo: MutexRefCell<Speedo>,
     mains: MutexRefCell<Mains>,
     rpm_pi: MutexRefCell<Pi>,
-    next_rpm_pi: MutexCell<Timestamp>,
+    next_rpm_pi: MutexCell<LargeTimestamp>,
     triac: Triac,
 }
 
@@ -73,7 +73,7 @@ impl System {
                 ki: RPMPI_KI,
                 ilim: RPMPI_ILIM,
             })),
-            next_rpm_pi: MutexCell::new(Timestamp::new()),
+            next_rpm_pi: MutexCell::new(LargeTimestamp::new()),
             triac: Triac::new(),
         }
     }
@@ -111,13 +111,14 @@ impl System {
     }
     */
 
-    fn debug(&self, _cs: CriticalSection<'_>, sp: &SysPeriph) {
-        sp.PORTB.portb.modify(|r, w| w.pb6().bit(!r.pb6().bit()));
+    fn debug(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ticks: u8) {
+        sp.PORTB.portb.modify(|_, w| w.pb6().set_bit());
+        let end = timer_get(cs) + ticks;
+        while timer_get(cs) < end {}
+        sp.PORTB.portb.modify(|_, w| w.pb6().clear_bit());
     }
 
     pub fn run(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ac: AcCapture) {
-        self.debug(cs, sp);
-
         let speedo_hz = {
             let mut speedo = self.speedo.borrow_mut(cs);
             speedo.update(cs, &ac);
@@ -141,12 +142,14 @@ impl System {
             )
         };
 
-        let now = timer_get(cs);
+        let now = timer_get_large(cs);
 
         if now >= self.next_rpm_pi.get(cs) {
             self.next_rpm_pi.set(cs, now + RPMPI_DT);
 
             if let Some(setpoint) = setpoint {
+                //self.debug(cs, sp, (setpoint >> 3) as u8);
+
                 if let Some(speedo_hz) = speedo_hz {
                     let setpoint = setpoint_to_f(setpoint);
                     let y = {

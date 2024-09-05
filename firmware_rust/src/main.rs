@@ -53,6 +53,7 @@ fn main() -> ! {
     // SAFETY: Everything, except for the AC_CAPTURE access,
     //         can use this central critical section.
     //         We allow interruptions of `system_cs` by `ANA_COMP` ISR.
+    //TODO make a MainContext struct
     let system_cs = unsafe { CriticalSection::new() };
     fence();
 
@@ -79,7 +80,6 @@ fn main() -> ! {
         SYSTEM.run(system_cs, &sp, ac_capture);
         wdt_poke(&dp.WDT);
     }
-    //fence();
 }
 
 // vim: ts=4 sw=4 expandtab
