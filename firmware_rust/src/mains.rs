@@ -13,6 +13,12 @@ pub enum Phase {
     NegHalfwave(LargeTimestamp),
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum PhaseUpdate {
+    NotChanged,
+    Changed,
+}
+
 pub struct Mains {
     prev_vsense: bool,
     phase: Phase,
@@ -30,23 +36,27 @@ impl Mains {
         sp.PORTA.pina.read().pa1().bit()
     }
 
-    pub fn run(&mut self, cs: CriticalSection<'_>, sp: &SysPeriph) {
+    pub fn run(&mut self, cs: CriticalSection<'_>, sp: &SysPeriph) -> PhaseUpdate {
         let vsense = self.read_vsense(cs, sp);
         let now = timer_get_large(cs);
+        let mut ret = PhaseUpdate::NotChanged;
         match self.phase {
             Phase::Notsync | Phase::NegHalfwave(_) => {
                 if !self.prev_vsense && vsense {
                     self.phase = Phase::PosHalfwave(now);
+                    ret = PhaseUpdate::Changed;
                 }
             }
             Phase::PosHalfwave(refstamp) => {
                 let nextref = refstamp + HALFWAVE_DUR.into();
                 if now >= nextref {
                     self.phase = Phase::NegHalfwave(nextref);
+                    ret = PhaseUpdate::Changed;
                 }
             }
         }
         self.prev_vsense = vsense;
+        ret
     }
 
     pub fn get_phase(&self) -> Phase {

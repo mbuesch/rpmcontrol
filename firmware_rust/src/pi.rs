@@ -1,18 +1,23 @@
 use crate::fixpt::Fixpt;
 
+#[derive(Clone)]
+pub struct PiParams {
+    pub kp: Fixpt,
+    pub ki: Fixpt,
+    pub ilim: Fixpt,
+}
+
 pub struct Pi {
+    params: PiParams,
     sp: Fixpt,
-    kp: Fixpt,
-    ki: Fixpt,
     i: Fixpt,
 }
 
 impl Pi {
-    pub const fn new(kp: Fixpt, ki: Fixpt) -> Self {
+    pub const fn new(params: PiParams) -> Self {
         Self {
+            params,
             sp: Fixpt::new(0),
-            kp,
-            ki,
             i: Fixpt::new(0),
         }
     }
@@ -21,18 +26,24 @@ impl Pi {
         self.sp = sp;
     }
 
-    pub fn run(&mut self, dt: Fixpt, r: Fixpt) -> Fixpt {
+    pub fn run(&mut self, r: Fixpt) -> Fixpt {
         // deviation
         let e = self.sp - r;
 
         // P term
-        let p = self.kp * e;
+        let p = self.params.kp * e;
 
         // I term
-        let i = self.i + (self.ki * e * dt);
+        let mut i = self.i + (self.params.ki * e);
+        if i > self.params.ilim {
+            i = self.params.ilim;
+        }
+        if i < -self.params.ilim {
+            i = -self.params.ilim;
+        }
         self.i = i;
 
-        (p + i).into()
+        p + i
     }
 }
 

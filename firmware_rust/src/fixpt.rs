@@ -1,6 +1,22 @@
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Fixpt(i16);
 
+macro_rules! fixpt {
+    ($numerator:literal / $denominator:literal) => {
+        Fixpt::from_decimal($numerator, $denominator)
+    };
+    ($numerator:literal / $denominator:ident) => {
+        Fixpt::from_decimal($numerator, $denominator)
+    };
+    ($numerator:ident / $denominator:literal) => {
+        Fixpt::from_decimal($numerator, $denominator)
+    };
+    ($numerator:ident / $denominator:ident) => {
+        Fixpt::from_decimal($numerator, $denominator)
+    };
+}
+pub(crate) use fixpt;
+
 impl Fixpt {
     pub const SHIFT: usize = 8;
 
@@ -10,6 +26,17 @@ impl Fixpt {
 
     pub const fn from_parts(int: i16, frac: u16) -> Self {
         Self(int << Self::SHIFT | frac as i16)
+    }
+
+    pub const fn from_decimal(numerator: i16, denominator: i16) -> Self {
+        let mut q: i32 = 1 << Self::SHIFT;
+        q *= numerator as i32;
+        q /= denominator as i32;
+        Self(q as i16)
+    }
+
+    pub const fn to_int(self) -> i16 {
+        self.0 >> Self::SHIFT
     }
 }
 
@@ -51,7 +78,7 @@ impl core::ops::Mul for Fixpt {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
-        ((self.0 * other.0) >> Self::SHIFT).into()
+        (((self.0 as i32 * other.0 as i32) >> Self::SHIFT) as i16).into()
     }
 }
 
@@ -63,6 +90,14 @@ impl core::ops::Div for Fixpt {
         tmp <<= Self::SHIFT;
         tmp /= other.0 as i32;
         (tmp as i16).into()
+    }
+}
+
+impl core::ops::Neg for Fixpt {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        (-self.0).into()
     }
 }
 

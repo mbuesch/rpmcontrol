@@ -1,18 +1,19 @@
 use crate::{
-    analog::{AcCapture, Adc, AdcChannel},
-    fixpt::Fixpt,
+    analog::{Ac, AcCapture, Adc, AdcChannel},
+    fixpt::{fixpt, Fixpt},
     hw::mcu,
     mains::Mains,
     mutex::{CriticalSection, MutexCell, MutexRefCell},
-    pi::Pi,
+    pi::{Pi, PiParams},
     speedo::Speedo,
     timer::{timer_get, Timestamp, TIMER_TICK_US},
     triac::Triac,
 };
 
 const RPMPI_DT: u8 = (1000_u16 / TIMER_TICK_US as u16) as u8;
-const RPMPI_KP: Fixpt = Fixpt::new(10); //TODO
-const RPMPI_KI: Fixpt = Fixpt::new(1); //TODO
+const RPMPI_KP: Fixpt = fixpt!(10 / 1); //TODO
+const RPMPI_KI: Fixpt = fixpt!(1 / 10); //TODO
+const RPMPI_ILIM: Fixpt = fixpt!(10 / 1);
 
 fn setpoint_to_f(adc: u16) -> Fixpt {
     let int = (adc >> 3) as i16;
@@ -23,9 +24,13 @@ fn setpoint_to_f(adc: u16) -> Fixpt {
 fn f_to_trig_offs(f: Fixpt) -> Fixpt {
     // Convert 0..128 Hz into pi..0 radians.
     // Convert pi..0 radians into 20..0 ms.
-    const F_INT: i16 = 6;
-    const F_FRAC: u16 = 102;
-    (Fixpt::new(128) - f) / Fixpt::from_parts(F_INT, F_FRAC)
+    let fmax = Fixpt::new(128);
+    if f <= fmax {
+        let fact = fixpt!(5 / 32); // 1 / 6.4
+        (fmax - f) * fact
+    } else {
+        Fixpt::new(0)
+    }
 }
 
 #[allow(non_snake_case)]
@@ -47,6 +52,7 @@ enum SysState {
 }
 
 pub struct System {
+    ac: Ac,
     adc: MutexRefCell<Adc>,
     speedo: MutexRefCell<Speedo>,
     mains: MutexRefCell<Mains>,
@@ -58,10 +64,15 @@ pub struct System {
 impl System {
     pub const fn new() -> Self {
         Self {
+            ac: Ac::new(),
             adc: MutexRefCell::new(Adc::new()),
             speedo: MutexRefCell::new(Speedo::new()),
             mains: MutexRefCell::new(Mains::new()),
-            rpm_pi: MutexRefCell::new(Pi::new(RPMPI_KP, RPMPI_KI)),
+            rpm_pi: MutexRefCell::new(Pi::new(PiParams {
+                kp: RPMPI_KP,
+                ki: RPMPI_KI,
+                ilim: RPMPI_ILIM,
+            })),
             next_rpm_pi: MutexCell::new(Timestamp::new()),
             triac: Triac::new(),
         }
@@ -73,7 +84,7 @@ impl System {
         adc.enable(
             AdcChannel::Setpoint.mask() | AdcChannel::ShuntDiff.mask() | AdcChannel::ShuntHi.mask(),
         );
-        //TODO more inits for SysState::Check needed?
+        self.ac.init(sp);
     }
 
     /*
@@ -113,10 +124,11 @@ impl System {
             speedo.get_freq_hz()
         };
 
-        let phase = {
+        let (phase_update, phase) = {
             let mut mains = self.mains.borrow_mut(cs);
-            mains.run(cs, sp);
-            mains.get_phase()
+            let phase_update = mains.run(cs, sp);
+            let phase = mains.get_phase();
+            (phase_update, phase)
         };
 
         let (setpoint, _shuntdiff, _shunthi) = {
@@ -140,7 +152,7 @@ impl System {
                     let y = {
                         let mut rpm_pi = self.rpm_pi.borrow_mut(cs);
                         rpm_pi.setpoint(setpoint);
-                        rpm_pi.run(RPMPI_DT.into(), speedo_hz)
+                        rpm_pi.run(speedo_hz)
                     };
                     let phi_offs_ms = f_to_trig_offs(y);
                     self.triac.set_phi_offs_ms(cs, phi_offs_ms);
@@ -148,7 +160,7 @@ impl System {
             }
         }
 
-        self.triac.run(cs, sp, &phase);
+        self.triac.run(cs, sp, phase_update, &phase);
     }
 }
 

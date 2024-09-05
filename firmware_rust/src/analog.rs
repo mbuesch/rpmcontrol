@@ -130,13 +130,24 @@ impl Adc {
             Some(self.result[chan as usize])
         }
     }
-
-    pub fn current_chan(&self) -> AdcChannel {
-        self.chan
-    }
 }
 
-pub struct Ac {}
+pub struct Ac(());
+
+impl Ac {
+    pub const fn new() -> Self {
+        Ac(())
+    }
+
+    #[rustfmt::skip]
+    pub fn init(&self, sp: &SysPeriph) {
+        sp.AC.acsr.write(|w| {
+            w.acie().set_bit()
+             .aci().set_bit()
+             .acis().on_rising_edge()
+        });
+    }
+}
 
 #[derive(Clone)]
 pub struct AcCapture {

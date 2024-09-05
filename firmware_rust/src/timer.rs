@@ -129,4 +129,11 @@ macro_rules! impl_timestamp {
 impl_timestamp!(Timestamp, u8);
 impl_timestamp!(LargeTimestamp, u16);
 
+impl From<LargeTimestamp> for Timestamp {
+    #[inline]
+    fn from(stamp: LargeTimestamp) -> Timestamp {
+        (stamp.0 as u8).into()
+    }
+}
+
 // vim: ts=4 sw=4 expandtab
