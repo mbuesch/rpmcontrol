@@ -157,12 +157,12 @@ impl System {
                 //self.debug(cs, sp, (setpoint >> 3) as u8);
 
                 if let Some(speedo_hz) = speedo_hz {
-                    self.debug(cs, sp, (speedo_hz.to_hz() / 10) as i8);
+                    self.debug(cs, sp, speedo_hz.as_16hz().to_int() as i8);
                     let setpoint = setpoint_to_f(setpoint);
                     let y = {
                         let mut rpm_pi = self.rpm_pi.borrow_mut(cs);
                         rpm_pi.setpoint(setpoint);
-                        rpm_pi.run(speedo_hz.as_fixpt_shifted())
+                        rpm_pi.run(speedo_hz.as_16hz())
                     };
                     let phi_offs_ms = f_to_trig_offs(y);
                     self.triac.set_phi_offs_ms(cs, phi_offs_ms);

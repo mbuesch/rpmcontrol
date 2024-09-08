@@ -14,23 +14,20 @@ const OK_THRES: u8 = 4;
 pub struct MotorSpeed(Fixpt);
 
 impl MotorSpeed {
-    const SHIFT: usize = 4;
+    const FACT_16HZ: u16 = 16;
 
     fn from_period_dur(dur: RelTimestamp) -> Self {
         let dur: i8 = dur.into();
         let dur: u8 = dur as _;
 
-        let num = (1_000_000 / (TIMER_TICK_US as u32 * SPEEDO_FACT)) as u16;
-        let denom = dur as u16 * (1 << Self::SHIFT);
+        // fact 2 to avoid rounding error.
+        let num = (1_000_000 / (TIMER_TICK_US as u32 * (SPEEDO_FACT / 2))) as u16;
+        let denom = dur as u16 * Self::FACT_16HZ * 2;
 
         Self(Fixpt::from_decimal(num as i16, denom as i16))
     }
 
-    pub fn to_hz(&self) -> u16 {
-        (self.0.to_int() << Self::SHIFT) as _
-    }
-
-    pub fn as_fixpt_shifted(&self) -> Fixpt {
+    pub fn as_16hz(&self) -> Fixpt {
         self.0
     }
 }
