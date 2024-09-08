@@ -11,6 +11,30 @@ const SPEEDO_FACT: u32 = 4 * 2;
 
 const OK_THRES: u8 = 4;
 
+pub struct MotorSpeed(Fixpt);
+
+impl MotorSpeed {
+    const SHIFT: usize = 4;
+
+    fn from_period_dur(dur: RelTimestamp) -> Self {
+        let dur: i8 = dur.into();
+        let dur: u8 = dur as _;
+
+        let num = (1_000_000 / (TIMER_TICK_US as u32 * SPEEDO_FACT)) as u16;
+        let denom = dur as u16 * (1 << Self::SHIFT);
+
+        Self(Fixpt::from_decimal(num as i16, denom as i16))
+    }
+
+    pub fn to_hz(&self) -> u16 {
+        (self.0.to_int() << Self::SHIFT) as _
+    }
+
+    pub fn as_fixpt_shifted(&self) -> Fixpt {
+        self.0
+    }
+}
+
 pub struct Speedo {
     mot_hz: Fixpt,
     ok_count: u8,
@@ -32,18 +56,11 @@ impl Speedo {
         self.ok_count = 0;
     }
 
-    pub fn get_freq_hz(&mut self) -> Option<Fixpt> {
+    pub fn get_freq_hz(&mut self) -> Option<MotorSpeed> {
         if self.ok_count < OK_THRES {
             None
         } else {
-            let dur: i8 = self.get_dur().into();
-            let dur: u8 = dur as _;
-
-            let num = (1_000_000 / (TIMER_TICK_US as u32 * SPEEDO_FACT)) as u16;
-            let denom = dur as u16;
-            let mot_hz = num / denom;
-
-            Some(Fixpt::new(mot_hz as _))
+            Some(MotorSpeed::from_period_dur(self.get_dur()))
         }
     }
 
