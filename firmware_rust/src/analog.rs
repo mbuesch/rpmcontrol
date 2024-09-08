@@ -2,7 +2,7 @@ use crate::{
     hw::interrupt,
     mutex::CriticalSection,
     system::SysPeriph,
-    timer::{timer_get, Timestamp},
+    timer::{timer_get, Timestamp, TIMER_TICK_US},
 };
 
 #[derive(Clone, Copy)]
@@ -144,7 +144,7 @@ impl Ac {
         sp.AC.acsr.write(|w| {
             w.acie().set_bit()
              .aci().set_bit()
-             .acis().on_rising_edge()
+             .acis().on_toggle()
         });
     }
 }
@@ -182,6 +182,10 @@ impl AcCapture {
 
 pub static mut AC_CAPTURE: AcCapture = AcCapture::new();
 
+/// AC events closer than this to the previous valid event are ignored.
+const AC_CAPTURE_MINDIST: u8 = 128 / TIMER_TICK_US;
+
+/// Analog Comparator interrupt.
 #[avr_device::interrupt(attiny26)]
 fn ANA_COMP() {
     // SAFETY: This interrupt shall not call into anything and not modify anything,
@@ -194,13 +198,16 @@ fn ANA_COMP() {
     //         we are in atomic interrupt context with interrupts disabled.
     let cs = unsafe { CriticalSection::new() };
 
+    let now = timer_get(cs);
     unsafe {
-        if AC_CAPTURE.flags != 0 {
-            // ac_capture_get() has not been called frequently enough.
-            //TODO?
+        if now >= AC_CAPTURE.stamp + AC_CAPTURE_MINDIST {
+            if AC_CAPTURE.flags != 0 {
+                // ac_capture_get() has not been called frequently enough.
+                //TODO?
+            }
+            AC_CAPTURE.stamp = now;
+            AC_CAPTURE.flags = AcCapture::FLAG_NEW;
         }
-        AC_CAPTURE.stamp = timer_get(cs);
-        AC_CAPTURE.flags = AcCapture::FLAG_NEW;
     }
 }
 
