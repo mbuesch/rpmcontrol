@@ -2,7 +2,7 @@ use crate::{
     hw::interrupt,
     mutex::CriticalSection,
     system::SysPeriph,
-    timer::{timer_get, Timestamp, TIMER_TICK_US},
+    timer::{timer_get, RelTimestamp, Timestamp},
 };
 
 #[derive(Clone, Copy)]
@@ -183,7 +183,7 @@ impl AcCapture {
 pub static mut AC_CAPTURE: AcCapture = AcCapture::new();
 
 /// AC events closer than this to the previous valid event are ignored.
-const AC_CAPTURE_MINDIST: u8 = 128 / TIMER_TICK_US;
+const AC_CAPTURE_MINDIST: RelTimestamp = RelTimestamp::from_micros(128);
 
 /// Analog Comparator interrupt.
 #[avr_device::interrupt(attiny26)]

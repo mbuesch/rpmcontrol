@@ -52,12 +52,12 @@ avrdude:
 		-B $(AVRDUDE_SPEED) -p $(AVRDUDE_MCU) \
 		-t
 
-writefuses:
+fuses:
 	$(AVRDUDE) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROG) \
 		-B 10 -p $(AVRDUDE_MCU) \
 		-U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m
 
-writeflash: $(HEX)
+flash: $(HEX)
 	$(AVRDUDE) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROG) \
 		-B $(AVRDUDE_SPEED) -p $(AVRDUDE_MCU) \
 		-U flash:w:$(HEX)

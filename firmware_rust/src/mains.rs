@@ -1,10 +1,10 @@
 use crate::{
     mutex::CriticalSection,
     system::SysPeriph,
-    timer::{timer_get_large, LargeTimestamp},
+    timer::{timer_get_large, LargeTimestamp, RelLargeTimestamp},
 };
 
-const HALFWAVE_DUR: LargeTimestamp = LargeTimestamp::from_millis(10);
+const HALFWAVE_DUR: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
 
 #[derive(Clone)]
 pub enum Phase {
@@ -48,7 +48,7 @@ impl Mains {
                 }
             }
             Phase::PosHalfwave(refstamp) => {
-                let nextref = refstamp + HALFWAVE_DUR.into();
+                let nextref = refstamp + HALFWAVE_DUR;
                 if now >= nextref {
                     self.phase = Phase::NegHalfwave(nextref);
                     ret = PhaseUpdate::Changed;

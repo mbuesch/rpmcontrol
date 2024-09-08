@@ -6,11 +6,11 @@ use crate::{
     mutex::{CriticalSection, MutexCell, MutexRefCell},
     pi::{Pi, PiParams},
     speedo::Speedo,
-    timer::{timer_get, timer_get_large, LargeTimestamp, TIMER_TICK_US},
+    timer::{timer_get, timer_get_large, LargeTimestamp, RelLargeTimestamp, RelTimestamp},
     triac::Triac,
 };
 
-const RPMPI_DT: u16 = 10_000_u16 / TIMER_TICK_US as u16;
+const RPMPI_DT: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
 const RPMPI_KP: Fixpt = fixpt!(10 / 1); //TODO
 const RPMPI_KI: Fixpt = fixpt!(1 / 10); //TODO
 const RPMPI_ILIM: Fixpt = fixpt!(10 / 1);
@@ -111,18 +111,22 @@ impl System {
     }
     */
 
-    fn debug(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ticks: u8) {
+    fn debug(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ticks: i8) {
         sp.PORTB.portb.modify(|_, w| w.pb6().set_bit());
-        let end = timer_get(cs) + ticks;
+        let end = timer_get(cs) + RelTimestamp::from_ticks(ticks);
         while timer_get(cs) < end {}
         sp.PORTB.portb.modify(|_, w| w.pb6().clear_bit());
     }
 
     pub fn run(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ac: AcCapture) {
-        let speedo_hz = {
+        if ac.is_new() {
+            self.debug(cs, sp, 1);
+        }
+
+        let (speedo_hz, dur) = {
             let mut speedo = self.speedo.borrow_mut(cs);
             speedo.update(cs, &ac);
-            speedo.get_freq_hz()
+            (speedo.get_freq_hz(), speedo.get_dur())
         };
 
         let (phase_update, phase) = {
@@ -151,6 +155,7 @@ impl System {
                 //self.debug(cs, sp, (setpoint >> 3) as u8);
 
                 if let Some(speedo_hz) = speedo_hz {
+                    //            self.debug(cs, sp, dur);
                     let setpoint = setpoint_to_f(setpoint);
                     let y = {
                         let mut rpm_pi = self.rpm_pi.borrow_mut(cs);

@@ -202,6 +202,7 @@ impl<T: Copy> MutexCell<T> {
 /// This is cheaper, because it doesn't call into the panic unwind path.
 /// Therefore, it does not impose caller-saves overhead onto the calling function.
 #[inline(always)]
+#[allow(dead_code)]
 pub fn unwrap_option<T>(value: Option<T>) -> T {
     match value {
         Some(value) => value,
@@ -214,6 +215,7 @@ pub fn unwrap_option<T>(value: Option<T>) -> T {
 /// This is cheaper, because it doesn't call into the panic unwind path.
 /// Therefore, it does not impose caller-saves overhead onto the calling function.
 #[inline(always)]
+#[allow(dead_code)]
 pub fn unwrap_result<T, E>(value: Result<T, E>) -> T {
     match value {
         Ok(value) => value,

@@ -3,13 +3,13 @@ use crate::{
     mains::{Phase, PhaseUpdate},
     mutex::{CriticalSection, MutexCell},
     system::SysPeriph,
-    timer::{timer_get_large, LargeTimestamp, Timestamp, TIMER_TICK_US},
+    timer::{timer_get_large, LargeTimestamp, RelLargeTimestamp, Timestamp, TIMER_TICK_US},
 };
 
 fn time_plus_ms(t: LargeTimestamp, ms: Fixpt) -> LargeTimestamp {
     const TICK_US: i16 = TIMER_TICK_US as i16;
     let ticks = (ms * fixpt!(1000 / TICK_US)).to_int();
-    t + ticks as u16
+    t + RelLargeTimestamp::from_ticks(ticks)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
