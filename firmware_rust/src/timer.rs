@@ -44,9 +44,9 @@ pub fn timer_get_large(cs: CriticalSection) -> LargeTimestamp {
 }
 
 macro_rules! impl_timestamp {
-    ($rel:ident, $abs:ident, $type:ty) => {
+    ($rel:ident, $abs:ident, $reltype:ty, $abstype:ty) => {
         #[derive(PartialEq, Eq, Copy, Clone)]
-        pub struct $abs(pub $type);
+        pub struct $abs(pub $abstype);
 
         impl $abs {
             #[inline]
@@ -55,18 +55,18 @@ macro_rules! impl_timestamp {
             }
 
             #[inline]
-            pub const fn from_ticks(ticks: $type) -> Self {
+            pub const fn from_ticks(ticks: $abstype) -> Self {
                 $abs(ticks)
             }
 
             #[inline]
             pub const fn from_micros(us: u32) -> $abs {
-                $abs((us / TIMER_TICK_US as u32) as $type)
+                $abs((us / TIMER_TICK_US as u32) as $abstype)
             }
 
             #[inline]
             pub const fn from_millis(ms: u32) -> $abs {
-                $abs(((ms * 1000) / TIMER_TICK_US as u32) as $type)
+                $abs(((ms * 1000) / TIMER_TICK_US as u32) as $abstype)
             }
         }
 
@@ -82,7 +82,7 @@ macro_rules! impl_timestamp {
             fn cmp(&self, other: &Self) -> core::cmp::Ordering {
                 if self.0 == other.0 {
                     core::cmp::Ordering::Equal
-                } else if self.0.wrapping_sub(other.0) & (1 << (<$type>::BITS - 1)) == 0 {
+                } else if self.0.wrapping_sub(other.0) & (1 << (<$abstype>::BITS - 1)) == 0 {
                     core::cmp::Ordering::Greater
                 } else {
                     core::cmp::Ordering::Less
@@ -102,27 +102,27 @@ macro_rules! impl_timestamp {
 
             #[inline]
             fn add(self, other: $rel) -> Self::Output {
-                self.0.wrapping_add(other.0 as $type).into()
+                self.0.wrapping_add(other.0 as $abstype).into()
             }
         }
 
         impl core::ops::Sub for $abs {
-            type Output = $type;
+            type Output = $rel;
 
             #[inline]
             fn sub(self, other: Self) -> Self::Output {
-                self.0.wrapping_sub(other.0)
+                (self.0.wrapping_sub(other.0) as $reltype).into()
             }
         }
 
-        impl From<$type> for $abs {
+        impl From<$abstype> for $abs {
             #[inline]
-            fn from(stamp: $type) -> Self {
+            fn from(stamp: $abstype) -> Self {
                 $abs(stamp)
             }
         }
 
-        impl From<$abs> for $type {
+        impl From<$abs> for $abstype {
             #[inline]
             fn from(stamp: $abs) -> Self {
                 stamp.0
@@ -132,9 +132,9 @@ macro_rules! impl_timestamp {
 }
 
 macro_rules! impl_reltimestamp {
-    ($rel:ident, $abs:ident, $type:ty) => {
+    ($rel:ident, $abs:ident, $reltype:ty, $abstype:ty) => {
         #[derive(PartialEq, Eq, Copy, Clone, PartialOrd, Ord)]
-        pub struct $rel(pub $type);
+        pub struct $rel(pub $reltype);
 
         impl $rel {
             #[inline]
@@ -143,18 +143,18 @@ macro_rules! impl_reltimestamp {
             }
 
             #[inline]
-            pub const fn from_ticks(ticks: $type) -> Self {
+            pub const fn from_ticks(ticks: $reltype) -> Self {
                 $rel(ticks)
             }
 
             #[inline]
             pub const fn from_micros(us: i32) -> $rel {
-                $rel((us / TIMER_TICK_US as i32) as $type)
+                $rel((us / TIMER_TICK_US as i32) as $reltype)
             }
 
             #[inline]
             pub const fn from_millis(ms: i32) -> $rel {
-                $rel(((ms * 1000) / TIMER_TICK_US as i32) as $type)
+                $rel(((ms * 1000) / TIMER_TICK_US as i32) as $reltype)
             }
         }
 
@@ -183,14 +183,14 @@ macro_rules! impl_reltimestamp {
             }
         }
 
-        impl From<$type> for $rel {
+        impl From<$reltype> for $rel {
             #[inline]
-            fn from(relstamp: $type) -> Self {
+            fn from(relstamp: $reltype) -> Self {
                 $rel(relstamp)
             }
         }
 
-        impl From<$rel> for $type {
+        impl From<$rel> for $reltype {
             #[inline]
             fn from(relstamp: $rel) -> Self {
                 relstamp.0
@@ -199,11 +199,11 @@ macro_rules! impl_reltimestamp {
     };
 }
 
-impl_timestamp!(RelTimestamp, Timestamp, u8);
-impl_timestamp!(RelLargeTimestamp, LargeTimestamp, u16);
+impl_timestamp!(RelTimestamp, Timestamp, i8, u8);
+impl_timestamp!(RelLargeTimestamp, LargeTimestamp, i16, u16);
 
-impl_reltimestamp!(RelTimestamp, Timestamp, i8);
-impl_reltimestamp!(RelLargeTimestamp, LargeTimestamp, i16);
+impl_reltimestamp!(RelTimestamp, Timestamp, i8, u8);
+impl_reltimestamp!(RelLargeTimestamp, LargeTimestamp, i16, u16);
 
 impl From<LargeTimestamp> for Timestamp {
     #[inline]

@@ -119,9 +119,11 @@ impl System {
     }
 
     pub fn run(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ac: AcCapture) {
+        /*
         if ac.is_new() {
             self.debug(cs, sp, 1);
         }
+        */
 
         let (speedo_hz, dur) = {
             let mut speedo = self.speedo.borrow_mut(cs);
@@ -155,7 +157,7 @@ impl System {
                 //self.debug(cs, sp, (setpoint >> 3) as u8);
 
                 if let Some(speedo_hz) = speedo_hz {
-                    //            self.debug(cs, sp, dur);
+                    self.debug(cs, sp, dur.into());
                     let setpoint = setpoint_to_f(setpoint);
                     let y = {
                         let mut rpm_pi = self.rpm_pi.borrow_mut(cs);

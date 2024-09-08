@@ -2,18 +2,20 @@ use crate::{
     analog::AcCapture,
     fixpt::Fixpt,
     mutex::CriticalSection,
-    timer::{timer_get, Timestamp},
+    timer::{timer_get, RelTimestamp, Timestamp, TIMER_TICK_US},
 };
 
 /// 2 edge (rising falling) in AC capture.
 /// 4 speedometer edges per motor revolution
 const SPEEDO_FACT: u32 = 4 * 2;
 
+const OK_THRES: u8 = 4;
+
 pub struct Speedo {
     mot_hz: Fixpt,
     ok_count: u8,
     prev_stamp: Timestamp,
-    prev_dur: u8, // small mov avg
+    dur: [u8; 4],
 }
 
 impl Speedo {
@@ -22,7 +24,7 @@ impl Speedo {
             mot_hz: Fixpt::new(0),
             ok_count: 0,
             prev_stamp: Timestamp::new(),
-            prev_dur: 0,
+            dur: [0; 4],
         }
     }
 
@@ -31,28 +33,37 @@ impl Speedo {
     }
 
     pub fn get_freq_hz(&mut self) -> Option<Fixpt> {
-        None
-        /*
-        self.mot_hz.map(|hz| {
-            let hz: u16 = hz.into();
-            Fixpt::new(unwrap_result(hz.try_into()))
-        })
-        */
+        if self.ok_count < OK_THRES {
+            None
+        } else {
+            let dur: i8 = self.get_dur().into();
+            let dur: u8 = dur as _;
+
+            let num = (1_000_000 / (TIMER_TICK_US as u32 * SPEEDO_FACT)) as u16;
+            let denom = dur as u16;
+            let mot_hz = num / denom;
+
+            Some(Fixpt::new(mot_hz as _))
+        }
     }
 
-    pub fn get_dur(&self) -> u8 {
-        self.prev_dur
+    pub fn get_dur(&self) -> RelTimestamp {
+        let a = self.dur[0] as u16;
+        let b = self.dur[1] as u16;
+        let c = self.dur[2] as u16;
+        let d = self.dur[3] as u16;
+        let dur: u8 = ((a + b + c + d) / 4) as _;
+        let dur: i8 = dur as _;
+        dur.into()
     }
 
-    fn new_duration(&mut self, dur: u8) {
-        self.prev_dur = dur;
-        /*
-        let num = (1_000_000 / (TIMER_TICK_US as u32 * SPEEDO_FACT)) as u16;
-        let denom = dur as u16;
-        let mot_hz = num / denom;
-        let mot_hz = unwrap_option(NonZeroU16::new(mot_hz));
-        self.mot_hz = Some(mot_hz);
-        */
+    fn new_duration(&mut self, dur: RelTimestamp) {
+        let dur: i8 = dur.into();
+        self.dur[0] = self.dur[1];
+        self.dur[1] = self.dur[2];
+        self.dur[2] = self.dur[3];
+        self.dur[3] = dur as _;
+        self.ok_count = self.ok_count.saturating_add(1);
     }
 
     pub fn update(&mut self, cs: CriticalSection<'_>, ac: &AcCapture) {
@@ -68,6 +79,7 @@ impl Speedo {
                 self.new_duration(dur);
             } else {
                 // prev_stamp wrapped.
+                self.ok_count = 0;
             }
             self.prev_stamp = ac_stamp;
         }
