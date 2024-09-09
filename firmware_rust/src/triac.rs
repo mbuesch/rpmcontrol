@@ -28,7 +28,7 @@ pub struct Triac {
 impl Triac {
     pub const fn new() -> Self {
         Self {
-            phi_offs_ms: MutexCell::new(Fixpt::new(20)),
+            phi_offs_ms: MutexCell::new(Fixpt::from_int(20)),
             state: MutexCell::new(TriacState::Idle),
             trig_time: MutexCell::new(Timestamp::new()),
         }

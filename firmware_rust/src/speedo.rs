@@ -42,7 +42,7 @@ pub struct Speedo {
 impl Speedo {
     pub const fn new() -> Self {
         Self {
-            mot_hz: Fixpt::new(0),
+            mot_hz: Fixpt::from_int(0),
             ok_count: 0,
             prev_stamp: Timestamp::new(),
             dur: [0; 4],

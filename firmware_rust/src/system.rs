@@ -23,12 +23,13 @@ fn setpoint_to_f(adc: u16) -> Fixpt {
 /// Convert 0..8 16Hz into pi..0 radians.
 /// Convert pi..0 radians into 20..0 ms.
 fn f_to_trig_offs(f: Fixpt) -> Fixpt {
-    let fmax = Fixpt::new(8);
-    if f <= fmax {
+    let fmin = Fixpt::from_int(0);
+    let fmax = Fixpt::from_int(8);
+    if f >= fmin && f <= fmax {
         let fact = fixpt!(5 / 2); // 20 / 8
         (fmax - f) * fact
     } else {
-        Fixpt::new(0)
+        fmin
     }
 }
 
@@ -124,10 +125,10 @@ impl System {
         }
         */
 
-        let (speedo_hz, dur) = {
+        let speedo_hz = {
             let mut speedo = self.speedo.borrow_mut(cs);
             speedo.update(cs, &ac);
-            (speedo.get_freq_hz(), speedo.get_dur())
+            speedo.get_freq_hz()
         };
 
         let (phase_update, phase) = {
@@ -153,11 +154,9 @@ impl System {
             self.next_rpm_pi.set(cs, now + RPMPI_DT);
 
             if let Some(setpoint) = setpoint {
-                //self.debug(cs, sp, (setpoint >> 3) as u8);
-
                 if let Some(speedo_hz) = speedo_hz {
-                    self.debug(cs, sp, speedo_hz.as_16hz().to_int() as i8);
                     let setpoint = setpoint_to_f(setpoint);
+                    self.debug(cs, sp, f_to_trig_offs(setpoint).to_int() as i8);
                     let y = {
                         let mut rpm_pi = self.rpm_pi.borrow_mut(cs);
                         rpm_pi.setpoint(setpoint);

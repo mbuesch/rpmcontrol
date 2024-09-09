@@ -17,8 +17,8 @@ impl Pi {
     pub const fn new(params: PiParams) -> Self {
         Self {
             params,
-            sp: Fixpt::new(0),
-            i: Fixpt::new(0),
+            sp: Fixpt::from_int(0),
+            i: Fixpt::from_int(0),
         }
     }
 

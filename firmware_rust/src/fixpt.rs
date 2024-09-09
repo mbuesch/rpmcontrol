@@ -20,10 +20,11 @@ pub(crate) use fixpt;
 impl Fixpt {
     pub const SHIFT: usize = 8;
 
-    pub const fn new(int: i16) -> Self {
+    pub const fn from_int(int: i16) -> Self {
         Self(int << Self::SHIFT)
     }
 
+    #[allow(dead_code)]
     pub const fn from_parts(int: i16, frac: u16) -> Self {
         Self(int << Self::SHIFT | frac as i16)
     }
@@ -42,19 +43,19 @@ impl Fixpt {
 
 impl From<u8> for Fixpt {
     fn from(value: u8) -> Self {
-        Self::new(value.into())
+        Self::from_int(value.into())
     }
 }
 
 impl From<i8> for Fixpt {
     fn from(value: i8) -> Self {
-        Self::new(value.into())
+        Self::from_int(value.into())
     }
 }
 
 impl From<i16> for Fixpt {
     fn from(value: i16) -> Self {
-        Self::new(value)
+        Self::from_int(value)
     }
 }
 
@@ -62,7 +63,7 @@ impl core::ops::Add for Fixpt {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        (self.0 + other.0).into()
+        Self(self.0 + other.0)
     }
 }
 
@@ -70,7 +71,7 @@ impl core::ops::Sub for Fixpt {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
-        (self.0 - other.0).into()
+        Self(self.0 - other.0)
     }
 }
 
@@ -78,7 +79,7 @@ impl core::ops::Mul for Fixpt {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
-        (((self.0 as i32 * other.0 as i32) >> Self::SHIFT) as i16).into()
+        Self(((self.0 as i32 * other.0 as i32) >> Self::SHIFT) as i16)
     }
 }
 
@@ -90,7 +91,7 @@ impl core::ops::Div for Fixpt {
         let mut tmp: i32 = self.0.into();
         tmp <<= Self::SHIFT;
         tmp /= other.0 as i32;
-        (tmp as i16).into()
+        Self(tmp as i16)
     }
 }
 */
@@ -99,7 +100,7 @@ impl core::ops::Neg for Fixpt {
     type Output = Self;
 
     fn neg(self) -> Self {
-        (-self.0).into()
+        Self(-self.0)
     }
 }
 
