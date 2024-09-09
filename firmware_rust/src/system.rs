@@ -15,18 +15,17 @@ const RPMPI_KP: Fixpt = fixpt!(10 / 1); //TODO
 const RPMPI_KI: Fixpt = fixpt!(1 / 10); //TODO
 const RPMPI_ILIM: Fixpt = fixpt!(10 / 1);
 
+/// Convert 0..0x3FF to 0..128 Hz to 0..8 16Hz
 fn setpoint_to_f(adc: u16) -> Fixpt {
-    let int = (adc >> 3) as i16;
-    let frac = (adc & 7) << (Fixpt::SHIFT - 3);
-    Fixpt::from_parts(int, frac)
+    Fixpt::from_decimal(adc as i16, 8 * 16)
 }
 
+/// Convert 0..8 16Hz into pi..0 radians.
+/// Convert pi..0 radians into 20..0 ms.
 fn f_to_trig_offs(f: Fixpt) -> Fixpt {
-    // Convert 0..128 Hz into pi..0 radians.
-    // Convert pi..0 radians into 20..0 ms.
-    let fmax = Fixpt::new(128);
+    let fmax = Fixpt::new(8);
     if f <= fmax {
-        let fact = fixpt!(5 / 32); // 1 / 6.4
+        let fact = fixpt!(5 / 2); // 20 / 8
         (fmax - f) * fact
     } else {
         Fixpt::new(0)

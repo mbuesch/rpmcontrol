@@ -82,6 +82,7 @@ impl core::ops::Mul for Fixpt {
     }
 }
 
+/*
 impl core::ops::Div for Fixpt {
     type Output = Self;
 
@@ -92,6 +93,7 @@ impl core::ops::Div for Fixpt {
         (tmp as i16).into()
     }
 }
+*/
 
 impl core::ops::Neg for Fixpt {
     type Output = Self;
