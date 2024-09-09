@@ -111,6 +111,7 @@ impl System {
     }
     */
 
+    #[allow(dead_code)]
     fn debug(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ticks: i8) {
         sp.PORTB.portb.modify(|_, w| w.pb6().set_bit());
         let end = timer_get(cs) + RelTimestamp::from_ticks(ticks);
@@ -119,12 +120,6 @@ impl System {
     }
 
     pub fn run(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ac: AcCapture) {
-        /*
-        if ac.is_new() {
-            self.debug(cs, sp, 1);
-        }
-        */
-
         let speedo_hz = {
             let mut speedo = self.speedo.borrow_mut(cs);
             speedo.update(cs, &ac);
@@ -156,7 +151,6 @@ impl System {
             if let Some(setpoint) = setpoint {
                 if let Some(speedo_hz) = speedo_hz {
                     let setpoint = setpoint_to_f(setpoint);
-                    self.debug(cs, sp, f_to_trig_offs(setpoint).to_int() as i8);
                     let y = {
                         let mut rpm_pi = self.rpm_pi.borrow_mut(cs);
                         rpm_pi.setpoint(setpoint);

@@ -33,7 +33,6 @@ impl MotorSpeed {
 }
 
 pub struct Speedo {
-    mot_hz: Fixpt,
     ok_count: u8,
     prev_stamp: Timestamp,
     dur: [u8; 4],
@@ -42,7 +41,6 @@ pub struct Speedo {
 impl Speedo {
     pub const fn new() -> Self {
         Self {
-            mot_hz: Fixpt::from_int(0),
             ok_count: 0,
             prev_stamp: Timestamp::new(),
             dur: [0; 4],
