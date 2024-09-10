@@ -51,7 +51,7 @@ impl Speedo {
         self.ok_count = 0;
     }
 
-    pub fn get_freq_hz(&mut self) -> Option<MotorSpeed> {
+    pub fn get_speed(&mut self) -> Option<MotorSpeed> {
         if self.ok_count < OK_THRES {
             None
         } else {

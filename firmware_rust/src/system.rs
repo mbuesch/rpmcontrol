@@ -123,7 +123,7 @@ impl System {
         let speedo_hz = {
             let mut speedo = self.speedo.borrow_mut(cs);
             speedo.update(cs, &ac);
-            speedo.get_freq_hz()
+            speedo.get_speed()
         };
 
         let (phase_update, phase) = {
