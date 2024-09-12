@@ -1,5 +1,5 @@
 use crate::{
-    mutex::CriticalSection,
+    mutex::MainCtx,
     system::SysPeriph,
     timer::{timer_get_large, LargeTimestamp, RelLargeTimestamp},
 };
@@ -32,13 +32,13 @@ impl Mains {
         }
     }
 
-    fn read_vsense(&self, _cs: CriticalSection<'_>, sp: &SysPeriph) -> bool {
+    fn read_vsense(&self, _m: &MainCtx<'_>, sp: &SysPeriph) -> bool {
         sp.PORTA.pina.read().pa1().bit()
     }
 
-    pub fn run(&mut self, cs: CriticalSection<'_>, sp: &SysPeriph) -> PhaseUpdate {
-        let vsense = self.read_vsense(cs, sp);
-        let now = timer_get_large(cs);
+    pub fn run(&mut self, m: &MainCtx<'_>, sp: &SysPeriph) -> PhaseUpdate {
+        let vsense = self.read_vsense(m, sp);
+        let now = timer_get_large(m);
         let mut ret = PhaseUpdate::NotChanged;
         match self.phase {
             Phase::Notsync | Phase::NegHalfwave(_) => {

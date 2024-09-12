@@ -18,7 +18,7 @@ mod triac;
 use crate::{
     analog::ac_capture_get,
     hw::{interrupt, mcu, ports_init, Peripherals},
-    mutex::{fence, unwrap_option, CriticalSection},
+    mutex::{unwrap_option, MainCtx},
     system::{SysPeriph, System},
     timer::{timer_init, TimerPeriph, TIMER_PERIPH},
 };
@@ -27,6 +27,8 @@ use panic_halt as _;
 static SYSTEM: System = System::new();
 
 fn wdt_init() {
+    // SAFETY: The asm code only accesses the WDT registers
+    //         which are not accessed from anywhere else in the program.
     unsafe {
         // Enable WDT with timeout 32.5 ms
         core::arch::asm!(
@@ -34,7 +36,6 @@ fn wdt_init() {
             "out {WDTCR}, {tmp}",
             "ldi {tmp}, 0x19", // WDCE=1, WDE=1, WDP2=0, WDP1=0, WDP0=1
             "out {WDTCR}, {tmp}",
-            "wdr",
             tmp = out(reg_upper) _,
             WDTCR = const 0x21,
             options(nostack, preserves_flags)
@@ -50,16 +51,7 @@ fn wdt_poke(_wp: &mcu::WDT) {
 fn main() -> ! {
     wdt_init();
 
-    // SAFETY: Everything, except for the AC_CAPTURE access,
-    //         can use this central critical section.
-    //         We allow interruptions of `system_cs` by `ANA_COMP` ISR.
-    //TODO make a MainContext struct
-    let system_cs = unsafe { CriticalSection::new() };
-    fence();
-
     let dp = unwrap_option(Peripherals::take());
-
-    ports_init(&dp);
 
     let sp = SysPeriph {
         AC: dp.AC,
@@ -68,16 +60,32 @@ fn main() -> ! {
         PORTB: dp.PORTB,
         TC1: dp.TC1,
     };
+
     let tp = TimerPeriph { TC0: dp.TC0 };
 
-    timer_init(&tp);
-    TIMER_PERIPH.replace(system_cs, Some(tp));
-    SYSTEM.init(system_cs, &sp);
+    let init_static_vars = |ctx| {
+        TIMER_PERIPH.init(ctx, tp);
+    };
 
+    // # SAFETY
+    //
+    // This is the context handle for the main() function.
+    // Holding a reference to this object proves that the holder
+    // is running in main() context.
+    let m = unsafe { MainCtx::new_with_init(init_static_vars) };
+
+    ports_init(&sp.PORTA, &sp.PORTB);
+
+    timer_init(&m);
+    SYSTEM.init(&m, &sp);
+
+    // SAFETY: This must be after construction of MainCtx
+    //         and after initialization of static MainInit variables.
     unsafe { interrupt::enable() };
+
     loop {
         let ac_capture = ac_capture_get();
-        SYSTEM.run(system_cs, &sp, ac_capture);
+        SYSTEM.run(&m, &sp, ac_capture);
         wdt_poke(&dp.WDT);
     }
 }

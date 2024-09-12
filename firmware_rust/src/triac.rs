@@ -1,7 +1,7 @@
 use crate::{
     fixpt::{fixpt, Fixpt},
     mains::{Phase, PhaseUpdate},
-    mutex::{CriticalSection, MutexCell},
+    mutex::{MainCtx, MutexCell},
     system::SysPeriph,
     timer::{timer_get_large, LargeTimestamp, RelLargeTimestamp, Timestamp, TIMER_TICK_US},
 };
@@ -34,24 +34,18 @@ impl Triac {
         }
     }
 
-    pub fn set_phi_offs_ms(&self, cs: CriticalSection<'_>, ms: Fixpt) {
-        self.phi_offs_ms.set(cs, ms);
+    pub fn set_phi_offs_ms(&self, m: &MainCtx<'_>, ms: Fixpt) {
+        self.phi_offs_ms.set(m, ms);
     }
 
-    fn set_trigger(&self, _cs: CriticalSection<'_>, sp: &SysPeriph, trigger: bool) {
+    fn set_trigger(&self, _m: &MainCtx<'_>, sp: &SysPeriph, trigger: bool) {
         let trigger = !trigger; // negative logic at triac gate.
         sp.PORTB.portb.modify(|_, w| w.pb3().bit(trigger));
     }
 
-    pub fn run(
-        &self,
-        cs: CriticalSection<'_>,
-        sp: &SysPeriph,
-        phase_update: PhaseUpdate,
-        phase: &Phase,
-    ) {
-        let now = timer_get_large(cs);
-        let phi_offs_ms = self.phi_offs_ms.get(cs);
+    pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph, phase_update: PhaseUpdate, phase: &Phase) {
+        let now = timer_get_large(m);
+        let phi_offs_ms = self.phi_offs_ms.get(m);
 
         let phaseref = match phase {
             Phase::Notsync => {
@@ -61,29 +55,29 @@ impl Triac {
             Phase::NegHalfwave(phaseref) => phaseref,
         };
 
-        match self.state.get(cs) {
+        match self.state.get(m) {
             TriacState::Idle => {
                 let must_trigger = now >= time_plus_ms(*phaseref, phi_offs_ms);
                 if must_trigger {
-                    self.set_trigger(cs, sp, true);
-                    self.state.set(cs, TriacState::Triggering);
-                    self.trig_time.set(cs, now.into());
+                    self.set_trigger(m, sp, true);
+                    self.state.set(m, TriacState::Triggering);
+                    self.trig_time.set(m, now.into());
                 } else {
-                    self.set_trigger(cs, sp, false);
+                    self.set_trigger(m, sp, false);
                 }
             }
             TriacState::Triggering => {
-                if self.trig_time.get(cs) >= now.into() {
-                    self.set_trigger(cs, sp, false);
-                    self.state.set(cs, TriacState::Triggered);
+                if self.trig_time.get(m) >= now.into() {
+                    self.set_trigger(m, sp, false);
+                    self.state.set(m, TriacState::Triggered);
                 }
                 if phase_update == PhaseUpdate::Changed {
-                    self.state.set(cs, TriacState::Idle);
+                    self.state.set(m, TriacState::Idle);
                 }
             }
             TriacState::Triggered => {
                 if phase_update == PhaseUpdate::Changed {
-                    self.state.set(cs, TriacState::Idle);
+                    self.state.set(m, TriacState::Idle);
                 }
             }
         }

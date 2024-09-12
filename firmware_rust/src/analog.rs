@@ -1,6 +1,6 @@
 use crate::{
     hw::interrupt,
-    mutex::CriticalSection,
+    mutex::IrqCtx,
     system::SysPeriph,
     timer::{timer_get, RelTimestamp, Timestamp},
 };
@@ -194,11 +194,13 @@ fn ANA_COMP() {
     //         wide creation of the `system_cs` CriticalSection.
     //         See main.rs.
 
-    // SAFETY: Creating a CS manually is safe, because
-    //         we are in atomic interrupt context with interrupts disabled.
-    let cs = unsafe { CriticalSection::new() };
+    // SAFETY: We are in an interrupt. Therefore, it is safe to construct an `IrqCtx`.
+    let ic = unsafe { &IrqCtx::new() };
 
-    let now = timer_get(cs);
+    let now = timer_get(&ic.to_any());
+
+    // SAFETY: `AC_CAPTURE` is only accessed from here and
+    //         from [ac_capture_get] with interrupts disabled.
     unsafe {
         if now >= AC_CAPTURE.stamp + AC_CAPTURE_MINDIST {
             if AC_CAPTURE.flags != 0 {
@@ -216,6 +218,7 @@ pub fn ac_capture_get() -> AcCapture {
         // SAFETY: Interrupts are disabled.
         //         Therefore, it is safe to access the analog comparator
         //         interrupt data.
+        //         See corresponding safety comment in `ANA_COMP` ISR.
         unsafe { AC_CAPTURE.clone_and_reset() }
     })
 }

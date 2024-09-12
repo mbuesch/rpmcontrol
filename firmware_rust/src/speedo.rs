@@ -1,7 +1,7 @@
 use crate::{
     analog::AcCapture,
     fixpt::Fixpt,
-    mutex::CriticalSection,
+    mutex::MainCtx,
     timer::{timer_get, RelTimestamp, Timestamp, TIMER_TICK_US},
 };
 
@@ -78,8 +78,8 @@ impl Speedo {
         self.ok_count = self.ok_count.saturating_add(1);
     }
 
-    pub fn update(&mut self, cs: CriticalSection<'_>, ac: &AcCapture) {
-        let now = timer_get(cs);
+    pub fn update(&mut self, m: &MainCtx<'_>, ac: &AcCapture) {
+        let now = timer_get(&m.to_any());
         if now < self.prev_stamp {
             // prev_stamp wrapped. Drop it.
             self.ok_count = 0;

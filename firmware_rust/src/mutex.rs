@@ -1,12 +1,117 @@
 use core::{
     cell::{Cell, UnsafeCell},
     marker::PhantomData,
+    mem::MaybeUninit,
     ops::{Deref, DerefMut},
     ptr::NonNull,
 };
 
 pub use crate::hw::Mutex;
 pub use avr_device::interrupt::CriticalSection;
+
+macro_rules! define_context {
+    ($name:ident) => {
+        pub struct $name<'cs>(CriticalSection<'cs>);
+
+        impl<'cs> $name<'cs> {
+            #[inline(always)]
+            pub unsafe fn new() -> Self {
+                let cs = CriticalSection::new();
+                fence();
+                Self(cs)
+            }
+
+            #[inline(always)]
+            #[allow(dead_code)]
+            pub unsafe fn cs(&self) -> CriticalSection<'cs> {
+                self.0
+            }
+
+            #[inline(always)]
+            pub fn to_any(&self) -> AnyCtx {
+                AnyCtx::new()
+            }
+        }
+
+        impl<'cs> Drop for $name<'cs> {
+            #[inline(always)]
+            fn drop(&mut self) {
+                fence();
+            }
+        }
+    };
+}
+
+define_context!(MainCtx);
+define_context!(IrqCtx);
+
+pub struct MainInitCtx(()); // Must not have a pub constructor.
+
+impl<'cs, 'a> MainCtx<'cs> {
+    /// SAFETY: The safety contract of [MainCtx::new] must be upheld.
+    #[inline(always)]
+    pub unsafe fn new_with_init<F: FnOnce(&'a MainInitCtx)>(f: F) -> Self {
+        // SAFETY: We are creating the MainCtx.
+        // Therefore, it's safe to construct the MainInitCtx marker.
+        f(&MainInitCtx(()));
+        // SAFETY: Safety contract of MainCtx::new is upheld.
+        unsafe { Self::new() }
+    }
+}
+
+pub struct AnyCtx(());
+
+impl AnyCtx {
+    #[inline(always)]
+    pub fn new() -> Self {
+        Self(())
+    }
+
+    #[inline(always)]
+    pub unsafe fn to_main_ctx<'cs>(&self) -> MainCtx<'cs> {
+        unsafe { MainCtx::new() }
+    }
+}
+
+pub struct MainInit<T>(UnsafeCell<MaybeUninit<T>>);
+
+impl<T> MainInit<T> {
+    /// # SAFETY
+    ///
+    /// It must be ensured that the returned instance is initialized
+    /// with a call to [Self::init] during construction of the [MainCtx].
+    /// See [MainCtx::new_with_init].
+    ///
+    /// Using this object in any way before initializing it will
+    /// result in Undefined Behavior.
+    #[inline(always)]
+    pub const unsafe fn new() -> Self {
+        Self(UnsafeCell::new(MaybeUninit::uninit()))
+    }
+
+    #[inline(always)]
+    pub fn init(&self, _m: &MainInitCtx, inner: T) {
+        // SAFETY: Initialization is required for the `assume_init` calls.
+        unsafe { *self.0.get() = MaybeUninit::new(inner) };
+    }
+
+    #[inline(always)]
+    #[allow(dead_code)]
+    pub fn deref(&self, _m: &MainCtx) -> &T {
+        // SAFETY: the `Self::new` safety contract ensures that `Self::init` is called before us.
+        unsafe { (*self.0.get()).assume_init_ref() }
+    }
+
+    #[inline(always)]
+    #[allow(dead_code)]
+    fn deref_mut(&mut self, _m: &MainCtx) -> &mut T {
+        // SAFETY: the `Self::new` safety contract ensures that `Self::init` is called before us.
+        unsafe { (*self.0.get()).assume_init_mut() }
+    }
+}
+
+unsafe impl<T: Send> Send for MainInit<T> {}
+unsafe impl<T> Sync for MainInit<T> {}
 
 #[inline(always)]
 pub fn fence() {
@@ -139,18 +244,18 @@ impl<T> MutexRefCell<T> {
 
     #[inline]
     #[allow(dead_code)]
-    pub fn borrow<'cs>(&'cs self, cs: CriticalSection<'cs>) -> Ref<'cs, T> {
+    pub fn borrow<'cs>(&'cs self, m: &MainCtx<'cs>) -> Ref<'cs, T> {
         unsafe {
             global_refcnt_inc();
-            Ref::new(NonNull::new_unchecked(self.inner.borrow(cs).get()))
+            Ref::new(NonNull::new_unchecked(self.inner.borrow(m.cs()).get()))
         }
     }
 
     #[inline]
-    pub fn borrow_mut<'cs>(&'cs self, cs: CriticalSection<'cs>) -> RefMut<'cs, T> {
+    pub fn borrow_mut<'cs>(&'cs self, m: &MainCtx<'cs>) -> RefMut<'cs, T> {
         unsafe {
             global_refcnt_inc_mut();
-            RefMut::new(NonNull::new_unchecked(self.inner.borrow(cs).get()))
+            RefMut::new(NonNull::new_unchecked(self.inner.borrow(m.cs()).get()))
         }
     }
 }
@@ -168,32 +273,27 @@ impl<T> MutexCell<T> {
     }
 
     #[inline]
-    pub fn replace(&self, cs: CriticalSection<'_>, inner: T) -> T {
-        self.inner.borrow(cs).replace(inner)
+    #[allow(dead_code)]
+    pub fn replace(&self, m: &MainCtx<'_>, inner: T) -> T {
+        self.inner.borrow(unsafe { m.cs() }).replace(inner)
     }
 
     #[inline]
-    pub fn as_ref<'cs>(&self, cs: CriticalSection<'cs>) -> &'cs T {
-        unsafe { &*self.inner.borrow(cs).as_ptr() as _ }
-    }
-}
-
-impl<T> MutexCell<Option<T>> {
-    #[inline]
-    pub fn as_ref_unwrap<'cs>(&self, cs: CriticalSection<'cs>) -> &'cs T {
-        unwrap_option(self.as_ref(cs).as_ref())
+    #[allow(dead_code)]
+    pub fn as_ref<'cs>(&self, m: &MainCtx<'cs>) -> &'cs T {
+        unsafe { &*self.inner.borrow(m.cs()).as_ptr() as _ }
     }
 }
 
 impl<T: Copy> MutexCell<T> {
     #[inline]
-    pub fn get(&self, cs: CriticalSection<'_>) -> T {
-        self.inner.borrow(cs).get()
+    pub fn get(&self, m: &MainCtx<'_>) -> T {
+        self.inner.borrow(unsafe { m.cs() }).get()
     }
 
     #[inline]
-    pub fn set(&self, cs: CriticalSection<'_>, inner: T) {
-        self.inner.borrow(cs).set(inner);
+    pub fn set(&self, m: &MainCtx<'_>, inner: T) {
+        self.inner.borrow(unsafe { m.cs() }).set(inner);
     }
 }
 

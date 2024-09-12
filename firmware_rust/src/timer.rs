@@ -1,6 +1,6 @@
 use crate::{
     hw::mcu,
-    mutex::{CriticalSection, MutexCell},
+    mutex::{AnyCtx, MainCtx, MainInit, MutexCell},
 };
 
 #[allow(non_snake_case)]
@@ -8,36 +8,46 @@ pub struct TimerPeriph {
     pub TC0: mcu::TC0,
 }
 
-pub static TIMER_PERIPH: MutexCell<Option<TimerPeriph>> = MutexCell::new(None);
+// SAFETY: This variable is initialized when constructing the MainCtx.
+pub static TIMER_PERIPH: MainInit<TimerPeriph> = unsafe { MainInit::new() };
+
 static TIMER_UPPER: MutexCell<u8> = MutexCell::new(0);
 
 pub const TIMER_TICK_US: u8 = 16; // 16 us per tick.
 
-pub fn timer_init(tp: &TimerPeriph) {
+pub fn timer_init(m: &MainCtx) {
     // Timer 0 configuration:
     // CS: 256 -> 16 us per timer tick.
-    tp.TC0.tccr0.write(|w| w.cs0().running_clk_256());
+    TIMER_PERIPH
+        .deref(m)
+        .TC0
+        .tccr0
+        .write(|w| w.cs0().running_clk_256());
 }
 
 // SAFETY: This function may only do atomic-read-only accesses, because it's
 //         called from all contexts, including interrupt context.
-#[rustfmt::skip]
-pub fn timer_get(cs: CriticalSection) -> Timestamp {
-    TIMER_PERIPH.as_ref_unwrap(cs).TC0.tcnt0.read().bits().into()
+#[inline(always)]
+pub fn timer_get(a: &AnyCtx) -> Timestamp {
+    // SAFETY: This function only does atomic peripheral read-only accesses.
+    //         Therefore, it is safe to pretend to be the main context, even
+    //         if we were actually called from irq context.
+    let m = unsafe { a.to_main_ctx() };
+
+    TIMER_PERIPH.deref(&m).TC0.tcnt0.read().bits().into()
 }
 
-pub fn timer_get_large(cs: CriticalSection) -> LargeTimestamp {
-    let tp = TIMER_PERIPH.as_ref_unwrap(cs);
-
-    let mut upper = TIMER_UPPER.get(cs);
-    let mut lower = tp.TC0.tcnt0.read().bits();
+#[inline(never)]
+pub fn timer_get_large(m: &MainCtx) -> LargeTimestamp {
+    let mut upper = TIMER_UPPER.get(m);
+    let mut lower = TIMER_PERIPH.deref(m).TC0.tcnt0.read().bits();
 
     // Increment the upper part, if the lower part had an overflow.
-    if tp.TC0.tifr.read().tov0().bit() {
-        tp.TC0.tifr.write(|w| w.tov0().set_bit());
-        lower = tp.TC0.tcnt0.read().bits();
+    if TIMER_PERIPH.deref(m).TC0.tifr.read().tov0().bit() {
+        TIMER_PERIPH.deref(m).TC0.tifr.write(|w| w.tov0().set_bit());
+        lower = TIMER_PERIPH.deref(m).TC0.tcnt0.read().bits();
         upper = upper.wrapping_add(1);
-        TIMER_UPPER.set(cs, upper);
+        TIMER_UPPER.set(m, upper);
     }
 
     ((upper as u16) << 8 | lower as u16).into()

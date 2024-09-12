@@ -3,7 +3,7 @@ use crate::{
     fixpt::{fixpt, Fixpt},
     hw::mcu,
     mains::Mains,
-    mutex::{CriticalSection, MutexCell, MutexRefCell},
+    mutex::{MainCtx, MutexCell, MutexRefCell},
     pi::{Pi, PiParams},
     speedo::Speedo,
     timer::{timer_get, timer_get_large, LargeTimestamp, RelLargeTimestamp, RelTimestamp},
@@ -78,8 +78,8 @@ impl System {
         }
     }
 
-    pub fn init(&self, cs: CriticalSection<'_>, sp: &SysPeriph) {
-        let mut adc = self.adc.borrow_mut(cs);
+    pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+        let mut adc = self.adc.borrow_mut(m);
         adc.init(sp);
         adc.enable(
             AdcChannel::Setpoint.mask() | AdcChannel::ShuntDiff.mask() | AdcChannel::ShuntHi.mask(),
@@ -112,29 +112,29 @@ impl System {
     */
 
     #[allow(dead_code)]
-    fn debug(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ticks: i8) {
+    fn debug(&self, m: &MainCtx<'_>, sp: &SysPeriph, ticks: i8) {
         sp.PORTB.portb.modify(|_, w| w.pb6().set_bit());
-        let end = timer_get(cs) + RelTimestamp::from_ticks(ticks);
-        while timer_get(cs) < end {}
+        let end = timer_get(&m.to_any()) + RelTimestamp::from_ticks(ticks);
+        while timer_get(&m.to_any()) < end {}
         sp.PORTB.portb.modify(|_, w| w.pb6().clear_bit());
     }
 
-    pub fn run(&self, cs: CriticalSection<'_>, sp: &SysPeriph, ac: AcCapture) {
+    pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph, ac: AcCapture) {
         let speedo_hz = {
-            let mut speedo = self.speedo.borrow_mut(cs);
-            speedo.update(cs, &ac);
+            let mut speedo = self.speedo.borrow_mut(m);
+            speedo.update(m, &ac);
             speedo.get_speed()
         };
 
         let (phase_update, phase) = {
-            let mut mains = self.mains.borrow_mut(cs);
-            let phase_update = mains.run(cs, sp);
+            let mut mains = self.mains.borrow_mut(m);
+            let phase_update = mains.run(m, sp);
             let phase = mains.get_phase();
             (phase_update, phase)
         };
 
         let (setpoint, _shuntdiff, _shunthi) = {
-            let mut adc = self.adc.borrow_mut(cs);
+            let mut adc = self.adc.borrow_mut(m);
             adc.run(sp);
             (
                 adc.get_result(AdcChannel::Setpoint),
@@ -143,26 +143,26 @@ impl System {
             )
         };
 
-        let now = timer_get_large(cs);
+        let now = timer_get_large(m);
 
-        if now >= self.next_rpm_pi.get(cs) {
-            self.next_rpm_pi.set(cs, now + RPMPI_DT);
+        if now >= self.next_rpm_pi.get(m) {
+            self.next_rpm_pi.set(m, now + RPMPI_DT);
 
             if let Some(setpoint) = setpoint {
                 if let Some(speedo_hz) = speedo_hz {
                     let setpoint = setpoint_to_f(setpoint);
                     let y = {
-                        let mut rpm_pi = self.rpm_pi.borrow_mut(cs);
+                        let mut rpm_pi = self.rpm_pi.borrow_mut(m);
                         rpm_pi.setpoint(setpoint);
                         rpm_pi.run(speedo_hz.as_16hz())
                     };
                     let phi_offs_ms = f_to_trig_offs(y);
-                    self.triac.set_phi_offs_ms(cs, phi_offs_ms);
+                    self.triac.set_phi_offs_ms(m, phi_offs_ms);
                 }
             }
         }
 
-        self.triac.run(cs, sp, phase_update, &phase);
+        self.triac.run(m, sp, phase_update, &phase);
     }
 }
 
