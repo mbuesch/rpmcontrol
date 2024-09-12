@@ -1,6 +1,6 @@
 use crate::{
     hw::mcu,
-    mutex::{AnyCtx, MainCtx, MainInit, MutexCell},
+    mutex::{AnyCtx, LazyMainInit, MainCtx, MutexCell},
 };
 
 #[allow(non_snake_case)]
@@ -9,7 +9,7 @@ pub struct TimerPeriph {
 }
 
 // SAFETY: This variable is initialized when constructing the MainCtx.
-pub static TIMER_PERIPH: MainInit<TimerPeriph> = unsafe { MainInit::new() };
+pub static TIMER_PERIPH: LazyMainInit<TimerPeriph> = unsafe { LazyMainInit::uninit() };
 
 static TIMER_UPPER: MutexCell<u8> = MutexCell::new(0);
 

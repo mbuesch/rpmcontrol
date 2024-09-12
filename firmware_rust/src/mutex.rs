@@ -14,19 +14,38 @@ macro_rules! define_context {
         pub struct $name<'cs>(CriticalSection<'cs>);
 
         impl<'cs> $name<'cs> {
+            /// Create a new context.
+            ///
+            /// # SAFETY
+            ///
+            /// This may only be called from the corresponding context.
+            /// `MainCtx` may only be constructed from `main()`
+            /// and `IrqCtx` may only be constructed from ISRs.
             #[inline(always)]
             pub unsafe fn new() -> Self {
-                let cs = CriticalSection::new();
+                // SAFETY: This cs is used with the low level PAC primitives.
+                //         The IRQ safety is upheld by the context machinery instead.
+                //
+                //         If a function takes a `MainCtx` argument, it can only be
+                //         called from `main()` context. Correspondingly for `IrqCtx`.
+                //
+                //         At the low level the `MutexCell` and `MutexRefCell` ensure
+                //         that they can only being used from the main context.
+                //         With this mechanism we can run the main context with IRQs
+                //         enabled. There cannot be any concurrency in safe code.
+                let cs = unsafe { CriticalSection::new() };
                 fence();
                 Self(cs)
             }
 
+            /// Get the `CriticalSection` that belongs to this context.
             #[inline(always)]
             #[allow(dead_code)]
-            pub unsafe fn cs(&self) -> CriticalSection<'cs> {
+            pub fn cs(&self) -> CriticalSection<'cs> {
                 self.0
             }
 
+            /// Convert this to a generic context.
             #[inline(always)]
             pub fn to_any(&self) -> AnyCtx {
                 AnyCtx::new()
@@ -45,7 +64,11 @@ macro_rules! define_context {
 define_context!(MainCtx);
 define_context!(IrqCtx);
 
-pub struct MainInitCtx(()); // Must not have a pub constructor.
+/// Main context initialization marker.
+///
+/// This marker does not have a pub constructor.
+/// It is only created by [MainCtx].
+pub struct MainInitCtx(());
 
 impl<'cs, 'a> MainCtx<'cs> {
     /// SAFETY: The safety contract of [MainCtx::new] must be upheld.
@@ -62,20 +85,33 @@ impl<'cs, 'a> MainCtx<'cs> {
 pub struct AnyCtx(());
 
 impl AnyCtx {
+    /// Create a new generic context.
     #[inline(always)]
     pub fn new() -> Self {
         Self(())
     }
 
+    /// Convert this into a [MainCtx].
+    ///
+    /// # SAFETY
+    ///
+    /// You must ensure that either:
+    ///
+    /// - We actually are running in main context or
+    /// - If we are running in interrupt context, then
+    ///   all all things done with this MainCtx must be safe w.r.t.
+    ///   the interrupted main context.
+    ///   e.g. atomic accesses have to be used. etc. etc.
     #[inline(always)]
     pub unsafe fn to_main_ctx<'cs>(&self) -> MainCtx<'cs> {
         unsafe { MainCtx::new() }
     }
 }
 
-pub struct MainInit<T>(UnsafeCell<MaybeUninit<T>>);
+/// Lazy initialization of static variables.
+pub struct LazyMainInit<T>(UnsafeCell<MaybeUninit<T>>);
 
-impl<T> MainInit<T> {
+impl<T> LazyMainInit<T> {
     /// # SAFETY
     ///
     /// It must be ensured that the returned instance is initialized
@@ -85,7 +121,7 @@ impl<T> MainInit<T> {
     /// Using this object in any way before initializing it will
     /// result in Undefined Behavior.
     #[inline(always)]
-    pub const unsafe fn new() -> Self {
+    pub const unsafe fn uninit() -> Self {
         Self(UnsafeCell::new(MaybeUninit::uninit()))
     }
 
@@ -110,9 +146,14 @@ impl<T> MainInit<T> {
     }
 }
 
-unsafe impl<T: Send> Send for MainInit<T> {}
-unsafe impl<T> Sync for MainInit<T> {}
+// SAFETY: If T is Send, then we can Send the whole object. The object only contains T state.
+unsafe impl<T: Send> Send for LazyMainInit<T> {}
 
+// SAFETY: The `deref` and `deref_mut` functions ensure that they can only be called
+//         from `MainCtx` compatible contexts.
+unsafe impl<T> Sync for LazyMainInit<T> {}
+
+/// Optimization and reordering fence.
 #[inline(always)]
 pub fn fence() {
     core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
@@ -275,7 +316,7 @@ impl<T> MutexCell<T> {
     #[inline]
     #[allow(dead_code)]
     pub fn replace(&self, m: &MainCtx<'_>, inner: T) -> T {
-        self.inner.borrow(unsafe { m.cs() }).replace(inner)
+        self.inner.borrow(m.cs()).replace(inner)
     }
 
     #[inline]
@@ -288,12 +329,12 @@ impl<T> MutexCell<T> {
 impl<T: Copy> MutexCell<T> {
     #[inline]
     pub fn get(&self, m: &MainCtx<'_>) -> T {
-        self.inner.borrow(unsafe { m.cs() }).get()
+        self.inner.borrow(m.cs()).get()
     }
 
     #[inline]
     pub fn set(&self, m: &MainCtx<'_>, inner: T) {
-        self.inner.borrow(unsafe { m.cs() }).set(inner);
+        self.inner.borrow(m.cs()).set(inner);
     }
 }
 
