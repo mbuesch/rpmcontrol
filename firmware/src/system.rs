@@ -20,17 +20,19 @@ fn setpoint_to_f(adc: u16) -> Fixpt {
     Fixpt::from_decimal(adc as i16, 8 * 16)
 }
 
-/// Convert 0..8 16Hz into pi..0 radians.
+/// Convert -8..8 16Hz into pi..0 radians.
 /// Convert pi..0 radians into 20..0 ms.
-fn f_to_trig_offs(f: Fixpt) -> Fixpt {
-    let fmin = Fixpt::from_int(0);
+fn f_to_trig_offs(mut f: Fixpt) -> Fixpt {
+    let fmin = Fixpt::from_int(-8);
     let fmax = Fixpt::from_int(8);
-    if f >= fmin && f <= fmax {
-        let fact = fixpt!(5 / 2); // 20 / 8
-        (fmax - f) * fact
-    } else {
-        fmin
+    if f < fmin {
+        f = fmin;
     }
+    if f > fmax {
+        f = fmax;
+    }
+    let fact = fixpt!(20 / 16);
+    (fmax - f) * fact
 }
 
 #[allow(non_snake_case)]
@@ -157,6 +159,7 @@ impl System {
                         rpm_pi.run(speedo_hz.as_16hz())
                     };
                     let phi_offs_ms = f_to_trig_offs(y);
+                    //self.debug(m, sp, phi_offs_ms.to_int() as i8);
                     self.triac.set_phi_offs_ms(m, phi_offs_ms);
                 }
             }
