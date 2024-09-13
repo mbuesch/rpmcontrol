@@ -96,6 +96,7 @@ impl core::ops::Div for Fixpt {
 }
 */
 
+/*
 impl core::ops::Neg for Fixpt {
     type Output = Self;
 
@@ -103,5 +104,6 @@ impl core::ops::Neg for Fixpt {
         Self(-self.0)
     }
 }
+*/
 
 // vim: ts=4 sw=4 expandtab
