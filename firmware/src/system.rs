@@ -11,9 +11,11 @@ use crate::{
 };
 
 const RPMPI_DT: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
-const RPMPI_KP: Fixpt = fixpt!(10 / 1); //TODO
-const RPMPI_KI: Fixpt = fixpt!(1 / 10); //TODO
-const RPMPI_ILIM: Fixpt = fixpt!(10 / 1);
+const RPMPI_PARAMS: PiParams = PiParams {
+    kp: fixpt!(10 / 1), //TODO
+    ki: fixpt!(1 / 10), //TODO
+    ilim: fixpt!(10 / 1),
+};
 
 /// Convert 0..0x3FF to 0..128 Hz to 0..8 16Hz
 fn setpoint_to_f(adc: u16) -> Fixpt {
@@ -22,15 +24,11 @@ fn setpoint_to_f(adc: u16) -> Fixpt {
 
 /// Convert -8..8 16Hz into pi..0 radians.
 /// Convert pi..0 radians into 20..0 ms.
-fn f_to_trig_offs(mut f: Fixpt) -> Fixpt {
+fn f_to_trig_offs(f: Fixpt) -> Fixpt {
     let fmin = Fixpt::from_int(-8);
     let fmax = Fixpt::from_int(8);
-    if f < fmin {
-        f = fmin;
-    }
-    if f > fmax {
-        f = fmax;
-    }
+    let f = f.max(fmin);
+    let f = f.min(fmax);
     let fact = fixpt!(20 / 16);
     (fmax - f) * fact
 }
@@ -70,11 +68,7 @@ impl System {
             adc: MutexRefCell::new(Adc::new()),
             speedo: MutexRefCell::new(Speedo::new()),
             mains: MutexRefCell::new(Mains::new()),
-            rpm_pi: MutexRefCell::new(Pi::new(PiParams {
-                kp: RPMPI_KP,
-                ki: RPMPI_KI,
-                ilim: RPMPI_ILIM,
-            })),
+            rpm_pi: MutexRefCell::new(Pi::new()),
             next_rpm_pi: MutexCell::new(LargeTimestamp::new()),
             triac: Triac::new(),
         }
@@ -155,8 +149,7 @@ impl System {
                     let setpoint = setpoint_to_f(setpoint);
                     let y = {
                         let mut rpm_pi = self.rpm_pi.borrow_mut(m);
-                        rpm_pi.setpoint(setpoint);
-                        rpm_pi.run(speedo_hz.as_16hz())
+                        rpm_pi.run(&RPMPI_PARAMS, setpoint, speedo_hz.as_16hz())
                     };
                     let phi_offs_ms = f_to_trig_offs(y);
                     //self.debug(m, sp, phi_offs_ms.to_int() as i8);

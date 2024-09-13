@@ -8,39 +8,27 @@ pub struct PiParams {
 }
 
 pub struct Pi {
-    params: PiParams,
-    sp: Fixpt,
     i: Fixpt,
 }
 
 impl Pi {
-    pub const fn new(params: PiParams) -> Self {
+    pub const fn new() -> Self {
         Self {
-            params,
-            sp: Fixpt::from_int(0),
             i: Fixpt::from_int(0),
         }
     }
 
-    pub fn setpoint(&mut self, sp: Fixpt) {
-        self.sp = sp;
-    }
-
-    pub fn run(&mut self, r: Fixpt) -> Fixpt {
+    pub fn run(&mut self, params: &PiParams, sp: Fixpt, r: Fixpt) -> Fixpt {
         // deviation
-        let e = self.sp - r;
+        let e = sp - r;
 
         // P term
-        let p = self.params.kp * e;
+        let p = params.kp * e;
 
         // I term
-        let mut i = self.i + (self.params.ki * e);
-        if i > self.params.ilim {
-            i = self.params.ilim;
-        }
-        if i < -self.params.ilim {
-            i = -self.params.ilim;
-        }
+        let i = self.i + (params.ki * e);
+        let i = i.min(params.ilim);
+        let i = i.max(-params.ilim);
         self.i = i;
 
         p + i
