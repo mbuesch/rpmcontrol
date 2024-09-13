@@ -78,6 +78,7 @@ impl core::ops::Sub for Fixpt {
 impl core::ops::Mul for Fixpt {
     type Output = Self;
 
+    #[inline(never)]
     fn mul(self, other: Self) -> Self {
         Self(((self.0 as i32 * other.0 as i32) >> Self::SHIFT) as i16)
     }
