@@ -1,9 +1,10 @@
 [package]
 name = "rpmcontrol"
 version = "0.1.0"
-authors = ["Michael Buesch <m@bues.ch>"]
+authors = [ "Michael Buesch <m@bues.ch>" ]
 edition = "2021"
 license = "MIT OR Apache-2.0"
+publish = false
 
 [[bin]]
 name = "rpmcontrol"
@@ -11,10 +12,7 @@ test = false
 bench = false
 
 [dependencies]
-panic-halt = "0.2.0"
 avr-device = { version = "0.5", features = [ "attiny26", "rt" ] }
-#attiny-hal = { version = "0.1", features = [ "attiny26" ] }
-#embedded-hal = "1"
 
 # The latest releases of `proc-macro2` do not support the rust toolchain that
 # we use.  Thus, we must fix this dependency to an older version where our
@@ -35,5 +33,6 @@ opt-level = "s"
 
 [patch.crates-io]
 avr-device = { path = "../../avr-device" }
-#attiny-hal = { path = "../../avr-hal/mcu/attiny-hal" }
-#avr-hal-generic = { path = "../../avr-hal/avr-hal-generic" }
+
+[lints.clippy]
+undocumented_unsafe_blocks = "warn"

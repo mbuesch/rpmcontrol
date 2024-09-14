@@ -22,7 +22,6 @@ use crate::{
     system::{SysPeriph, System},
     timer::{timer_init, TimerPeriph, TIMER_PERIPH},
 };
-use panic_halt as _;
 
 static SYSTEM: System = System::new();
 

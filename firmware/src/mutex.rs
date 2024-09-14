@@ -375,4 +375,10 @@ pub fn reset_system() -> ! {
     }
 }
 
+#[inline(always)]
+#[panic_handler]
+fn panic(_: &core::panic::PanicInfo) -> ! {
+    reset_system();
+}
+
 // vim: ts=4 sw=4 expandtab
