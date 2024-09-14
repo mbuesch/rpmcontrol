@@ -66,8 +66,7 @@ fn main() -> ! {
         TIMER_PERIPH.init(ctx, tp);
     };
 
-    // # SAFETY
-    //
+    // SAFETY:
     // This is the context handle for the main() function.
     // Holding a reference to this object proves that the holder
     // is running in main() context.

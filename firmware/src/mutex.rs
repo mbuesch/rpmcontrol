@@ -104,6 +104,7 @@ impl AnyCtx {
     ///   e.g. atomic accesses have to be used. etc. etc.
     #[inline(always)]
     pub unsafe fn to_main_ctx<'cs>(&self) -> MainCtx<'cs> {
+        // SAFETY: See function doc.
         unsafe { MainCtx::new() }
     }
 }
@@ -179,6 +180,7 @@ impl<'cs, T> Deref for Ref<'cs, T> {
 
     #[inline]
     fn deref(&self) -> &Self::Target {
+        // SAFETY: The MutexRefCell + CriticalSection ensure safety.
         unsafe { self.inner.as_ref() }
     }
 }
@@ -186,6 +188,7 @@ impl<'cs, T> Deref for Ref<'cs, T> {
 impl<'cs, T> Drop for Ref<'cs, T> {
     #[inline]
     fn drop(&mut self) {
+        // SAFETY: Dropping of ref must decrement the count.
         unsafe { global_refcnt_dec() };
     }
 }
@@ -210,6 +213,7 @@ impl<'cs, T> Deref for RefMut<'cs, T> {
 
     #[inline]
     fn deref(&self) -> &Self::Target {
+        // SAFETY: The MutexRefCell + CriticalSection ensure safety.
         unsafe { self.inner.as_ref() }
     }
 }
@@ -217,6 +221,7 @@ impl<'cs, T> Deref for RefMut<'cs, T> {
 impl<'cs, T> DerefMut for RefMut<'cs, T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
+        // SAFETY: The MutexRefCell + CriticalSection ensure safety.
         unsafe { self.inner.as_mut() }
     }
 }
@@ -224,48 +229,55 @@ impl<'cs, T> DerefMut for RefMut<'cs, T> {
 impl<'cs, T> Drop for RefMut<'cs, T> {
     #[inline]
     fn drop(&mut self) {
-        unsafe {
-            global_refcnt_dec_mut();
-        }
+        // SAFETY: Dropping of ref must decrement the count.
+        unsafe { global_refcnt_dec_mut() };
     }
 }
 
 static mut GLOBAL_REFCNT: i8 = 0;
 const GLOBAL_REFCNT_WRITE: i8 = -1;
 
+// SAFETY: Must hold a CriticalSection.
 #[inline(never)]
 unsafe fn global_refcnt_inc() {
-    let count = GLOBAL_REFCNT;
-    if count < 0 {
-        // Already mutably borrowed or too many shared borrows.
-        reset_system();
-    }
+    // SAFETY: We hold a CriticalSection which ensures safety.
     unsafe {
+        let count = GLOBAL_REFCNT;
+        if count < 0 {
+            // Already mutably borrowed or too many shared borrows.
+            reset_system();
+        }
         GLOBAL_REFCNT = count.wrapping_add(1);
     }
 }
 
+// SAFETY: Must hold a CriticalSection.
 #[inline(never)]
 unsafe fn global_refcnt_inc_mut() {
-    let count = GLOBAL_REFCNT;
-    if count != 0 {
-        // "MutexRefCell (mut): Already borrowed.
-        reset_system();
-    }
+    // SAFETY: We hold a CriticalSection which ensures safety.
     unsafe {
+        let count = GLOBAL_REFCNT;
+        if count != 0 {
+            // "MutexRefCell (mut): Already borrowed.
+            reset_system();
+        }
         GLOBAL_REFCNT = GLOBAL_REFCNT_WRITE;
     }
 }
 
+// SAFETY: Must hold a CriticalSection.
 #[inline(never)]
 unsafe fn global_refcnt_dec() {
+    // SAFETY: We hold a CriticalSection which ensures safety.
     unsafe {
         GLOBAL_REFCNT = GLOBAL_REFCNT.wrapping_sub(1);
     }
 }
 
+// SAFETY: Must hold a CriticalSection.
 #[inline(always)]
 unsafe fn global_refcnt_dec_mut() {
+    // SAFETY: We hold a CriticalSection which ensures safety.
     unsafe {
         GLOBAL_REFCNT = 0;
     }
@@ -286,6 +298,7 @@ impl<T> MutexRefCell<T> {
     #[inline]
     #[allow(dead_code)]
     pub fn borrow<'cs>(&'cs self, m: &MainCtx<'cs>) -> Ref<'cs, T> {
+        // SAFETY: The CriticalSection and the reference count ensures safety.
         unsafe {
             global_refcnt_inc();
             Ref::new(NonNull::new_unchecked(self.inner.borrow(m.cs()).get()))
@@ -294,6 +307,7 @@ impl<T> MutexRefCell<T> {
 
     #[inline]
     pub fn borrow_mut<'cs>(&'cs self, m: &MainCtx<'cs>) -> RefMut<'cs, T> {
+        // SAFETY: The CriticalSection and the reference count ensures safety.
         unsafe {
             global_refcnt_inc_mut();
             RefMut::new(NonNull::new_unchecked(self.inner.borrow(m.cs()).get()))
@@ -322,6 +336,8 @@ impl<T> MutexCell<T> {
     #[inline]
     #[allow(dead_code)]
     pub fn as_ref<'cs>(&self, m: &MainCtx<'cs>) -> &'cs T {
+        // SAFETY: The returned reference is bound to the
+        //         lifetime of the CriticalSection.
         unsafe { &*self.inner.borrow(m.cs()).as_ptr() as _ }
     }
 }
