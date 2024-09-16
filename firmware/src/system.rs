@@ -81,6 +81,7 @@ impl System {
             AdcChannel::Setpoint.mask() | AdcChannel::ShuntDiff.mask() | AdcChannel::ShuntHi.mask(),
         );
         self.ac.init(sp);
+        self.triac.shutoff(m);
     }
 
     /*
@@ -140,21 +141,20 @@ impl System {
         };
 
         let now = timer_get_large(m);
-
         if now >= self.next_rpm_pi.get(m) {
             self.next_rpm_pi.set(m, now + RPMPI_DT);
 
-            if let Some(setpoint) = setpoint {
-                if let Some(speedo_hz) = speedo_hz {
-                    let setpoint = setpoint_to_f(setpoint);
-                    let y = {
-                        let mut rpm_pi = self.rpm_pi.borrow_mut(m);
-                        rpm_pi.run(&RPMPI_PARAMS, setpoint, speedo_hz.as_16hz())
-                    };
-                    let phi_offs_ms = f_to_trig_offs(y);
-                    //self.debug(m, sp, phi_offs_ms.to_int() as i8);
-                    self.triac.set_phi_offs_ms(m, phi_offs_ms);
-                }
+            if let (Some(setpoint), Some(speedo_hz)) = (setpoint, speedo_hz) {
+                let setpoint = setpoint_to_f(setpoint);
+                let y = {
+                    let mut rpm_pi = self.rpm_pi.borrow_mut(m);
+                    rpm_pi.run(&RPMPI_PARAMS, setpoint, speedo_hz.as_16hz())
+                };
+                let phi_offs_ms = f_to_trig_offs(y);
+                self.debug(m, sp, phi_offs_ms.to_int().abs() as i8);
+                self.triac.set_phi_offs_ms(m, phi_offs_ms);
+            } else {
+                self.triac.shutoff(m);
             }
         }
 

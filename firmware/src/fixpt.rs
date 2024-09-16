@@ -39,6 +39,10 @@ impl Fixpt {
     pub const fn to_int(self) -> i16 {
         self.0 >> Self::SHIFT
     }
+
+    pub const fn to_q(self) -> i16 {
+        self.0
+    }
 }
 
 impl From<u8> for Fixpt {
