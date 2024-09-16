@@ -47,10 +47,6 @@ impl Speedo {
         }
     }
 
-    pub fn reset(&mut self) {
-        self.ok_count = 0;
-    }
-
     pub fn get_speed(&mut self) -> Option<MotorSpeed> {
         if self.ok_count < OK_THRES {
             None

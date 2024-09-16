@@ -3,7 +3,9 @@ use crate::{
     mains::{Phase, PhaseUpdate},
     mutex::{MainCtx, MutexCell},
     system::SysPeriph,
-    timer::{timer_get_large, LargeTimestamp, RelLargeTimestamp, Timestamp, RelTimestamp, TIMER_TICK_US},
+    timer::{
+        timer_get_large, LargeTimestamp, RelLargeTimestamp, RelTimestamp, Timestamp, TIMER_TICK_US,
+    },
 };
 
 /// Triac trigger pulse length.
