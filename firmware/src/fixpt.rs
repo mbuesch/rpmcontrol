@@ -36,6 +36,7 @@ impl Fixpt {
         Self(q as i16)
     }
 
+    #[allow(dead_code)]
     pub const fn to_int(self) -> i16 {
         self.0 >> Self::SHIFT
     }

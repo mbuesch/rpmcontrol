@@ -150,8 +150,9 @@ impl System {
                     let mut rpm_pi = self.rpm_pi.borrow_mut(m);
                     rpm_pi.run(&RPMPI_PARAMS, setpoint, speedo_hz.as_16hz())
                 };
+                //let y = setpoint;
                 let phi_offs_ms = f_to_trig_offs(y);
-                self.debug(m, sp, phi_offs_ms.to_int().abs() as i8);
+                //self.debug(m, sp, phi_offs_ms.to_int() as i8);
                 self.triac.set_phi_offs_ms(m, phi_offs_ms);
             } else {
                 self.triac.shutoff(m);
