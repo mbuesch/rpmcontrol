@@ -1,7 +1,7 @@
 use crate::{
     analog::AcCapture,
     fixpt::Fixpt,
-    mutex::MainCtx,
+    mutex::{MainCtx, MutexCell},
     timer::{timer_get, RelTimestamp, Timestamp, TIMER_TICK_US},
 };
 
@@ -33,63 +33,70 @@ impl MotorSpeed {
 }
 
 pub struct Speedo {
-    ok_count: u8,
-    prev_stamp: Timestamp,
-    dur: [u8; 4],
+    ok_count: MutexCell<u8>,
+    prev_stamp: MutexCell<Timestamp>,
+    dur0: MutexCell<u8>,
+    dur1: MutexCell<u8>,
+    dur2: MutexCell<u8>,
+    dur3: MutexCell<u8>,
 }
 
 impl Speedo {
     pub const fn new() -> Self {
         Self {
-            ok_count: 0,
-            prev_stamp: Timestamp::new(),
-            dur: [0; 4],
+            ok_count: MutexCell::new(0),
+            prev_stamp: MutexCell::new(Timestamp::new()),
+            dur0: MutexCell::new(0),
+            dur1: MutexCell::new(0),
+            dur2: MutexCell::new(0),
+            dur3: MutexCell::new(0),
         }
     }
 
-    pub fn get_speed(&mut self) -> Option<MotorSpeed> {
-        if self.ok_count < OK_THRES {
+    pub fn get_speed(&self, m: &MainCtx<'_>) -> Option<MotorSpeed> {
+        if self.ok_count.get(m) < OK_THRES {
             None
         } else {
-            Some(MotorSpeed::from_period_dur(self.get_dur()))
+            Some(MotorSpeed::from_period_dur(self.get_dur(m)))
         }
     }
 
-    pub fn get_dur(&self) -> RelTimestamp {
-        let a = self.dur[0] as u16;
-        let b = self.dur[1] as u16;
-        let c = self.dur[2] as u16;
-        let d = self.dur[3] as u16;
+    pub fn get_dur(&self, m: &MainCtx<'_>) -> RelTimestamp {
+        let a = self.dur0.get(m) as u16;
+        let b = self.dur1.get(m) as u16;
+        let c = self.dur2.get(m) as u16;
+        let d = self.dur3.get(m) as u16;
         let dur: u8 = ((a + b + c + d) / 4) as _;
         let dur: i8 = dur as _;
         dur.into()
     }
 
-    fn new_duration(&mut self, dur: RelTimestamp) {
+    fn new_duration(&self, m: &MainCtx<'_>, dur: RelTimestamp) {
         let dur: i8 = dur.into();
-        self.dur[0] = self.dur[1];
-        self.dur[1] = self.dur[2];
-        self.dur[2] = self.dur[3];
-        self.dur[3] = dur as _;
-        self.ok_count = self.ok_count.saturating_add(1);
+        self.dur0.set(m, self.dur1.get(m));
+        self.dur1.set(m, self.dur2.get(m));
+        self.dur2.set(m, self.dur3.get(m));
+        self.dur3.set(m, dur as _);
+        self.ok_count.set(m, self.ok_count.get(m).saturating_add(1));
     }
 
-    pub fn update(&mut self, m: &MainCtx<'_>, ac: &AcCapture) {
+    pub fn update(&self, m: &MainCtx<'_>, ac: &AcCapture) {
         let now = timer_get(&m.to_any());
-        if now < self.prev_stamp {
+        let prev_stamp = self.prev_stamp.get(m);
+        if now < prev_stamp {
             // prev_stamp wrapped. Drop it.
-            self.ok_count = 0;
+            self.ok_count.set(m, 0);
         }
         if ac.is_new() {
             let ac_stamp = ac.stamp();
-            if ac_stamp >= self.prev_stamp {
-                let dur = ac_stamp - self.prev_stamp;
-                self.new_duration(dur);
+            if ac_stamp >= prev_stamp {
+                let dur = ac_stamp - prev_stamp;
+                self.new_duration(m, dur);
             } else {
                 // prev_stamp wrapped.
-                self.ok_count = 0;
+                self.ok_count.set(m, 0);
             }
-            self.prev_stamp = ac_stamp;
+            self.prev_stamp.set(m, ac_stamp);
         }
     }
 }

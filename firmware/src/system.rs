@@ -54,7 +54,7 @@ enum SysState {
 pub struct System {
     ac: Ac,
     adc: MutexRefCell<Adc>,
-    speedo: MutexRefCell<Speedo>,
+    speedo: Speedo,
     mains: Mains,
     rpm_pi: Pi,
     next_rpm_pi: MutexCell<LargeTimestamp>,
@@ -66,7 +66,7 @@ impl System {
         Self {
             ac: Ac::new(),
             adc: MutexRefCell::new(Adc::new()),
-            speedo: MutexRefCell::new(Speedo::new()),
+            speedo: Speedo::new(),
             mains: Mains::new(),
             rpm_pi: Pi::new(),
             next_rpm_pi: MutexCell::new(LargeTimestamp::new()),
@@ -117,20 +117,14 @@ impl System {
     }
 
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph, ac: AcCapture) {
-        let speedo_hz = {
-            let mut speedo = self.speedo.borrow_mut(m);
-            speedo.update(m, &ac);
-            speedo.get_speed()
-        };
+        self.speedo.update(m, &ac);
+        let speedo_hz = self.speedo.get_speed(m);
 
-        let (phase_update, phase, phaseref) = {
-            let phase_update = self.mains.run(m, sp);
-            let phase = self.mains.get_phase(m);
-            let phaseref = self.mains.get_phaseref(m);
-            (phase_update, phase, phaseref)
-        };
+        let phase_update = self.mains.run(m, sp);
+        let phase = self.mains.get_phase(m);
+        let phaseref = self.mains.get_phaseref(m);
 
-        let (setpoint, _shuntdiff, _shunthi) = {
+        let (setpoint, shuntdiff, shunthi) = {
             let mut adc = self.adc.borrow_mut(m);
             adc.run(sp);
             (
