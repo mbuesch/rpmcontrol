@@ -123,11 +123,12 @@ impl System {
             speedo.get_speed()
         };
 
-        let (phase_update, phase) = {
+        let (phase_update, phase, phaseref) = {
             let mut mains = self.mains.borrow_mut(m);
             let phase_update = mains.run(m, sp);
             let phase = mains.get_phase();
-            (phase_update, phase)
+            let phaseref = mains.get_phaseref();
+            (phase_update, phase, phaseref)
         };
 
         let (setpoint, _shuntdiff, _shunthi) = {
@@ -159,7 +160,7 @@ impl System {
             }
         }
 
-        self.triac.run(m, sp, phase_update, &phase);
+        self.triac.run(m, sp, phase_update, phase, phaseref);
     }
 }
 

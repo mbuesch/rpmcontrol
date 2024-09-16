@@ -95,22 +95,25 @@ impl Triac {
         sp.PORTB.portb.modify(|_, w| w.pb3().bit(trigger));
     }
 
-    pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph, phase_update: PhaseUpdate, phase: &Phase) {
-        let phaseref = match phase {
-            Phase::Notsync => {
-                self.set_trigger(m, sp, false);
-                return;
-            }
-            Phase::PosHalfwave(phaseref) => phaseref,
-            Phase::NegHalfwave(phaseref) => phaseref,
-        };
+    pub fn run(
+        &self,
+        m: &MainCtx<'_>,
+        sp: &SysPeriph,
+        phase_update: PhaseUpdate,
+        phase: Phase,
+        phaseref: LargeTimestamp,
+    ) {
+        if phase == Phase::Notsync {
+            self.set_trigger(m, sp, false);
+            return;
+        }
 
         let now = timer_get_large(m);
         let phi_offs_ms = self.phi_offs_ms.get(m);
 
         match self.state.get(m) {
             TriacState::Idle => {
-                let must_trigger = now >= t_plus_trig_offs(*phaseref, phi_offs_ms);
+                let must_trigger = now >= t_plus_trig_offs(phaseref, phi_offs_ms);
                 if must_trigger {
                     self.state.set(m, TriacState::Triggering);
                     self.set_trigger(m, sp, true);

@@ -6,11 +6,11 @@ use crate::{
 
 const HALFWAVE_DUR: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
 
-#[derive(Clone)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Phase {
     Notsync,
-    PosHalfwave(LargeTimestamp),
-    NegHalfwave(LargeTimestamp),
+    PosHalfwave,
+    NegHalfwave,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -22,6 +22,7 @@ pub enum PhaseUpdate {
 pub struct Mains {
     prev_vsense: bool,
     phase: Phase,
+    phaseref: LargeTimestamp,
 }
 
 impl Mains {
@@ -29,6 +30,7 @@ impl Mains {
         Self {
             prev_vsense: false,
             phase: Phase::Notsync,
+            phaseref: LargeTimestamp::new(),
         }
     }
 
@@ -41,16 +43,18 @@ impl Mains {
         let now = timer_get_large(m);
         let mut ret = PhaseUpdate::NotChanged;
         match self.phase {
-            Phase::Notsync | Phase::NegHalfwave(_) => {
+            Phase::Notsync | Phase::NegHalfwave => {
                 if !self.prev_vsense && vsense {
-                    self.phase = Phase::PosHalfwave(now);
+                    self.phaseref = now;
+                    self.phase = Phase::PosHalfwave;
                     ret = PhaseUpdate::Changed;
                 }
             }
-            Phase::PosHalfwave(refstamp) => {
-                let nextref = refstamp + HALFWAVE_DUR;
+            Phase::PosHalfwave => {
+                let nextref = self.phaseref + HALFWAVE_DUR;
                 if now >= nextref {
-                    self.phase = Phase::NegHalfwave(nextref);
+                    self.phaseref = nextref;
+                    self.phase = Phase::NegHalfwave;
                     ret = PhaseUpdate::Changed;
                 }
             }
@@ -60,7 +64,11 @@ impl Mains {
     }
 
     pub fn get_phase(&self) -> Phase {
-        self.phase.clone()
+        self.phase
+    }
+
+    pub fn get_phaseref(&self) -> LargeTimestamp {
+        self.phaseref
     }
 }
 
