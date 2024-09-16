@@ -1,6 +1,6 @@
 use crate::{
     hw::interrupt,
-    mutex::IrqCtx,
+    mutex::{IrqCtx, MainCtx, MutexCell},
     system::SysPeriph,
     timer::{timer_get, RelTimestamp, Timestamp},
 };
@@ -18,36 +18,36 @@ impl AdcChannel {
         1 << *self as usize
     }
 
-    pub fn select_next(&mut self) {
-        *self = match self {
+    pub fn select_next(&self) -> AdcChannel {
+        match self {
             Self::Setpoint => Self::ShuntDiff,
             Self::ShuntDiff => Self::ShuntHi,
             Self::ShuntHi => Self::Setpoint,
-        };
+        }
     }
 }
 
 pub struct Adc {
-    chan: AdcChannel,
-    enabled: u8,
-    running: bool,
-    result: [u16; 3],
-    ok: u8,
+    chan: MutexCell<AdcChannel>,
+    enabled: MutexCell<u8>,
+    running: MutexCell<bool>,
+    result: [MutexCell<u16>; 3],
+    ok: MutexCell<u8>,
 }
 
 impl Adc {
     pub const fn new() -> Self {
         Self {
-            chan: AdcChannel::Setpoint,
-            enabled: 0,
-            running: false,
-            result: [0; 3],
-            ok: 0,
+            chan: MutexCell::new(AdcChannel::Setpoint),
+            enabled: MutexCell::new(0),
+            running: MutexCell::new(false),
+            result: [MutexCell::new(0), MutexCell::new(0), MutexCell::new(0)],
+            ok: MutexCell::new(0),
         }
     }
 
-    fn update_mux(&self, sp: &SysPeriph) {
-        match self.chan {
+    fn update_mux(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+        match self.chan.get(m) {
             AdcChannel::Setpoint => {
                 sp.ADC.admux.write(|w| w.refs().vcc().mux().adc0());
             }
@@ -64,7 +64,7 @@ impl Adc {
 
     #[rustfmt::skip]
     #[inline]
-    fn start_conversion(&mut self, sp: &SysPeriph) {
+    fn start_conversion(&self, _m: &MainCtx<'_>, sp: &SysPeriph) {
         sp.ADC.adcsr.modify(|_, w| {
             w.adif().set_bit()
              .adsc().set_bit()
@@ -72,12 +72,12 @@ impl Adc {
     }
 
     #[inline]
-    fn conversion_done(&self, sp: &SysPeriph) -> bool {
+    fn conversion_done(&self, _m: &MainCtx<'_>, sp: &SysPeriph) -> bool {
         sp.ADC.adcsr.read().adif().bit_is_set()
     }
 
     #[rustfmt::skip]
-    pub fn init(&mut self, sp: &SysPeriph) {
+    pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         sp.ADC.adcsr.write(|w| {
             w.adps().prescaler_128()
              .adie().clear_bit()
@@ -87,47 +87,50 @@ impl Adc {
              .aden().set_bit()
         });
 
-        self.update_mux(sp);
-        self.start_conversion(sp);
-        while !self.conversion_done(sp) {}
+        self.update_mux(m, sp);
+        self.start_conversion(m, sp);
+        while !self.conversion_done(m, sp) {}
 
         //TODO offset compensation
     }
 
-    pub fn run(&mut self, sp: &SysPeriph) {
-        if !self.is_enabled(self.chan) {
-            self.ok &= !self.chan.mask();
-            self.chan.select_next();
-            self.running = false;
+    pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+        let chan = self.chan.get(m);
+        if !self.is_enabled(m, chan) {
+            self.ok.set(m, self.ok.get(m) & !chan.mask());
+            self.chan.set(m, chan.select_next());
+            self.running.set(m, false);
         }
 
-        if self.running && self.is_enabled(self.chan) && self.conversion_done(sp) {
-            self.result[self.chan as usize] = sp.ADC.adc.read().bits();
-            self.ok |= self.chan.mask();
-            self.chan.select_next();
-            self.running = false;
+        let chan = self.chan.get(m);
+        if self.running.get(m) && self.is_enabled(m, chan) && self.conversion_done(m, sp) {
+            self.result[chan as usize].set(m, sp.ADC.adc.read().bits());
+            self.ok.set(m, self.ok.get(m) | chan.mask());
+            self.chan.set(m, self.chan.get(m).select_next());
+            self.running.set(m, false);
         }
 
-        if !self.running && self.is_enabled(self.chan) {
-            self.update_mux(sp);
-            self.start_conversion(sp);
-            self.running = true;
+        let chan = self.chan.get(m);
+        if !self.running.get(m) && self.is_enabled(m, chan) {
+            self.update_mux(m, sp);
+            self.start_conversion(m, sp);
+            self.running.set(m, true);
         }
     }
 
-    fn is_enabled(&self, chan: AdcChannel) -> bool {
-        self.enabled & chan.mask() != 0
+    fn is_enabled(&self, m: &MainCtx<'_>, chan: AdcChannel) -> bool {
+        self.enabled.get(m) & chan.mask() != 0
     }
 
-    pub fn enable(&mut self, chan_mask: u8) {
-        self.enabled = chan_mask;
+    pub fn enable(&self, m: &MainCtx<'_>, chan_mask: u8) {
+        self.enabled.set(m, chan_mask);
     }
 
-    pub fn get_result(&self, chan: AdcChannel) -> Option<u16> {
-        if self.ok & chan.mask() == 0 {
+    pub fn get_result(&self, m: &MainCtx<'_>, chan: AdcChannel) -> Option<u16> {
+        if self.ok.get(m) & chan.mask() == 0 {
             None
         } else {
-            Some(self.result[chan as usize])
+            Some(self.result[chan as usize].get(m))
         }
     }
 }

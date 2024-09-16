@@ -35,10 +35,7 @@ impl MotorSpeed {
 pub struct Speedo {
     ok_count: MutexCell<u8>,
     prev_stamp: MutexCell<Timestamp>,
-    dur0: MutexCell<u8>,
-    dur1: MutexCell<u8>,
-    dur2: MutexCell<u8>,
-    dur3: MutexCell<u8>,
+    dur: [MutexCell<u8>; 4],
 }
 
 impl Speedo {
@@ -46,10 +43,12 @@ impl Speedo {
         Self {
             ok_count: MutexCell::new(0),
             prev_stamp: MutexCell::new(Timestamp::new()),
-            dur0: MutexCell::new(0),
-            dur1: MutexCell::new(0),
-            dur2: MutexCell::new(0),
-            dur3: MutexCell::new(0),
+            dur: [
+                MutexCell::new(0),
+                MutexCell::new(0),
+                MutexCell::new(0),
+                MutexCell::new(0),
+            ],
         }
     }
 
@@ -62,10 +61,10 @@ impl Speedo {
     }
 
     pub fn get_dur(&self, m: &MainCtx<'_>) -> RelTimestamp {
-        let a = self.dur0.get(m) as u16;
-        let b = self.dur1.get(m) as u16;
-        let c = self.dur2.get(m) as u16;
-        let d = self.dur3.get(m) as u16;
+        let a = self.dur[0].get(m) as u16;
+        let b = self.dur[1].get(m) as u16;
+        let c = self.dur[2].get(m) as u16;
+        let d = self.dur[3].get(m) as u16;
         let dur: u8 = ((a + b + c + d) / 4) as _;
         let dur: i8 = dur as _;
         dur.into()
@@ -73,10 +72,10 @@ impl Speedo {
 
     fn new_duration(&self, m: &MainCtx<'_>, dur: RelTimestamp) {
         let dur: i8 = dur.into();
-        self.dur0.set(m, self.dur1.get(m));
-        self.dur1.set(m, self.dur2.get(m));
-        self.dur2.set(m, self.dur3.get(m));
-        self.dur3.set(m, dur as _);
+        self.dur[0].set(m, self.dur[1].get(m));
+        self.dur[1].set(m, self.dur[2].get(m));
+        self.dur[2].set(m, self.dur[3].get(m));
+        self.dur[3].set(m, dur as _);
         self.ok_count.set(m, self.ok_count.get(m).saturating_add(1));
     }
 

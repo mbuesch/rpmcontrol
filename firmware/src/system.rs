@@ -3,7 +3,7 @@ use crate::{
     fixpt::{fixpt, Fixpt},
     hw::mcu,
     mains::Mains,
-    mutex::{MainCtx, MutexCell, MutexRefCell},
+    mutex::{MainCtx, MutexCell},
     pi::{Pi, PiParams},
     speedo::Speedo,
     timer::{timer_get, timer_get_large, LargeTimestamp, RelLargeTimestamp, RelTimestamp},
@@ -53,7 +53,7 @@ enum SysState {
 
 pub struct System {
     ac: Ac,
-    adc: MutexRefCell<Adc>,
+    adc: Adc,
     speedo: Speedo,
     mains: Mains,
     rpm_pi: Pi,
@@ -65,7 +65,7 @@ impl System {
     pub const fn new() -> Self {
         Self {
             ac: Ac::new(),
-            adc: MutexRefCell::new(Adc::new()),
+            adc: Adc::new(),
             speedo: Speedo::new(),
             mains: Mains::new(),
             rpm_pi: Pi::new(),
@@ -75,9 +75,9 @@ impl System {
     }
 
     pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
-        let mut adc = self.adc.borrow_mut(m);
-        adc.init(sp);
-        adc.enable(
+        self.adc.init(m, sp);
+        self.adc.enable(
+            m,
             AdcChannel::Setpoint.mask() | AdcChannel::ShuntDiff.mask() | AdcChannel::ShuntHi.mask(),
         );
         self.ac.init(sp);
@@ -124,15 +124,10 @@ impl System {
         let phase = self.mains.get_phase(m);
         let phaseref = self.mains.get_phaseref(m);
 
-        let (setpoint, shuntdiff, shunthi) = {
-            let mut adc = self.adc.borrow_mut(m);
-            adc.run(sp);
-            (
-                adc.get_result(AdcChannel::Setpoint),
-                adc.get_result(AdcChannel::ShuntDiff),
-                adc.get_result(AdcChannel::ShuntHi),
-            )
-        };
+        self.adc.run(m, sp);
+        let setpoint = self.adc.get_result(m, AdcChannel::Setpoint);
+        let shuntdiff = self.adc.get_result(m, AdcChannel::ShuntDiff);
+        let shunthi = self.adc.get_result(m, AdcChannel::ShuntHi);
 
         let now = timer_get_large(m);
         if now >= self.next_rpm_pi.get(m) {
