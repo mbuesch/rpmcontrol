@@ -6,9 +6,14 @@ use crate::{
     timer::{timer_get_large, LargeTimestamp, RelLargeTimestamp, Timestamp, RelTimestamp, TIMER_TICK_US},
 };
 
+/// Triac trigger pulse length.
 const PULSE_LEN: RelTimestamp = RelTimestamp::from_micros(64);
 
-fn time_plus_ms(t: LargeTimestamp, ms: Fixpt) -> LargeTimestamp {
+/// The last point a trigger can happen.
+/// Relative to the halfwave start.
+const MAX_TRIG_OFFS: RelLargeTimestamp = RelLargeTimestamp::from_micros(9_850);
+
+fn t_plus_trig_offs(t: LargeTimestamp, ms: Fixpt) -> LargeTimestamp {
     // We must convert `ms` to a corresponding number of ticks.
     //
     // Basically, we want to do:
@@ -34,6 +39,8 @@ fn time_plus_ms(t: LargeTimestamp, ms: Fixpt) -> LargeTimestamp {
     // ticks = ---------
     //              32
 
+    // The microseconds per tick value is embedded in the constants below.
+    // See comment above.
     assert_eq!(TIMER_TICK_US, 16);
 
     // First part: Fixpt multiplication.
@@ -44,7 +51,11 @@ fn time_plus_ms(t: LargeTimestamp, ms: Fixpt) -> LargeTimestamp {
     // Get the raw fixpt value and shift by 5.
     let ticks = scaled.to_q() >> (Fixpt::SHIFT - 5);
 
-    t + RelLargeTimestamp::from_ticks(ticks)
+    // Limit to last possible moment.
+    let trig_offs = RelLargeTimestamp::from_ticks(ticks).min(MAX_TRIG_OFFS);
+
+    // Halfwave start + offset is trigger start.
+    t + trig_offs
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -97,29 +108,32 @@ impl Triac {
 
         match self.state.get(m) {
             TriacState::Idle => {
-                let must_trigger = now >= time_plus_ms(*phaseref, phi_offs_ms);
+                let must_trigger = now >= t_plus_trig_offs(*phaseref, phi_offs_ms);
                 if must_trigger {
-                    self.set_trigger(m, sp, true);
                     self.state.set(m, TriacState::Triggering);
+                    self.set_trigger(m, sp, true);
                     self.trig_time.set(m, now.into());
-                } else {
-                    self.set_trigger(m, sp, false);
                 }
             }
             TriacState::Triggering => {
                 let now: Timestamp = now.into();
                 if now >= self.trig_time.get(m) + PULSE_LEN {
-                    self.set_trigger(m, sp, false);
                     self.state.set(m, TriacState::Triggered);
+                    self.set_trigger(m, sp, false);
                 }
                 if phase_update == PhaseUpdate::Changed {
                     self.state.set(m, TriacState::Idle);
+                    self.set_trigger(m, sp, false);
                 }
             }
             TriacState::Triggered => {
                 if phase_update == PhaseUpdate::Changed {
                     self.state.set(m, TriacState::Idle);
+                    self.set_trigger(m, sp, false);
                 }
+                //TODO re-trigger if:
+                // - the triac lost trigger (measure voltage) and
+                // - it's still earlier than MAX_TRIG_OFFS from beginning.
             }
         }
     }
