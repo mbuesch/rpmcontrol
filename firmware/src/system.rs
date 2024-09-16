@@ -19,7 +19,7 @@ const RPMPI_PARAMS: PiParams = PiParams {
 
 /// Convert 0..0x3FF to 0..128 Hz to 0..8 16Hz
 fn setpoint_to_f(adc: u16) -> Fixpt {
-    Fixpt::from_decimal(adc as i16, 8 * 16)
+    Fixpt::from_fraction(adc as i16, 8 * 16)
 }
 
 /// Convert -8..8 16Hz into pi..0 radians.

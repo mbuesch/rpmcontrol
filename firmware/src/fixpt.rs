@@ -3,16 +3,16 @@ pub struct Fixpt(i16);
 
 macro_rules! fixpt {
     ($numerator:literal / $denominator:literal) => {
-        Fixpt::from_decimal($numerator, $denominator)
+        Fixpt::from_fraction($numerator, $denominator)
     };
     ($numerator:literal / $denominator:ident) => {
-        Fixpt::from_decimal($numerator, $denominator)
+        Fixpt::from_fraction($numerator, $denominator)
     };
     ($numerator:ident / $denominator:literal) => {
-        Fixpt::from_decimal($numerator, $denominator)
+        Fixpt::from_fraction($numerator, $denominator)
     };
     ($numerator:ident / $denominator:ident) => {
-        Fixpt::from_decimal($numerator, $denominator)
+        Fixpt::from_fraction($numerator, $denominator)
     };
 }
 pub(crate) use fixpt;
@@ -29,7 +29,7 @@ impl Fixpt {
         Self(int << Self::SHIFT | frac as i16)
     }
 
-    pub const fn from_decimal(numerator: i16, denominator: i16) -> Self {
+    pub const fn from_fraction(numerator: i16, denominator: i16) -> Self {
         let mut q: i32 = 1 << Self::SHIFT;
         q *= numerator as i32;
         q /= denominator as i32;
