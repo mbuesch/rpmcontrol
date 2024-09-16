@@ -1,4 +1,7 @@
-use crate::fixpt::Fixpt;
+use crate::{
+    fixpt::Fixpt,
+    mutex::{MainCtx, MutexCell},
+};
 
 #[derive(Clone)]
 pub struct PiParams {
@@ -8,17 +11,17 @@ pub struct PiParams {
 }
 
 pub struct Pi {
-    i: Fixpt,
+    i: MutexCell<Fixpt>,
 }
 
 impl Pi {
     pub const fn new() -> Self {
         Self {
-            i: Fixpt::from_int(0),
+            i: MutexCell::new(Fixpt::from_int(0)),
         }
     }
 
-    pub fn run(&mut self, params: &PiParams, sp: Fixpt, r: Fixpt) -> Fixpt {
+    pub fn run(&self, m: &MainCtx<'_>, params: &PiParams, sp: Fixpt, r: Fixpt) -> Fixpt {
         // deviation
         let e = sp - r;
 
@@ -26,10 +29,10 @@ impl Pi {
         let p = params.kp * e;
 
         // I term
-        let i = self.i + (params.ki * e);
+        let i = self.i.get(m) + (params.ki * e);
         let i = i.min(params.ilim);
         let i = i.max(-params.ilim);
-        self.i = i;
+        self.i.set(m, i);
 
         p + i
     }

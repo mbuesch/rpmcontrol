@@ -55,8 +55,8 @@ pub struct System {
     ac: Ac,
     adc: MutexRefCell<Adc>,
     speedo: MutexRefCell<Speedo>,
-    mains: MutexRefCell<Mains>,
-    rpm_pi: MutexRefCell<Pi>,
+    mains: Mains,
+    rpm_pi: Pi,
     next_rpm_pi: MutexCell<LargeTimestamp>,
     triac: Triac,
 }
@@ -67,8 +67,8 @@ impl System {
             ac: Ac::new(),
             adc: MutexRefCell::new(Adc::new()),
             speedo: MutexRefCell::new(Speedo::new()),
-            mains: MutexRefCell::new(Mains::new()),
-            rpm_pi: MutexRefCell::new(Pi::new()),
+            mains: Mains::new(),
+            rpm_pi: Pi::new(),
             next_rpm_pi: MutexCell::new(LargeTimestamp::new()),
             triac: Triac::new(),
         }
@@ -124,10 +124,9 @@ impl System {
         };
 
         let (phase_update, phase, phaseref) = {
-            let mut mains = self.mains.borrow_mut(m);
-            let phase_update = mains.run(m, sp);
-            let phase = mains.get_phase();
-            let phaseref = mains.get_phaseref();
+            let phase_update = self.mains.run(m, sp);
+            let phase = self.mains.get_phase(m);
+            let phaseref = self.mains.get_phaseref(m);
             (phase_update, phase, phaseref)
         };
 
@@ -147,10 +146,9 @@ impl System {
 
             if let (Some(setpoint), Some(speedo_hz)) = (setpoint, speedo_hz) {
                 let setpoint = setpoint_to_f(setpoint);
-                let y = {
-                    let mut rpm_pi = self.rpm_pi.borrow_mut(m);
-                    rpm_pi.run(&RPMPI_PARAMS, setpoint, speedo_hz.as_16hz())
-                };
+                let y = self
+                    .rpm_pi
+                    .run(m, &RPMPI_PARAMS, setpoint, speedo_hz.as_16hz());
                 //let y = setpoint;
                 let phi_offs_ms = f_to_trig_offs(y);
                 //self.debug(m, sp, phi_offs_ms.to_int() as i8);
