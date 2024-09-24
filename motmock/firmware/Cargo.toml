@@ -1,0 +1,38 @@
+[package]
+name = "motmock"
+version = "0.1.0"
+authors = [ "Michael Buesch <m@bues.ch>" ]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[[bin]]
+name = "motmock"
+test = false
+bench = false
+
+[dependencies]
+avr-device = { version = "0.6", features = [ "atmega8", "rt" ] }
+
+# The latest releases of `proc-macro2` do not support the rust toolchain that
+# we use.  Thus, we must fix this dependency to an older version where our
+# toolchain is still supported.  See https://github.com/Rahix/avr-hal/issues/537
+[build-dependencies.proc-macro2]
+version = "=1.0.79"
+
+[profile.dev]
+panic = "abort"
+lto = "fat"
+opt-level = "s"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = "fat"
+opt-level = "s"
+
+#[patch.crates-io]
+#avr-device = { path = "../../avr-device" }
+
+[lints.clippy]
+undocumented_unsafe_blocks = "warn"
