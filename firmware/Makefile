@@ -7,6 +7,7 @@ AVRDUDE_MCU:=t26
 AVRDUDE_PORT:=usb
 AVRDUDE_PROG:=avrisp2
 AVRDUDE_SPEED:=1
+AVRDUDE_SPEED_SLOW:=10
 
 # Fuses: ext-high-freq-crystal-4ms; BOD-4V
 LFUSE:=0xEF
@@ -44,17 +45,17 @@ clean:
 
 reset:
 	$(AVRDUDE) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROG) \
-		-B $(AVRDUDE_SPEED) -p $(AVRDUDE_MCU) \
+		-B $(AVRDUDE_SPEED_SLOW) -p $(AVRDUDE_MCU) \
 		-U signature:r:/dev/null:i -qq
 
 avrdude:
 	$(AVRDUDE) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROG) \
-		-B $(AVRDUDE_SPEED) -p $(AVRDUDE_MCU) \
+		-B $(AVRDUDE_SPEED_SLOW) -p $(AVRDUDE_MCU) \
 		-t
 
 fuses:
 	$(AVRDUDE) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROG) \
-		-B 10 -p $(AVRDUDE_MCU) \
+		-B $(AVRDUDE_SPEED_SLOW) -p $(AVRDUDE_MCU) \
 		-U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m
 
 flash: $(HEX)
