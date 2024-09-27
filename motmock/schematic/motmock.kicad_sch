@@ -518,6 +518,164 @@
 				)
 			)
 		)
+		(symbol "Device:C_Polarized"
+			(pin_numbers hide)
+			(pin_names
+				(offset 0.254)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "C"
+				(at 0.635 2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Value" "C_Polarized"
+				(at 0.635 -2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(property "Footprint" ""
+				(at 0.9652 -3.81 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Polarized capacitor"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "cap capacitor"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "CP_*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "C_Polarized_0_1"
+				(rectangle
+					(start -2.286 0.508)
+					(end 2.286 1.016)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.778 2.286) (xy -0.762 2.286)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 2.794) (xy -1.27 1.778)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 2.286 -0.508)
+					(end -2.286 -1.016)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+			)
+			(symbol "C_Polarized_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 2.794)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 2.794)
+					(name "~"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
 		(symbol "Device:L"
 			(pin_numbers hide)
 			(pin_names
@@ -2052,10 +2210,6 @@
 		(uuid "89ac1dc4-8d06-4e5b-98b3-9018b02caa4f")
 	)
 	(no_connect
-		(at 130.81 95.25)
-		(uuid "8a09cbd6-3087-45f6-b538-c453ce1f60bc")
-	)
-	(no_connect
 		(at 130.81 146.05)
 		(uuid "94d0140c-29f3-46bb-87e4-ec02a8dbeec0")
 	)
@@ -2078,6 +2232,10 @@
 	(no_connect
 		(at 130.81 143.51)
 		(uuid "f0436f20-f6dd-48ac-8a09-3117073d923a")
+	)
+	(no_connect
+		(at 130.81 113.03)
+		(uuid "fb1ecb19-fbb3-4a3a-bfb0-6e1c8acc1486")
 	)
 	(wire
 		(pts
@@ -2128,6 +2286,16 @@
 			(type default)
 		)
 		(uuid "27b69a05-f2ea-44ab-859f-876a96604e23")
+	)
+	(wire
+		(pts
+			(xy 74.93 163.83) (xy 74.93 166.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "323cd266-9845-4c7f-8dc4-b144e074b841")
 	)
 	(wire
 		(pts
@@ -2331,6 +2499,16 @@
 	)
 	(wire
 		(pts
+			(xy 130.81 95.25) (xy 134.62 95.25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a59e1318-05bb-4149-a816-4a1ae1bdedda")
+	)
+	(wire
+		(pts
 			(xy 35.56 38.1) (xy 41.91 38.1)
 		)
 		(stroke
@@ -2388,6 +2566,16 @@
 			(type default)
 		)
 		(uuid "cac85c6a-b5f9-42ee-8b0f-7c856de6da86")
+	)
+	(wire
+		(pts
+			(xy 74.93 153.67) (xy 74.93 156.21)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ce3132d1-04a5-4d52-81df-ab3bca1097bd")
 	)
 	(wire
 		(pts
@@ -2471,16 +2659,6 @@
 	)
 	(wire
 		(pts
-			(xy 130.81 113.03) (xy 134.62 113.03)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "fda83b23-0371-4b00-83aa-9673a9c68caa")
-	)
-	(wire
-		(pts
 			(xy 115.57 83.82) (xy 118.11 83.82)
 		)
 		(stroke
@@ -2501,7 +2679,7 @@
 	)
 	(global_label "mot"
 		(shape input)
-		(at 134.62 113.03 0)
+		(at 134.62 95.25 0)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -2511,7 +2689,7 @@
 		)
 		(uuid "01255d2b-e3bf-4568-aaae-e7ca7b0094c7")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 141.1732 113.03 0)
+			(at 141.1732 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3312,6 +3490,76 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:C_Polarized")
+		(at 74.93 160.02 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "5d9c8210-1c55-4469-8dd6-ee0c5f1342cb")
+		(property "Reference" "C2"
+			(at 78.74 157.8609 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "10 uF"
+			(at 78.74 160.4009 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 75.8952 163.83 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 74.93 160.02 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Polarized capacitor"
+			(at 74.93 160.02 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "6b0bd6d3-faff-4b4c-a7c4-1ecc8ffddc14")
+		)
+		(pin "2"
+			(uuid "6ffa5745-f04d-487c-ac8f-e6b18fa1c189")
+		)
+		(instances
+			(project ""
+				(path "/0a4d76bd-d9dd-401a-acab-a3d06f37f9ef"
+					(reference "C2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+5V")
 		(at 41.91 30.48 270)
 		(unit 1)
@@ -3786,6 +4034,72 @@
 	)
 	(symbol
 		(lib_id "power:GND")
+		(at 74.93 166.37 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "a3956f91-6b94-4e82-8119-3fee94825f12")
+		(property "Reference" "#PWR013"
+			(at 74.93 172.72 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 74.93 171.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 74.93 166.37 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 74.93 166.37 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 74.93 166.37 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "c66982d0-6c85-42ce-85b5-7efb091012ce")
+		)
+		(instances
+			(project "motmock"
+				(path "/0a4d76bd-d9dd-401a-acab-a3d06f37f9ef"
+					(reference "#PWR013")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
 		(at 101.6 80.01 270)
 		(unit 1)
 		(exclude_from_sim no)
@@ -3846,6 +4160,72 @@
 			(project "motmock"
 				(path "/0a4d76bd-d9dd-401a-acab-a3d06f37f9ef"
 					(reference "#PWR06")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+5V")
+		(at 74.93 153.67 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "be61159b-56d5-428d-92ce-a7a417bd0ddb")
+		(property "Reference" "#PWR012"
+			(at 74.93 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+5V"
+			(at 74.93 148.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 74.93 153.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 74.93 153.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+5V\""
+			(at 74.93 153.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "fabfee29-6dce-4e9c-885f-41d29b06a520")
+		)
+		(instances
+			(project "motmock"
+				(path "/0a4d76bd-d9dd-401a-acab-a3d06f37f9ef"
+					(reference "#PWR012")
 					(unit 1)
 				)
 			)
@@ -4221,7 +4601,7 @@
 				)
 			)
 		)
-		(property "Value" "R"
+		(property "Value" "10 k"
 			(at 78.74 88.9 90)
 			(effects
 				(font

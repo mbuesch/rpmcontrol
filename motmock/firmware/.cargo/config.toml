@@ -1,0 +1,5 @@
+[build]
+target = "./avr-atmega8.json"
+
+[unstable]
+build-std = ["core"]
