@@ -5,7 +5,7 @@ use crate::{
     mains::Mains,
     mutex::{MainCtx, MutexCell},
     pi::{Pi, PiParams},
-    speedo::Speedo,
+    speedo::{MotorSpeed, Speedo},
     timer::{timer_get, timer_get_large, LargeTimestamp, RelLargeTimestamp, RelTimestamp},
     triac::Triac,
 };
@@ -118,7 +118,7 @@ impl System {
 
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph, ac: AcCapture) {
         self.speedo.update(m, &ac);
-        let speedo_hz = self.speedo.get_speed(m);
+        let speedo_hz = self.speedo.get_speed(m).unwrap_or(MotorSpeed::zero());
 
         let phase_update = self.mains.run(m, sp);
         let phase = self.mains.get_phase(m);
@@ -133,7 +133,7 @@ impl System {
         if now >= self.next_rpm_pi.get(m) {
             self.next_rpm_pi.set(m, now + RPMPI_DT);
 
-            if let (Some(setpoint), Some(speedo_hz)) = (setpoint, speedo_hz) {
+            if let Some(setpoint) = setpoint {
                 let setpoint = setpoint_to_f(setpoint);
                 let y = self
                     .rpm_pi

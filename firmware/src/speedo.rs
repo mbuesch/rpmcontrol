@@ -16,6 +16,10 @@ pub struct MotorSpeed(Fixpt);
 impl MotorSpeed {
     const FACT_16HZ: u16 = 16;
 
+    pub fn zero() -> Self {
+        Self(Fixpt::from_int(0))
+    }
+
     fn from_period_dur(dur: RelTimestamp) -> Self {
         let dur: i8 = dur.into();
         let dur: u8 = dur as _;
