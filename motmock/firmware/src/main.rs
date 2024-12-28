@@ -6,7 +6,10 @@
 
 use avr_device::atmega8::{Peripherals, PORTB, PORTC, PORTD, TC1, TC2};
 
-pub fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
+/// # Safety
+///
+/// Must only be called during init with IRQs disabled.
+pub unsafe fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
     fn pin_input(_bit: usize) -> u8 {
         0
     }
@@ -22,6 +25,7 @@ pub fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
 
     // PORTB
     pb.portb.write(|w| {
+        // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
                 pin_low(0) | // n/c
@@ -34,6 +38,7 @@ pub fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
         }
     });
     pb.ddrb.write(|w| {
+        // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
                 pin_output(0) | // n/c
@@ -48,6 +53,7 @@ pub fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
 
     // PORTC
     pc.portc.write(|w| {
+        // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
                 pin_low(0) | // 50hz
@@ -62,6 +68,7 @@ pub fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
         }
     });
     pc.ddrc.write(|w| {
+        // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
                 pin_output(0) | // 50hz
@@ -78,6 +85,7 @@ pub fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
 
     // PORTD
     pd.portd.write(|w| {
+        // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
                 pin_low(0) | // n/c
@@ -92,6 +100,7 @@ pub fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
         }
     });
     pd.ddrd.write(|w| {
+        // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
                 pin_output(0) | // n/c
@@ -109,6 +118,7 @@ pub fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
 
 const TIMER1_DUTYMAX: u16 = 0xFF;
 
+#[rustfmt::skip]
 fn timer1_init(tc1: &TC1) {
     tc1.icr1.write(|w| w.bits(TIMER1_DUTYMAX));
     tc1.ocr1a.write(|w| w.bits(0x00));
@@ -129,6 +139,7 @@ fn timer1_duty(tc1: &TC1, duty: u16) {
 
 const TIMER2_MAX: u8 = 78;
 
+#[rustfmt::skip]
 fn timer2_init(tc2: &TC2) {
     // Timer2 init; ctc, 100 Hz.
     tc2.ocr2.write(|w| w.bits(TIMER2_MAX));
@@ -155,7 +166,10 @@ fn timer2_value(tc2: &TC2) -> u8 {
 fn main() -> ! {
     let dp = Peripherals::take().unwrap();
 
-    ports_init(&dp.PORTB, &dp.PORTC, &dp.PORTD);
+    // SAFETY: We are running in init with IRQs disabled.
+    unsafe {
+        ports_init(&dp.PORTB, &dp.PORTC, &dp.PORTD);
+    }
     timer1_init(&dp.TC1);
     timer2_init(&dp.TC2);
 
