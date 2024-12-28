@@ -164,9 +164,10 @@ fn main() -> ! {
     loop {
         let trig = dp.PORTD.pind.read().pd2().bit();
         if trig && !in_trig {
-            let val = TIMER2_MAX - timer2_value(&dp.TC2);
+            let val: u8 = TIMER2_MAX - timer2_value(&dp.TC2);
+            let val: u16 = val.into();
 
-            let duty = val as u16 * (TIMER1_DUTYMAX + 1) / (TIMER2_MAX as u16 + 1);
+            let duty = val * (TIMER1_DUTYMAX + 1) / (TIMER2_MAX as u16 + 1);
 
             timer1_duty(&dp.TC1, duty);
         }
