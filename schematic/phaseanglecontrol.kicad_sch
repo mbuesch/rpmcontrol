@@ -2663,6 +2663,12 @@
 		(uuid "2baccb78-b33e-4af2-a324-c656bba91f6e")
 	)
 	(junction
+		(at 210.82 95.25)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2c2a5700-ec84-4461-ac30-fff6f257cd57")
+	)
+	(junction
 		(at 116.84 156.21)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2685,6 +2691,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "3d8bc6e1-83d1-40fa-a952-71c2490883d7")
+	)
+	(junction
+		(at 199.39 85.09)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "417fbb86-7f9b-4d9c-b22e-7479958e8091")
 	)
 	(junction
 		(at 241.3 85.09)
@@ -2940,6 +2952,16 @@
 	)
 	(wire
 		(pts
+			(xy 199.39 95.25) (xy 210.82 95.25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "16218355-655a-4b13-92d9-a0eecb75e4e2")
+	)
+	(wire
+		(pts
 			(xy 222.25 95.25) (xy 222.25 96.52)
 		)
 		(stroke
@@ -2970,7 +2992,7 @@
 	)
 	(wire
 		(pts
-			(xy 205.74 85.09) (xy 210.82 85.09)
+			(xy 195.58 85.09) (xy 199.39 85.09)
 		)
 		(stroke
 			(width 0)
@@ -3380,6 +3402,16 @@
 	)
 	(wire
 		(pts
+			(xy 199.39 85.09) (xy 210.82 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "627dac8c-0834-4333-b9ec-7c8e0b64c708")
+	)
+	(wire
+		(pts
 			(xy 158.75 95.25) (xy 158.75 96.52)
 		)
 		(stroke
@@ -3457,6 +3489,16 @@
 			(type default)
 		)
 		(uuid "6be806b1-c7b9-462c-8660-5c22afb50999")
+	)
+	(wire
+		(pts
+			(xy 199.39 93.98) (xy 199.39 95.25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6d79838b-de4d-42cc-a229-f9d65874e9f7")
 	)
 	(wire
 		(pts
@@ -3927,6 +3969,16 @@
 			(type default)
 		)
 		(uuid "bbafb65f-09c0-48ef-b5de-003dd65c6de8")
+	)
+	(wire
+		(pts
+			(xy 199.39 85.09) (xy 199.39 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c05377b3-94d2-4efd-b9d4-694e2434d706")
 	)
 	(wire
 		(pts
@@ -4664,7 +4716,7 @@
 	)
 	(global_label "speedo"
 		(shape input)
-		(at 205.74 85.09 180)
+		(at 195.58 85.09 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -4674,7 +4726,7 @@
 		)
 		(uuid "76ccac51-ccb5-4b0e-8470-e562ec97532c")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 196.1025 85.09 0)
+			(at 185.9425 85.09 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7022,6 +7074,94 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:D")
+		(at 199.39 90.17 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "77d05f04-c8c4-4ab6-9724-697e7d44a1f2")
+		(property "Reference" "D8"
+			(at 201.93 88.8999 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "BAT85"
+			(at 201.93 91.4399 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 199.39 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 199.39 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Diode"
+			(at 199.39 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Device" "D"
+			(at 199.39 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Pins" "1=K 2=A"
+			(at 199.39 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "2"
+			(uuid "06da2d59-0047-482d-9d83-3959f2ec11f7")
+		)
+		(pin "1"
+			(uuid "330726fe-bdf4-4d67-870e-dddab03afcc7")
+		)
+		(instances
+			(project ""
+				(path "/167e0419-9f88-4ea4-ae96-d03af9cd26b8"
+					(reference "D8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:+5V")
 		(at 184.15 128.27 90)
 		(unit 1)
@@ -7392,7 +7532,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "82c93e6c-1b94-45f1-8144-b43d517f3976")
-		(property "Reference" "D9"
+		(property "Reference" "D10"
 			(at 246.38 36.8299 90)
 			(effects
 				(font
@@ -7446,7 +7586,7 @@
 		(instances
 			(project ""
 				(path "/167e0419-9f88-4ea4-ae96-d03af9cd26b8"
-					(reference "D9")
+					(reference "D10")
 					(unit 1)
 				)
 			)
@@ -7974,7 +8114,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "967e99cb-853c-45a8-b430-8103a06ab532")
-		(property "Reference" "D8"
+		(property "Reference" "D9"
 			(at 213.36 88.8999 90)
 			(effects
 				(font
@@ -8028,7 +8168,7 @@
 		(instances
 			(project "phaseanglecontrol"
 				(path "/167e0419-9f88-4ea4-ae96-d03af9cd26b8"
-					(reference "D8")
+					(reference "D9")
 					(unit 1)
 				)
 			)
@@ -8660,7 +8800,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "be272ed4-e933-4977-8f52-e9c354591422")
-		(property "Reference" "D10"
+		(property "Reference" "D11"
 			(at 246.38 46.9899 90)
 			(effects
 				(font
@@ -8732,7 +8872,7 @@
 		(instances
 			(project ""
 				(path "/167e0419-9f88-4ea4-ae96-d03af9cd26b8"
-					(reference "D10")
+					(reference "D11")
 					(unit 1)
 				)
 			)
