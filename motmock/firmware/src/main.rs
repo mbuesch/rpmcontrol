@@ -138,6 +138,7 @@ fn timer1_duty(tc1: &TC1, duty: u16) {
 }
 
 const TIMER2_MAX: u8 = 78;
+const TIMER2_CUTOFF: u8 = 2;
 
 #[rustfmt::skip]
 fn timer2_init(tc2: &TC2) {
@@ -178,7 +179,10 @@ fn main() -> ! {
     loop {
         let trig = dp.PORTD.pind.read().pd2().bit();
         if trig && !in_trig {
-            let val: u8 = TIMER2_MAX - timer2_value(&dp.TC2);
+            let mut val: u8 = TIMER2_MAX - timer2_value(&dp.TC2);
+            if val <= TIMER2_CUTOFF {
+                val = 0;
+            }
             let val: u16 = val.into();
 
             let duty = val * (TIMER1_DUTYMAX + 1) / (TIMER2_MAX as u16 + 1);
