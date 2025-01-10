@@ -2,6 +2,7 @@ use crate::{
     analog::AcCapture,
     fixpt::Fixpt,
     mutex::{MainCtx, MutexCell},
+    system::SysPeriph,
     timer::{timer_get, RelTimestamp, Timestamp, TIMER_TICK_US},
 };
 
@@ -83,14 +84,15 @@ impl Speedo {
         self.ok_count.set(m, self.ok_count.get(m).saturating_add(1));
     }
 
-    pub fn update(&self, m: &MainCtx<'_>, ac: &AcCapture) {
+    pub fn update(&self, m: &MainCtx<'_>, sp: &SysPeriph, ac: &AcCapture) {
         let now = timer_get(&m.to_any());
         let prev_stamp = self.prev_stamp.get(m);
         if now < prev_stamp {
             // prev_stamp wrapped. Drop it.
             self.ok_count.set(m, 0);
         }
-        if ac.is_new() {
+        if ac.is_new() && ac.is_rising() {
+            crate::system::debug(m, sp, 1);//XXX
             let ac_stamp = ac.stamp();
             if ac_stamp >= prev_stamp {
                 let dur = ac_stamp - prev_stamp;

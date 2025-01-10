@@ -42,6 +42,14 @@ pub struct SysPeriph {
     pub TC1: mcu::TC1,
 }
 
+#[allow(dead_code)]
+pub fn debug(m: &MainCtx<'_>, sp: &SysPeriph, ticks: i8) {
+    sp.PORTB.portb.modify(|_, w| w.pb6().set_bit());
+    let end = timer_get(&m.to_any()) + RelTimestamp::from_ticks(ticks);
+    while timer_get(&m.to_any()) < end {}
+    sp.PORTB.portb.modify(|_, w| w.pb6().clear_bit());
+}
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
 enum SysState {
@@ -108,16 +116,8 @@ impl System {
     }
     */
 
-    #[allow(dead_code)]
-    fn debug(&self, m: &MainCtx<'_>, sp: &SysPeriph, ticks: i8) {
-        sp.PORTB.portb.modify(|_, w| w.pb6().set_bit());
-        let end = timer_get(&m.to_any()) + RelTimestamp::from_ticks(ticks);
-        while timer_get(&m.to_any()) < end {}
-        sp.PORTB.portb.modify(|_, w| w.pb6().clear_bit());
-    }
-
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph, ac: AcCapture) {
-        self.speedo.update(m, &ac);
+        self.speedo.update(m, sp, &ac);
         let speedo_hz = self.speedo.get_speed(m).unwrap_or(MotorSpeed::zero());
 
         let phase_update = self.mains.run(m, sp);
@@ -140,7 +140,7 @@ impl System {
                     .run(m, &RPMPI_PARAMS, setpoint, speedo_hz.as_16hz());
                 //let y = setpoint;
                 let phi_offs_ms = f_to_trig_offs(y);
-                //self.debug(m, sp, phi_offs_ms.to_int() as i8);
+                //debug(m, sp, phi_offs_ms.to_int() as i8);
                 self.triac.set_phi_offs_ms(m, phi_offs_ms);
             } else {
                 self.triac.shutoff(m);

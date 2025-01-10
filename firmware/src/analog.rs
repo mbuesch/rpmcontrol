@@ -155,21 +155,25 @@ impl Ac {
 #[derive(Clone)]
 pub struct AcCapture {
     stamp: Timestamp,
-    flags: u8,
+    new: bool,
+    rising: bool,
 }
 
 impl AcCapture {
-    pub const FLAG_NEW: u8 = 0x01;
-
     const fn new() -> Self {
         Self {
             stamp: Timestamp(0),
-            flags: 0,
+            new: false,
+            rising: false,
         }
     }
 
     pub fn is_new(&self) -> bool {
-        self.flags & Self::FLAG_NEW != 0
+        self.new
+    }
+
+    pub fn is_rising(&self) -> bool {
+        self.rising
     }
 
     pub fn stamp(&self) -> Timestamp {
@@ -178,7 +182,7 @@ impl AcCapture {
 
     pub fn clone_and_reset(&mut self) -> Self {
         let ret = self.clone();
-        self.flags = 0;
+        self.new = false;
         ret
     }
 }
@@ -186,7 +190,7 @@ impl AcCapture {
 pub static mut AC_CAPTURE: AcCapture = AcCapture::new();
 
 /// AC events closer than this to the previous valid event are ignored.
-const AC_CAPTURE_MINDIST: RelTimestamp = RelTimestamp::from_micros(128);
+const AC_CAPTURE_MINDIST: RelTimestamp = RelTimestamp::from_micros(256);
 
 /// Analog Comparator interrupt.
 #[avr_device::interrupt(attiny26)]
@@ -206,12 +210,13 @@ fn ANA_COMP() {
     //         from [ac_capture_get] with interrupts disabled.
     unsafe {
         if now >= AC_CAPTURE.stamp + AC_CAPTURE_MINDIST {
-            if AC_CAPTURE.flags != 0 {
+            if AC_CAPTURE.new {
                 // ac_capture_get() has not been called frequently enough.
                 //TODO?
             }
             AC_CAPTURE.stamp = now;
-            AC_CAPTURE.flags = AcCapture::FLAG_NEW;
+            AC_CAPTURE.new = true;
+            AC_CAPTURE.rising = !AC_CAPTURE.rising;
         }
     }
 }
