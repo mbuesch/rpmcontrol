@@ -12,12 +12,13 @@ const SPEEDO_FACT: u32 = 4 * 2;
 
 const OK_THRES: u8 = 4;
 
+#[derive(Copy, Clone)]
 pub struct MotorSpeed(Fixpt);
 
 impl MotorSpeed {
     const FACT_16HZ: u16 = 16;
 
-    pub fn zero() -> Self {
+    pub const fn zero() -> Self {
         Self(Fixpt::from_int(0))
     }
 
@@ -32,7 +33,7 @@ impl MotorSpeed {
         Self(Fixpt::from_fraction(num as i16, denom as i16))
     }
 
-    pub fn as_16hz(&self) -> Fixpt {
+    pub const fn as_16hz(&self) -> Fixpt {
         self.0
     }
 }
@@ -58,10 +59,10 @@ impl Speedo {
     }
 
     pub fn get_speed(&self, m: &MainCtx<'_>) -> Option<MotorSpeed> {
-        if self.ok_count.get(m) < OK_THRES {
-            None
-        } else {
+        if self.ok_count.get(m) >= OK_THRES {
             Some(MotorSpeed::from_period_dur(self.get_dur(m)))
+        } else {
+            None
         }
     }
 
@@ -84,7 +85,7 @@ impl Speedo {
         self.ok_count.set(m, self.ok_count.get(m).saturating_add(1));
     }
 
-    pub fn update(&self, m: &MainCtx<'_>, sp: &SysPeriph, ac: &AcCapture) {
+    pub fn update(&self, m: &MainCtx<'_>, _sp: &SysPeriph, ac: &AcCapture) {
         let now = timer_get(&m.to_any());
         let prev_stamp = self.prev_stamp.get(m);
         if now < prev_stamp {
@@ -92,7 +93,6 @@ impl Speedo {
             self.ok_count.set(m, 0);
         }
         if ac.is_new() && ac.is_rising() {
-            crate::system::debug(m, sp, 1);//XXX
             let ac_stamp = ac.stamp();
             if ac_stamp >= prev_stamp {
                 let dur = ac_stamp - prev_stamp;
