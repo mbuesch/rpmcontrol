@@ -137,7 +137,7 @@ impl System {
                 let setpoint = setpoint_to_f(setpoint);
                 let y = self
                     .rpm_pi
-                    .run(m, &RPMPI_PARAMS, setpoint, speedo_hz.as_16hz());
+                    .run(m, &RPMPI_PARAMS, setpoint, speedo_hz.as_16hz(), false);
                 //let y = setpoint;
                 let phi_offs_ms = f_to_trig_offs(y);
                 //debug(m, sp, phi_offs_ms.to_int() as i8);

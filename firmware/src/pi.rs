@@ -21,7 +21,14 @@ impl Pi {
         }
     }
 
-    pub fn run(&self, m: &MainCtx<'_>, params: &PiParams, sp: Fixpt, r: Fixpt) -> Fixpt {
+    pub fn run(
+        &self,
+        m: &MainCtx<'_>,
+        params: &PiParams,
+        sp: Fixpt,
+        r: Fixpt,
+        reset: bool,
+    ) -> Fixpt {
         // deviation
         let e = sp - r;
 
@@ -29,9 +36,12 @@ impl Pi {
         let p = params.kp * e;
 
         // I term
-        let i = self.i.get(m) + (params.ki * e);
-        let i = i.min(params.ilim);
-        let i = i.max(-params.ilim);
+        let mut i = self.i.get(m) + (params.ki * e);
+        i = i.min(params.ilim);
+        i = i.max(-params.ilim);
+        if reset {
+            i = Fixpt::from_int(0);
+        }
         self.i.set(m, i);
 
         p + i
