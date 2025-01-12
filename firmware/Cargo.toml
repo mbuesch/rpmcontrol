@@ -12,7 +12,7 @@ test = false
 bench = false
 
 [dependencies]
-avr-device = { version = "0.6", features = [ "attiny26", "rt" ] }
+avr-device = { version = "0.7", features = [ "attiny861a", "rt" ] }
 
 # The latest releases of `proc-macro2` do not support the rust toolchain that
 # we use.  Thus, we must fix this dependency to an older version where our
@@ -31,8 +31,8 @@ codegen-units = 1
 lto = "fat"
 opt-level = "s"
 
-#[patch.crates-io]
-#avr-device = { path = "../../avr-device" }
+[patch.crates-io]
+avr-device = { path = "../../avr-device" }
 
 [lints.clippy]
 undocumented_unsafe_blocks = "warn"

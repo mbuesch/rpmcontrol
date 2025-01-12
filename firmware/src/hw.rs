@@ -1,11 +1,16 @@
-pub use avr_device::{
-    attiny26::{self as mcu, Peripherals},
-    interrupt::{self, Mutex},
-};
+pub use attiny::{self as mcu, Peripherals};
+pub use avr_device::attiny861a as attiny;
+pub use avr_device::interrupt::{self, Mutex};
 
-use avr_device::attiny26::{PORTA, PORTB};
+use attiny::{PORTA, PORTB};
 
-pub fn ports_init(pa: &PORTA, pb: &PORTB) {
+/// Initialize ports.
+///
+/// # Safety
+///
+/// Must only be called during init with interrupts disabled.
+#[allow(unused_unsafe)]
+pub unsafe fn ports_init(pa: &PORTA, pb: &PORTB) {
     fn pin_input(_bit: usize) -> u8 {
         0
     }
@@ -22,57 +27,60 @@ pub fn ports_init(pa: &PORTA, pb: &PORTB) {
         0
     }
 
-    // PORTA
-    pa.porta.write(|w| {
-        w.bits(
-            pin_floating(0) | // setpoint, single ended ADC
-            pin_floating(1) | // vsense, single ended ADC
-            pin_low(2) | // DNC
-            pin_floating(3) | // AREF
-            pin_floating(4) | // shunt_lo, differential ADC
-            pin_floating(5) | // shunt_hi, differential ADC + single ended ADC
-            pin_floating(6) | // speedo, AD comparator pos
-            pin_floating(7), // speedoref, AD comparator neg
-        )
-    });
-    pa.ddra.write(|w| {
-        w.bits(
-            pin_input(0) | // setpoint, single ended ADC
-            pin_input(1) | // vsense, single ended ADC
-            pin_output(2) | // DNC
-            pin_input(3) | // AREF
-            pin_input(4) | // shunt_lo, differential ADC
-            pin_input(5) | // shunt_hi, differential ADC + single ended ADC
-            pin_input(6) | // speedo, AD comparator pos
-            pin_input(7), // speedoref, AD comparator neg
-        )
-    });
+    // SAFETY: Called with interrupts disabled.
+    unsafe {
+        // PORTA
+        pa.porta.write(|w| {
+            w.bits(
+                pin_floating(0) | // setpoint, single ended ADC
+                pin_floating(1) | // vsense, single ended ADC
+                pin_low(2) | // DNC
+                pin_floating(3) | // AREF
+                pin_floating(4) | // shunt_lo, differential ADC
+                pin_floating(5) | // shunt_hi, differential ADC + single ended ADC
+                pin_floating(6) | // speedo, AD comparator pos
+                pin_floating(7), // speedoref, AD comparator neg
+            )
+        });
+        pa.ddra.write(|w| {
+            w.bits(
+                pin_input(0) | // setpoint, single ended ADC
+                pin_input(1) | // vsense, single ended ADC
+                pin_output(2) | // DNC
+                pin_input(3) | // AREF
+                pin_input(4) | // shunt_lo, differential ADC
+                pin_input(5) | // shunt_hi, differential ADC + single ended ADC
+                pin_input(6) | // speedo, AD comparator pos
+                pin_input(7), // speedoref, AD comparator neg
+            )
+        });
 
-    // PORTB
-    pb.portb.write(|w| {
-        w.bits(
-            pin_low(0) | // ISP MOSI
-            pin_low(1) | // ISP MISO
-            pin_low(2) | // ISP SCK
-            pin_high(3) | // trig, active low
-            pin_floating(4) | // XTAL1
-            pin_floating(5) | // XTAL2
-            pin_low(6) | // Debug
-            pin_floating(7), // RESET, active low
-        )
-    });
-    pb.ddrb.write(|w| {
-        w.bits(
-            pin_output(0) | // ISP MOSI
-            pin_output(1) | // ISP MISO
-            pin_output(2) | // ISP SCK
-            pin_output(3) | // trig, active low
-            pin_input(4) | // XTAL1
-            pin_input(5) | // XTAL2
-            pin_output(6) | // Debug
-            pin_input(7), // RESET, active low
-        )
-    });
+        // PORTB
+        pb.portb.write(|w| {
+            w.bits(
+                pin_low(0) | // ISP MOSI
+                pin_low(1) | // ISP MISO
+                pin_low(2) | // ISP SCK
+                pin_high(3) | // trig, active low
+                pin_floating(4) | // XTAL1
+                pin_floating(5) | // XTAL2
+                pin_low(6) | // Debug
+                pin_floating(7), // RESET, active low
+            )
+        });
+        pb.ddrb.write(|w| {
+            w.bits(
+                pin_output(0) | // ISP MOSI
+                pin_output(1) | // ISP MISO
+                pin_output(2) | // ISP SCK
+                pin_output(3) | // trig, active low
+                pin_input(4) | // XTAL1
+                pin_input(5) | // XTAL2
+                pin_output(6) | // Debug
+                pin_input(7), // RESET, active low
+            )
+        });
+    }
 }
 
 // vim: ts=4 sw=4 expandtab

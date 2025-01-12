@@ -72,7 +72,11 @@ fn main() -> ! {
     // is running in main() context.
     let m = unsafe { MainCtx::new_with_init(init_static_vars) };
 
-    ports_init(&sp.PORTA, &sp.PORTB);
+    // SAFETY:
+    // It is safe to call ports-init during main init with IRQs disabled.
+    unsafe {
+        ports_init(&sp.PORTA, &sp.PORTB);
+    }
 
     timer_init(&m);
     SYSTEM.init(&m, &sp);

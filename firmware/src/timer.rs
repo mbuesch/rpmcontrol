@@ -21,8 +21,8 @@ pub fn timer_init(m: &MainCtx) {
     TIMER_PERIPH
         .deref(m)
         .TC0
-        .tccr0
-        .write(|w| w.cs0().running_clk_256());
+        .tccr0b
+        .write(|w| w.cs0().prescale_256());
 }
 
 // SAFETY: This function may only do atomic-read-only accesses, because it's
@@ -34,18 +34,19 @@ pub fn timer_get(a: &AnyCtx) -> Timestamp {
     //         if we were actually called from irq context.
     let m = unsafe { a.to_main_ctx() };
 
-    TIMER_PERIPH.deref(&m).TC0.tcnt0.read().bits().into()
+    TIMER_PERIPH.deref(&m).TC0.tcnt0l.read().bits().into()
 }
 
 #[inline(never)]
 pub fn timer_get_large(m: &MainCtx) -> LargeTimestamp {
     let mut upper = TIMER_UPPER.get(m);
-    let mut lower = TIMER_PERIPH.deref(m).TC0.tcnt0.read().bits();
+    let mut lower = TIMER_PERIPH.deref(m).TC0.tcnt0l.read().bits();
 
+    //TODO use 16bit timer
     // Increment the upper part, if the lower part had an overflow.
     if TIMER_PERIPH.deref(m).TC0.tifr.read().tov0().bit() {
         TIMER_PERIPH.deref(m).TC0.tifr.write(|w| w.tov0().set_bit());
-        lower = TIMER_PERIPH.deref(m).TC0.tcnt0.read().bits();
+        lower = TIMER_PERIPH.deref(m).TC0.tcnt0l.read().bits();
         upper = upper.wrapping_add(1);
         TIMER_UPPER.set(m, upper);
     }

@@ -65,7 +65,7 @@ impl Adc {
     #[rustfmt::skip]
     #[inline]
     fn start_conversion(&self, _m: &MainCtx<'_>, sp: &SysPeriph) {
-        sp.ADC.adcsr.modify(|_, w| {
+        sp.ADC.adcsra.modify(|_, w| {
             w.adif().set_bit()
              .adsc().set_bit()
         });
@@ -73,15 +73,14 @@ impl Adc {
 
     #[inline]
     fn conversion_done(&self, _m: &MainCtx<'_>, sp: &SysPeriph) -> bool {
-        sp.ADC.adcsr.read().adif().bit_is_set()
+        sp.ADC.adcsra.read().adif().bit_is_set()
     }
 
     #[rustfmt::skip]
     pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
-        sp.ADC.adcsr.write(|w| {
+        sp.ADC.adcsra.write(|w| {
             w.adps().prescaler_128()
              .adie().clear_bit()
-             .adfr().clear_bit()
              .adif().set_bit()
              .adsc().clear_bit()
              .aden().set_bit()
@@ -144,7 +143,7 @@ impl Ac {
 
     #[rustfmt::skip]
     pub fn init(&self, sp: &SysPeriph) {
-        sp.AC.acsr.write(|w| {
+        sp.AC.acsra.write(|w| {
             w.acie().set_bit()
              .aci().set_bit()
              .acis().on_toggle()

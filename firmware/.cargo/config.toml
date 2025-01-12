@@ -1,5 +1,5 @@
 [build]
-target = "./avr-attiny26.json"
+target = "./avr-attiny861a.json"
 
 [unstable]
 build-std = ["core"]
