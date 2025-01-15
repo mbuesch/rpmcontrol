@@ -1,5 +1,6 @@
 OBJCOPY:=avr-objcopy
 OBJDUMP:=avr-objdump
+GDB:=avr-gdb
 SIZE:=avr-size
 
 DWDEBUG:=dwdebug
@@ -72,5 +73,8 @@ dw:
 dw-flash: $(BIN)
 	$(DWDEBUG) 'device $(DWDEBUG_PORT), l $(BIN), te, qr'
 
-dw-gdbserver: $(BIN)
+dw-gdbserver:
 	$(DWDEBUG) 'device $(DWDEBUG_PORT), reset, te, gdbserver, qr'
+
+gdb:
+	$(GDB) -ex 'target remote :4444' $(ELF)
