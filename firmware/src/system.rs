@@ -39,7 +39,6 @@ pub struct SysPeriph {
     pub ADC: mcu::ADC,
     pub PORTA: mcu::PORTA,
     pub PORTB: mcu::PORTB,
-    pub TC1: mcu::TC1,
 }
 
 #[allow(dead_code)]

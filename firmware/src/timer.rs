@@ -4,25 +4,33 @@ use crate::{
 };
 
 #[allow(non_snake_case)]
-pub struct TimerPeriph {
-    pub TC0: mcu::TC0,
+pub struct Dp {
+    pub TC1: mcu::TC1,
 }
 
-// SAFETY: This variable is initialized when constructing the MainCtx.
-pub static TIMER_PERIPH: LazyMainInit<TimerPeriph> = unsafe { LazyMainInit::uninit() };
+// SAFETY: Is initialized when constructing the MainCtx.
+pub static DP: LazyMainInit<Dp> = unsafe { LazyMainInit::uninit() };
 
 static TIMER_UPPER: MutexCell<u8> = MutexCell::new(0);
 
 pub const TIMER_TICK_US: u8 = 16; // 16 us per tick.
 
+#[rustfmt::skip]
 pub fn timer_init(m: &MainCtx) {
-    // Timer 0 configuration:
+    // Timer 1 configuration:
     // CS: 256 -> 16 us per timer tick.
-    TIMER_PERIPH
-        .deref(m)
-        .TC0
-        .tccr0b
-        .write(|w| w.cs0().prescale_256());
+    DP.deref(&m).TC1.tc1h.write(|w| w);
+    DP.deref(&m).TC1.tcnt1.write(|w| w);
+    DP.deref(&m).TC1.tccr1a.write(|w| w);
+    DP.deref(&m).TC1.tccr1c.write(|w| w);
+    DP.deref(&m).TC1.tccr1d.write(|w| w);
+    DP.deref(&m).TC1.tccr1e.write(|w| w);
+    DP.deref(&m).TC1.ocr1a.write(|w| w.bits(0xFF));
+    DP.deref(&m).TC1.ocr1b.write(|w| w.bits(0xFF));
+    DP.deref(&m).TC1.ocr1c.write(|w| w.bits(0xFF)); // TOP value
+    DP.deref(&m).TC1.ocr1d.write(|w| w.bits(0xFF));
+    DP.deref(&m).TC1.dt1.write(|w| w);
+    DP.deref(&m).TC1.tccr1b.write(|w| w.cs1().prescale_256());
 }
 
 // SAFETY: This function may only do atomic-read-only accesses, because it's
@@ -34,19 +42,18 @@ pub fn timer_get(a: &AnyCtx) -> Timestamp {
     //         if we were actually called from irq context.
     let m = unsafe { a.to_main_ctx() };
 
-    TIMER_PERIPH.deref(&m).TC0.tcnt0l.read().bits().into()
+    DP.deref(&m).TC1.tcnt1.read().bits().into()
 }
 
 #[inline(never)]
 pub fn timer_get_large(m: &MainCtx) -> LargeTimestamp {
     let mut upper = TIMER_UPPER.get(m);
-    let mut lower = TIMER_PERIPH.deref(m).TC0.tcnt0l.read().bits();
+    let mut lower = DP.deref(m).TC1.tcnt1.read().bits();
 
-    //TODO use 16bit timer
     // Increment the upper part, if the lower part had an overflow.
-    if TIMER_PERIPH.deref(m).TC0.tifr.read().tov0().bit() {
-        TIMER_PERIPH.deref(m).TC0.tifr.write(|w| w.tov0().set_bit());
-        lower = TIMER_PERIPH.deref(m).TC0.tcnt0l.read().bits();
+    if DP.deref(m).TC1.tifr.read().tov1().bit() {
+        DP.deref(m).TC1.tifr.write(|w| w.tov1().set_bit());
+        lower = DP.deref(m).TC1.tcnt1.read().bits();
         upper = upper.wrapping_add(1);
         TIMER_UPPER.set(m, upper);
     }

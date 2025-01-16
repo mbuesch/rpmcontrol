@@ -20,7 +20,7 @@ use crate::{
     hw::{interrupt, mcu, ports_init, Peripherals},
     mutex::{unwrap_option, MainCtx},
     system::{SysPeriph, System},
-    timer::{timer_init, TimerPeriph, TIMER_PERIPH},
+    timer::timer_init,
 };
 
 static SYSTEM: System = System::new();
@@ -57,13 +57,12 @@ fn main() -> ! {
         ADC: dp.ADC,
         PORTA: dp.PORTA,
         PORTB: dp.PORTB,
-        TC1: dp.TC1,
     };
 
-    let tp = TimerPeriph { TC0: dp.TC0 };
+    let timer_dp = timer::Dp { TC1: dp.TC1 };
 
     let init_static_vars = |ctx| {
-        TIMER_PERIPH.init(ctx, tp);
+        timer::DP.init(ctx, timer_dp);
     };
 
     // SAFETY:
