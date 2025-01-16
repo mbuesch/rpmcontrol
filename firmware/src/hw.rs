@@ -83,4 +83,9 @@ pub unsafe fn ports_init(pa: &PORTA, pb: &PORTB) {
     }
 }
 
+#[avr_device::interrupt(attiny861a)]
+fn ANA_COMP() {
+    crate::analog::irq_handler_ana_comp();
+}
+
 // vim: ts=4 sw=4 expandtab
