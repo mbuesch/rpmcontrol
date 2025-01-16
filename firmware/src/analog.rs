@@ -192,7 +192,7 @@ pub static mut AC_CAPTURE: AcCapture = AcCapture::new();
 const AC_CAPTURE_MINDIST: RelTimestamp = RelTimestamp::from_micros(256);
 
 /// Analog Comparator interrupt.
-#[avr_device::interrupt(attiny26)]
+#[avr_device::interrupt(attiny861a)]
 fn ANA_COMP() {
     // SAFETY: This interrupt shall not call into anything and not modify anything,
     //         except for timer and the stored time stamp.
