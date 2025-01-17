@@ -2,6 +2,7 @@ pub use attiny::{self as mcu, Peripherals};
 pub use avr_device::attiny861a as attiny;
 pub use avr_device::interrupt::{self, Mutex};
 
+use crate::mutex::IrqCtx;
 use attiny::{PORTA, PORTB};
 
 /// Initialize ports.
@@ -85,7 +86,8 @@ pub unsafe fn ports_init(pa: &PORTA, pb: &PORTB) {
 
 #[avr_device::interrupt(attiny861a)]
 fn ANA_COMP() {
-    crate::analog::irq_handler_ana_comp();
+    // SAFETY: We are in an interrupt. Therefore, it is safe to construct an `IrqCtx`.
+    crate::analog::irq_handler_ana_comp(unsafe { &IrqCtx::new() });
 }
 
 // vim: ts=4 sw=4 expandtab

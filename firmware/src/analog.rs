@@ -192,15 +192,12 @@ pub static mut AC_CAPTURE: AcCapture = AcCapture::new();
 const AC_CAPTURE_MINDIST: RelTimestamp = RelTimestamp::from_micros(256);
 
 /// Analog Comparator interrupt.
-pub fn irq_handler_ana_comp() {
+pub fn irq_handler_ana_comp(ic: &IrqCtx) {
     // SAFETY: This interrupt shall not call into anything and not modify anything,
     //         except for timer and the stored time stamp.
     //         The rest of the system safety depends on this due to the system
     //         wide creation of the `system_cs` CriticalSection.
     //         See main.rs.
-
-    // SAFETY: We are in an interrupt. Therefore, it is safe to construct an `IrqCtx`.
-    let ic = unsafe { &IrqCtx::new() };
 
     let now = timer_get(&ic.to_any());
 
