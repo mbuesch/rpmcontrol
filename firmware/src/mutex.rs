@@ -124,9 +124,12 @@ impl<T> LazyMainInit<T> {
     }
 
     #[inline(always)]
-    pub fn init(&self, _m: &MainInitCtx, inner: T) {
+    pub fn init(&self, _m: &MainInitCtx, inner: T) -> &T {
         // SAFETY: Initialization is required for the `assume_init` calls.
-        unsafe { *self.0.get() = MaybeUninit::new(inner) };
+        unsafe {
+            *self.0.get() = MaybeUninit::new(inner);
+            (*self.0.get()).assume_init_ref()
+        }
     }
 
     #[inline(always)]

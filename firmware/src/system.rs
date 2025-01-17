@@ -3,8 +3,9 @@ use crate::{
     fixpt::{fixpt, Fixpt},
     hw::mcu,
     mains::Mains,
-    mutex::{MainCtx, MutexCell},
+    mutex::{AnyCtx, MainCtx, MutexCell},
     pi::{Pi, PiParams},
+    ports::PORTB,
     speedo::{MotorSpeed, Speedo},
     timer::{timer_get, timer_get_large, LargeTimestamp, RelLargeTimestamp, RelTimestamp},
     triac::Triac,
@@ -37,16 +38,15 @@ fn f_to_trig_offs(f: Fixpt) -> Fixpt {
 pub struct SysPeriph {
     pub AC: mcu::AC,
     pub ADC: mcu::ADC,
-    pub PORTA: mcu::PORTA,
-    pub PORTB: mcu::PORTB,
 }
 
 #[allow(dead_code)]
-pub fn debug(m: &MainCtx<'_>, sp: &SysPeriph, ticks: i8) {
-    sp.PORTB.portb.modify(|_, w| w.pb6().set_bit());
-    let end = timer_get(&m.to_any()) + RelTimestamp::from_ticks(ticks);
-    while timer_get(&m.to_any()) < end {}
-    sp.PORTB.portb.modify(|_, w| w.pb6().clear_bit());
+pub fn debug(ticks: i8) {
+    let ctx = AnyCtx::new();
+    PORTB.set_bit(&ctx, 6, true);
+    let end = timer_get(&ctx) + RelTimestamp::from_ticks(ticks);
+    while timer_get(&ctx) < end {}
+    PORTB.set_bit(&ctx, 6, false);
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -119,7 +119,7 @@ impl System {
         self.speedo.update(m, sp, &ac);
         let speedo_hz = self.speedo.get_speed(m).unwrap_or(MotorSpeed::zero());
 
-        let phase_update = self.mains.run(m, sp);
+        let phase_update = self.mains.run(m);
         let phase = self.mains.get_phase(m);
         let phaseref = self.mains.get_phaseref(m);
 
@@ -146,7 +146,7 @@ impl System {
             }
         }
 
-        self.triac.run(m, sp, phase_update, phase, phaseref);
+        self.triac.run(m, phase_update, phase, phaseref);
     }
 }
 

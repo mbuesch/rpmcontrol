@@ -1,6 +1,6 @@
 use crate::{
     mutex::{MainCtx, MutexCell},
-    system::SysPeriph,
+    ports::PORTA,
     timer::{timer_get_large, LargeTimestamp, RelLargeTimestamp},
 };
 
@@ -34,12 +34,12 @@ impl Mains {
         }
     }
 
-    fn read_vsense(&self, _m: &MainCtx<'_>, sp: &SysPeriph) -> bool {
-        sp.PORTA.pina.read().pa1().bit()
+    fn read_vsense(&self, m: &MainCtx<'_>) -> bool {
+        PORTA.get_bit(&m.to_any(), 1)
     }
 
-    pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) -> PhaseUpdate {
-        let vsense = self.read_vsense(m, sp);
+    pub fn run(&self, m: &MainCtx<'_>) -> PhaseUpdate {
+        let vsense = self.read_vsense(m);
         let now = timer_get_large(m);
         let mut ret = PhaseUpdate::NotChanged;
         match self.phase.get(m) {

@@ -2,7 +2,7 @@ use crate::{
     fixpt::{fixpt, Fixpt},
     mains::{Phase, PhaseUpdate},
     mutex::{MainCtx, MutexCell},
-    system::SysPeriph,
+    ports::PORTB,
     timer::{
         timer_get_large, LargeTimestamp, RelLargeTimestamp, RelTimestamp, Timestamp, TIMER_TICK_US,
     },
@@ -90,21 +90,20 @@ impl Triac {
         self.phi_offs_ms.set(m, Fixpt::from_int(20));
     }
 
-    fn set_trigger(&self, _m: &MainCtx<'_>, sp: &SysPeriph, trigger: bool) {
+    fn set_trigger(&self, m: &MainCtx<'_>, trigger: bool) {
         let trigger = !trigger; // negative logic at triac gate.
-        sp.PORTB.portb.modify(|_, w| w.pb3().bit(trigger));
+        PORTB.set_bit(&m.to_any(), 3, trigger);
     }
 
     pub fn run(
         &self,
         m: &MainCtx<'_>,
-        sp: &SysPeriph,
         phase_update: PhaseUpdate,
         phase: Phase,
         phaseref: LargeTimestamp,
     ) {
         if phase == Phase::Notsync {
-            self.set_trigger(m, sp, false);
+            self.set_trigger(m, false);
             return;
         }
 
@@ -116,7 +115,7 @@ impl Triac {
                 let must_trigger = now >= t_plus_trig_offs(phaseref, phi_offs_ms);
                 if must_trigger {
                     self.state.set(m, TriacState::Triggering);
-                    self.set_trigger(m, sp, true);
+                    self.set_trigger(m, true);
                     self.trig_time.set(m, now.into());
                 }
             }
@@ -124,17 +123,17 @@ impl Triac {
                 let now: Timestamp = now.into();
                 if now >= self.trig_time.get(m) + PULSE_LEN {
                     self.state.set(m, TriacState::Triggered);
-                    self.set_trigger(m, sp, false);
+                    self.set_trigger(m, false);
                 }
                 if phase_update == PhaseUpdate::Changed {
                     self.state.set(m, TriacState::Idle);
-                    self.set_trigger(m, sp, false);
+                    self.set_trigger(m, false);
                 }
             }
             TriacState::Triggered => {
                 if phase_update == PhaseUpdate::Changed {
                     self.state.set(m, TriacState::Idle);
-                    self.set_trigger(m, sp, false);
+                    self.set_trigger(m, false);
                 }
                 //TODO re-trigger if:
                 // - the triac lost trigger (measure voltage) and

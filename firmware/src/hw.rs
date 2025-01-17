@@ -3,91 +3,18 @@ pub use avr_device::attiny861a as attiny;
 pub use avr_device::interrupt::{self, Mutex};
 
 use crate::mutex::IrqCtx;
-use attiny::{PORTA, PORTB};
 
-/// Initialize ports.
-///
-/// # Safety
-///
-/// Must only be called during init with interrupts disabled.
-#[allow(unused_unsafe)]
-pub unsafe fn ports_init(pa: &PORTA, pb: &PORTB) {
-    fn pin_input(_bit: usize) -> u8 {
-        0
-    }
-    fn pin_output(bit: usize) -> u8 {
-        1 << bit
-    }
-    fn pin_low(_bit: usize) -> u8 {
-        0
-    }
-    fn pin_high(bit: usize) -> u8 {
-        1 << bit
-    }
-    fn pin_floating(_bit: usize) -> u8 {
-        0
-    }
-
-    // SAFETY: Called with interrupts disabled.
-    unsafe {
-        // PORTA
-        pa.porta.write(|w| {
-            w.bits(
-                pin_floating(0) | // setpoint, single ended ADC
-                pin_floating(1) | // vsense, single ended ADC
-                pin_low(2) | // DNC
-                pin_floating(3) | // AREF
-                pin_floating(4) | // shunt_lo, differential ADC
-                pin_floating(5) | // shunt_hi, differential ADC + single ended ADC
-                pin_floating(6) | // speedo, AD comparator pos
-                pin_floating(7), // speedoref, AD comparator neg
-            )
-        });
-        pa.ddra.write(|w| {
-            w.bits(
-                pin_input(0) | // setpoint, single ended ADC
-                pin_input(1) | // vsense, single ended ADC
-                pin_output(2) | // DNC
-                pin_input(3) | // AREF
-                pin_input(4) | // shunt_lo, differential ADC
-                pin_input(5) | // shunt_hi, differential ADC + single ended ADC
-                pin_input(6) | // speedo, AD comparator pos
-                pin_input(7), // speedoref, AD comparator neg
-            )
-        });
-
-        // PORTB
-        pb.portb.write(|w| {
-            w.bits(
-                pin_low(0) | // ISP MOSI
-                pin_low(1) | // ISP MISO
-                pin_low(2) | // ISP SCK
-                pin_high(3) | // trig, active low
-                pin_floating(4) | // XTAL1
-                pin_floating(5) | // XTAL2
-                pin_low(6) | // Debug
-                pin_floating(7), // RESET, active low
-            )
-        });
-        pb.ddrb.write(|w| {
-            w.bits(
-                pin_output(0) | // ISP MOSI
-                pin_output(1) | // ISP MISO
-                pin_output(2) | // ISP SCK
-                pin_output(3) | // trig, active low
-                pin_input(4) | // XTAL1
-                pin_input(5) | // XTAL2
-                pin_output(6) | // Debug
-                pin_input(7), // RESET, active low
-            )
-        });
-    }
+macro_rules! define_isr {
+    ($name:ident, $handler:path) => {
+        #[avr_device::interrupt(attiny861a)]
+        fn $name() {
+            // SAFETY: We are inside of an interrupt handler.
+            // Therefore, it is safe to construct an `IrqCtx`.
+            $handler(unsafe { &IrqCtx::new() });
+        }
+    };
 }
 
-#[avr_device::interrupt(attiny861a)]
-fn ANA_COMP() {
-    // SAFETY: We are in an interrupt. Therefore, it is safe to construct an `IrqCtx`.
-    crate::analog::irq_handler_ana_comp(unsafe { &IrqCtx::new() });
-}
+define_isr!(ANA_COMP, crate::analog::irq_handler_ana_comp);
 
 // vim: ts=4 sw=4 expandtab

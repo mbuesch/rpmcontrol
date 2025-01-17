@@ -10,6 +10,7 @@ mod hw;
 mod mains;
 mod mutex;
 mod pi;
+mod ports;
 mod speedo;
 mod system;
 mod timer;
@@ -17,7 +18,7 @@ mod triac;
 
 use crate::{
     analog::ac_capture_get,
-    hw::{interrupt, mcu, ports_init, Peripherals},
+    hw::{interrupt, mcu, Peripherals},
     mutex::{unwrap_option, MainCtx},
     system::{SysPeriph, System},
     timer::timer_init,
@@ -55,13 +56,15 @@ fn main() -> ! {
     let sp = SysPeriph {
         AC: dp.AC,
         ADC: dp.ADC,
-        PORTA: dp.PORTA,
-        PORTB: dp.PORTB,
     };
 
+    let porta_dp = ports::PortA { PORTA: dp.PORTA };
+    let portb_dp = ports::PortB { PORTB: dp.PORTB };
     let timer_dp = timer::Dp { TC1: dp.TC1 };
 
     let init_static_vars = |ctx| {
+        ports::PORTA.init(ctx, porta_dp).setup(ctx);
+        ports::PORTB.init(ctx, portb_dp).setup(ctx);
         timer::DP.init(ctx, timer_dp);
     };
 
@@ -70,12 +73,6 @@ fn main() -> ! {
     // Holding a reference to this object proves that the holder
     // is running in main() context.
     let m = unsafe { MainCtx::new_with_init(init_static_vars) };
-
-    // SAFETY:
-    // It is safe to call ports-init during main init with IRQs disabled.
-    unsafe {
-        ports_init(&sp.PORTA, &sp.PORTB);
-    }
 
     timer_init(&m);
     SYSTEM.init(&m, &sp);
