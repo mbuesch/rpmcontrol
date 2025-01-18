@@ -3,7 +3,7 @@ use crate::{
     fixpt::{fixpt, Fixpt},
     hw::mcu,
     mains::Mains,
-    mutex::{AnyCtx, MainCtx, MutexCell},
+    mutex::{MainCtx, MutexCell},
     pi::{Pi, PiParams},
     ports::PORTB,
     speedo::{MotorSpeed, Speedo},
@@ -42,11 +42,10 @@ pub struct SysPeriph {
 
 #[allow(dead_code)]
 pub fn debug(ticks: i8) {
-    let ctx = AnyCtx::new();
-    PORTB.set_bit(&ctx, 6, true);
-    let end = timer_get(&ctx) + RelTimestamp::from_ticks(ticks);
-    while timer_get(&ctx) < end {}
-    PORTB.set_bit(&ctx, 6, false);
+    PORTB.set_bit(6, true);
+    let end = timer_get() + RelTimestamp::from_ticks(ticks);
+    while timer_get() < end {}
+    PORTB.set_bit(6, false);
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]

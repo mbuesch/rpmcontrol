@@ -63,9 +63,12 @@ fn main() -> ! {
     let timer_dp = timer::Dp { TC1: dp.TC1 };
 
     let init_static_vars = |ctx| {
-        ports::PORTA.init(ctx, porta_dp).setup(ctx);
-        ports::PORTB.init(ctx, portb_dp).setup(ctx);
+        let porta = ports::PORTA.init(ctx, porta_dp);
+        let portb = ports::PORTB.init(ctx, portb_dp);
         timer::DP.init(ctx, timer_dp);
+
+        porta.setup(ctx);
+        portb.setup(ctx);
     };
 
     // SAFETY:

@@ -86,7 +86,7 @@ impl Speedo {
     }
 
     pub fn update(&self, m: &MainCtx<'_>, _sp: &SysPeriph, ac: &AcCapture) {
-        let now = timer_get(&m.to_any());
+        let now = timer_get();
         let prev_stamp = self.prev_stamp.get(m);
         if now < prev_stamp {
             // prev_stamp wrapped. Drop it.

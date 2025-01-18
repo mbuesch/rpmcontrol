@@ -34,8 +34,8 @@ impl Mains {
         }
     }
 
-    fn read_vsense(&self, m: &MainCtx<'_>) -> bool {
-        PORTA.get_bit(&m.to_any(), 1)
+    fn read_vsense(&self, _m: &MainCtx<'_>) -> bool {
+        PORTA.get_bit(1)
     }
 
     pub fn run(&self, m: &MainCtx<'_>) -> PhaseUpdate {

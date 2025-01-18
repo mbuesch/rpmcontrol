@@ -6,7 +6,7 @@
 
 use crate::{
     hw::mcu,
-    mutex::{AnyCtx, LazyMainInit, MainInitCtx},
+    mutex::{LazyMainInit, MainInitCtx},
 };
 
 #[rustfmt::skip]
@@ -37,38 +37,32 @@ macro_rules! impl_port {
         impl LazyMainInit<$struct> {
             #[inline(always)]
             #[allow(dead_code)]
-            pub fn get_bit(&self, ctx: &AnyCtx, bit: usize) -> bool {
-                // SAFETY: This is safe from any context.
-                // After init we only ever access this with volatile bitwise instructions.
-                let m = unsafe { ctx.to_main_ctx() };
+            pub fn get_bit(&self, bit: usize) -> bool {
                 match bit {
-                    0 => $name.deref(&m).$name.$pin.read().$bit0().bit(),
-                    1 => $name.deref(&m).$name.$pin.read().$bit1().bit(),
-                    2 => $name.deref(&m).$name.$pin.read().$bit2().bit(),
-                    3 => $name.deref(&m).$name.$pin.read().$bit3().bit(),
-                    4 => $name.deref(&m).$name.$pin.read().$bit4().bit(),
-                    5 => $name.deref(&m).$name.$pin.read().$bit5().bit(),
-                    6 => $name.deref(&m).$name.$pin.read().$bit6().bit(),
-                    7 => $name.deref(&m).$name.$pin.read().$bit7().bit(),
+                    0 => $name.$name.$pin.read().$bit0().bit(),
+                    1 => $name.$name.$pin.read().$bit1().bit(),
+                    2 => $name.$name.$pin.read().$bit2().bit(),
+                    3 => $name.$name.$pin.read().$bit3().bit(),
+                    4 => $name.$name.$pin.read().$bit4().bit(),
+                    5 => $name.$name.$pin.read().$bit5().bit(),
+                    6 => $name.$name.$pin.read().$bit6().bit(),
+                    7 => $name.$name.$pin.read().$bit7().bit(),
                     _ => unreachable!(),
                 }
             }
 
             #[inline(always)]
             #[allow(dead_code)]
-            pub fn set_bit(&self, ctx: &AnyCtx, bit: usize, value: bool) {
-                // SAFETY: This is safe from any context.
-                // After init we only ever access this with volatile bitwise instructions.
-                let m = unsafe { ctx.to_main_ctx() };
+            pub fn set_bit(&self, bit: usize, value: bool) {
                 match bit {
-                    0 => $name.deref(&m).$name.$port.modify(|_, w| w.$bit0().bit(value)),
-                    1 => $name.deref(&m).$name.$port.modify(|_, w| w.$bit1().bit(value)),
-                    2 => $name.deref(&m).$name.$port.modify(|_, w| w.$bit2().bit(value)),
-                    3 => $name.deref(&m).$name.$port.modify(|_, w| w.$bit3().bit(value)),
-                    4 => $name.deref(&m).$name.$port.modify(|_, w| w.$bit4().bit(value)),
-                    5 => $name.deref(&m).$name.$port.modify(|_, w| w.$bit5().bit(value)),
-                    6 => $name.deref(&m).$name.$port.modify(|_, w| w.$bit6().bit(value)),
-                    7 => $name.deref(&m).$name.$port.modify(|_, w| w.$bit7().bit(value)),
+                    0 => $name.$name.$port.modify(|_, w| w.$bit0().bit(value)),
+                    1 => $name.$name.$port.modify(|_, w| w.$bit1().bit(value)),
+                    2 => $name.$name.$port.modify(|_, w| w.$bit2().bit(value)),
+                    3 => $name.$name.$port.modify(|_, w| w.$bit3().bit(value)),
+                    4 => $name.$name.$port.modify(|_, w| w.$bit4().bit(value)),
+                    5 => $name.$name.$port.modify(|_, w| w.$bit5().bit(value)),
+                    6 => $name.$name.$port.modify(|_, w| w.$bit6().bit(value)),
+                    7 => $name.$name.$port.modify(|_, w| w.$bit7().bit(value)),
                     _ => unreachable!(),
                 }
             }

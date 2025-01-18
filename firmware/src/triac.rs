@@ -90,9 +90,9 @@ impl Triac {
         self.phi_offs_ms.set(m, Fixpt::from_int(20));
     }
 
-    fn set_trigger(&self, m: &MainCtx<'_>, trigger: bool) {
+    fn set_trigger(&self, _m: &MainCtx<'_>, trigger: bool) {
         let trigger = !trigger; // negative logic at triac gate.
-        PORTB.set_bit(&m.to_any(), 3, trigger);
+        PORTB.set_bit(3, trigger);
     }
 
     pub fn run(

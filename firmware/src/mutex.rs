@@ -34,19 +34,6 @@ macro_rules! define_context {
                 fence();
                 Self(cs)
             }
-
-            /// Get the `CriticalSection` that belongs to this context.
-            #[inline(always)]
-            #[allow(dead_code)]
-            pub fn cs(&self) -> CriticalSection<'cs> {
-                self.0
-            }
-
-            /// Convert this to a generic context.
-            #[inline(always)]
-            pub fn to_any(&self) -> AnyCtx {
-                AnyCtx::new()
-            }
         }
 
         impl<'cs> Drop for $name<'cs> {
@@ -61,11 +48,45 @@ macro_rules! define_context {
 define_context!(MainCtx);
 define_context!(IrqCtx);
 
+impl<'cs> MainCtx<'cs> {
+    /// Get the `CriticalSection` that belongs to this context.
+    /// In the main context interrupts are enabled.
+    /// Therefore, this cs can ONLY be used together with `MutexCell` and `MutexRefCell`.
+    #[inline(always)]
+    #[allow(dead_code)]
+    unsafe fn cs(&self) -> CriticalSection<'cs> {
+        self.0
+    }
+}
+
+impl<'cs> IrqCtx<'cs> {
+    /// Get the `CriticalSection` that belongs to this context.
+    /// In IRQ context interrupts are disabled.
+    /// Therefore, this cs can be used for any critical section work.
+    #[inline(always)]
+    #[allow(dead_code)]
+    pub fn cs(&self) -> CriticalSection<'cs> {
+        self.0
+    }
+}
+
 /// Main context initialization marker.
 ///
 /// This marker does not have a pub constructor.
 /// It is only created by [MainCtx].
 pub struct MainInitCtx(());
+
+impl MainInitCtx {
+    /// Get the `CriticalSection` that belongs to this context.
+    /// In initialization context interrupts are disabled.
+    /// Therefore, this cs can be used for any critical section work.
+    #[inline(always)]
+    #[allow(dead_code)]
+    pub fn cs<'cs>(&self) -> CriticalSection<'cs> {
+        // SAFETY: This can only be called during init with interrupts disabled.
+        unsafe { CriticalSection::new() }
+    }
+}
 
 impl<'cs, 'a> MainCtx<'cs> {
     /// SAFETY: The safety contract of [MainCtx::new] must be upheld.
@@ -75,33 +96,6 @@ impl<'cs, 'a> MainCtx<'cs> {
         // Therefore, it's safe to construct the MainInitCtx marker.
         f(&MainInitCtx(()));
         // SAFETY: Safety contract of MainCtx::new is upheld.
-        unsafe { Self::new() }
-    }
-}
-
-pub struct AnyCtx(());
-
-impl AnyCtx {
-    /// Create a new generic context.
-    #[inline(always)]
-    pub fn new() -> Self {
-        Self(())
-    }
-
-    /// Convert this into a [MainCtx].
-    ///
-    /// # SAFETY
-    ///
-    /// You must ensure that either:
-    ///
-    /// - We actually are running in main context or
-    /// - If we are running in interrupt context, then
-    ///   all all things done with this MainCtx must be safe w.r.t.
-    ///   the interrupted main context.
-    ///   e.g. atomic accesses have to be used. etc. etc.
-    #[inline(always)]
-    pub unsafe fn to_main_ctx<'cs>(&self) -> MainCtx<'cs> {
-        // SAFETY: See function doc.
         unsafe { MainCtx::new() }
     }
 }
@@ -131,17 +125,19 @@ impl<T> LazyMainInit<T> {
             (*self.0.get()).assume_init_ref()
         }
     }
+}
 
-    #[inline(always)]
-    #[allow(dead_code)]
-    pub fn deref(&self, _m: &MainCtx) -> &T {
+impl<T> core::ops::Deref for LazyMainInit<T> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
         // SAFETY: the `Self::new` safety contract ensures that `Self::init` is called before us.
         unsafe { (*self.0.get()).assume_init_ref() }
     }
+}
 
-    #[inline(always)]
-    #[allow(dead_code)]
-    fn deref_mut(&mut self, _m: &MainCtx) -> &mut T {
+impl<T> core::ops::DerefMut for LazyMainInit<T> {
+    fn deref_mut(&mut self) -> &mut T {
         // SAFETY: the `Self::new` safety contract ensures that `Self::init` is called before us.
         unsafe { (*self.0.get()).assume_init_mut() }
     }
@@ -175,7 +171,8 @@ impl<T> MutexCell<T> {
     #[inline]
     #[allow(dead_code)]
     pub fn replace(&self, m: &MainCtx<'_>, inner: T) -> T {
-        self.inner.borrow(m.cs()).replace(inner)
+        // SAFETY: We only use the cs for the main context, where it is allowed to be used.
+        self.inner.borrow(unsafe { m.cs() }).replace(inner)
     }
 
     #[inline]
@@ -183,6 +180,7 @@ impl<T> MutexCell<T> {
     pub fn as_ref<'cs>(&self, m: &MainCtx<'cs>) -> &'cs T {
         // SAFETY: The returned reference is bound to the
         //         lifetime of the CriticalSection.
+        //         We only use the cs for the main context, where it is allowed to be used.
         unsafe { &*self.inner.borrow(m.cs()).as_ptr() as _ }
     }
 }
@@ -190,12 +188,14 @@ impl<T> MutexCell<T> {
 impl<T: Copy> MutexCell<T> {
     #[inline]
     pub fn get(&self, m: &MainCtx<'_>) -> T {
-        self.inner.borrow(m.cs()).get()
+        // SAFETY: We only use the cs for the main context, where it is allowed to be used.
+        self.inner.borrow(unsafe { m.cs() }).get()
     }
 
     #[inline]
     pub fn set(&self, m: &MainCtx<'_>, inner: T) {
-        self.inner.borrow(m.cs()).set(inner);
+        // SAFETY: We only use the cs for the main context, where it is allowed to be used.
+        self.inner.borrow(unsafe { m.cs() }).set(inner);
     }
 }
 
