@@ -92,7 +92,7 @@ impl Triac {
 
     fn set_trigger(&self, _m: &MainCtx<'_>, trigger: bool) {
         let trigger = !trigger; // negative logic at triac gate.
-        PORTB.set_bit(3, trigger);
+        PORTB.set(3, trigger);
     }
 
     pub fn run(

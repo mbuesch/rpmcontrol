@@ -37,7 +37,7 @@ macro_rules! impl_port {
         impl LazyMainInit<$struct> {
             #[inline(always)]
             #[allow(dead_code)]
-            pub fn get_bit(&self, bit: usize) -> bool {
+            pub fn get(&self, bit: usize) -> bool {
                 match bit {
                     0 => $name.$name.$pin.read().$bit0().bit(),
                     1 => $name.$name.$pin.read().$bit1().bit(),
@@ -53,7 +53,7 @@ macro_rules! impl_port {
 
             #[inline(always)]
             #[allow(dead_code)]
-            pub fn set_bit(&self, bit: usize, value: bool) {
+            pub fn set(&self, bit: usize, value: bool) {
                 match bit {
                     0 => $name.$name.$port.modify(|_, w| w.$bit0().bit(value)),
                     1 => $name.$name.$port.modify(|_, w| w.$bit1().bit(value)),
@@ -69,7 +69,7 @@ macro_rules! impl_port {
 
             #[inline(always)]
             #[allow(dead_code)]
-            pub fn set_output(&self, bit: usize) {
+            pub fn output(&self, bit: usize) {
                 match bit {
                     0 => $name.$name.$ddr.modify(|_, w| w.$bit0().set_bit()),
                     1 => $name.$name.$ddr.modify(|_, w| w.$bit1().set_bit()),
@@ -85,7 +85,7 @@ macro_rules! impl_port {
 
             #[inline(always)]
             #[allow(dead_code)]
-            pub fn set_input(&self, bit: usize) {
+            pub fn input(&self, bit: usize) {
                 match bit {
                     0 => $name.$name.$ddr.modify(|_, w| w.$bit0().clear_bit()),
                     1 => $name.$name.$ddr.modify(|_, w| w.$bit1().clear_bit()),

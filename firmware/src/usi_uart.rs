@@ -44,7 +44,7 @@ static TXDATA: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 impl Dp {
     pub fn setup(&self, c: &MainInitCtx) {
         self.USI.usidr.write(|w| w.bits(0xFF));
-        //TODO
+        //TODO enable PCINT
     }
 }
 
@@ -83,8 +83,8 @@ crate::system::debug(1);//XXX
             DP.USI.usicr.modify(|_, w| w.usioie().clear_bit());
             DP.USI.usisr.modify(|_, w| w.usioif().set_bit());
             DP.TC0.tccr0b.write(|w| w);
-            PORTB.set_bit(PORTB_BIT, true);
-            PORTB.set_input(PORTB_BIT);
+            PORTB.set(PORTB_BIT, true);
+            PORTB.input(PORTB_BIT);
             //TODO enable PCINT
             mode.set(Mode::Rx);
         }
@@ -92,17 +92,19 @@ crate::system::debug(1);//XXX
 }
 
 #[rustfmt::skip]
-pub fn uart_tx_cs<'cs>(cs: CriticalSection<'cs>, data: u8) -> bool {
+pub fn uart_tx_cs(cs: CriticalSection<'_>, mut data: u8) -> bool {
 crate::system::debug(1);//XXX
     let mode = MODE.borrow(cs);
     match mode.get() {
         Mode::Rx => {
-            // ready
-            let data = bit_rev(data);
+            data = bit_rev(data);
             TXDATA.borrow(cs).set(data);
-            PORTB.set_bit(PORTB_BIT, true);
-            PORTB.set_output(PORTB_BIT);
+
             DP.TC0.tccr0b.write(|w| w);
+
+            PORTB.set(PORTB_BIT, true);
+            PORTB.output(PORTB_BIT);
+
             DP.USI.usidr.write(|w| w.bits((data >> 2) | 0x80));
             DP.USI.usisr.write(|w| {
                 w.usicnt().bits(16 - 5)
@@ -114,11 +116,13 @@ crate::system::debug(1);//XXX
                  .usics().tc0()
             });
             DP.USI.usipp.write(|w| w);
+
             DP.TC0.tccr0a.write(|w| w.ctc0().set_bit());
             DP.TC0.tcnt0h.write(|w| w);
             DP.TC0.tcnt0l.write(|w| w);
             DP.TC0.ocr0a.write(|w| w.bits(TC0_OCR));
             DP.TC0.tccr0b.write(|w| w.cs0().prescale_8());
+
             mode.set(Mode::Tx0);
             true
         }

@@ -42,10 +42,10 @@ pub struct SysPeriph {
 
 #[allow(dead_code)]
 pub fn debug(ticks: i8) {
-    PORTB.set_bit(6, true);
+    PORTB.set(6, true);
     let end = timer_get() + RelTimestamp::from_ticks(ticks);
     while timer_get() < end {}
-    PORTB.set_bit(6, false);
+    PORTB.set(6, false);
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
