@@ -15,6 +15,7 @@ mod speedo;
 mod system;
 mod timer;
 mod triac;
+mod usi_uart;
 
 use crate::{
     analog::ac_capture_get,
@@ -61,14 +62,20 @@ fn main() -> ! {
     let porta_dp = ports::PortA { PORTA: dp.PORTA };
     let portb_dp = ports::PortB { PORTB: dp.PORTB };
     let timer_dp = timer::Dp { TC1: dp.TC1 };
+    let usi_dp = usi_uart::Dp {
+        USI: dp.USI,
+        TC0: dp.TC0,
+    };
 
     let init_static_vars = |ctx| {
         let porta = ports::PORTA.init(ctx, porta_dp);
         let portb = ports::PORTB.init(ctx, portb_dp);
         timer::DP.init(ctx, timer_dp);
+        let usi_uart = usi_uart::DP.init(ctx, usi_dp);
 
         porta.setup(ctx);
         portb.setup(ctx);
+        usi_uart.setup(ctx);
     };
 
     // SAFETY:

@@ -15,6 +15,8 @@ macro_rules! define_isr {
     };
 }
 
+define_isr!(PCINT, crate::usi_uart::irq_handler_pcint);
+define_isr!(USI_OVF, crate::usi_uart::irq_handler_usi_ovf);
 define_isr!(ANA_COMP, crate::analog::irq_handler_ana_comp);
 
 // vim: ts=4 sw=4 expandtab
