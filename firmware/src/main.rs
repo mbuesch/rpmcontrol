@@ -5,6 +5,7 @@
 #![feature(asm_const)]
 
 mod analog;
+mod debug;
 mod fixpt;
 mod hw;
 mod mains;
@@ -23,6 +24,7 @@ use crate::{
     mutex::{unwrap_option, MainCtx},
     system::{SysPeriph, System},
     timer::timer_init,
+    debug::debug_init,
 };
 
 static SYSTEM: System = System::new();
@@ -76,6 +78,7 @@ fn main() -> ! {
         porta.setup(ctx);
         portb.setup(ctx);
         usi_uart.setup(ctx);
+        debug_init(ctx);
     };
 
     // SAFETY:

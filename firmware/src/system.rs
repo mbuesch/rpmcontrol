@@ -9,6 +9,7 @@ use crate::{
     speedo::{MotorSpeed, Speedo},
     timer::{timer_get, timer_get_large, LargeTimestamp, RelLargeTimestamp, RelTimestamp},
     triac::Triac,
+    debug::Debug,
 };
 
 const RPMPI_DT: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
@@ -137,6 +138,10 @@ impl System {
                     .rpm_pi
                     .run(m, &RPMPI_PARAMS, setpoint, speedo_hz.as_16hz(), false);
                 //let y = setpoint;
+                Debug::Speedo.log_fixpt(speedo_hz);
+                Debug::Setpoint.log_fixpt(setpoint);
+                Debug::PidY.log_fixpt(y);
+
                 let phi_offs_ms = f_to_trig_offs(y);
                 //debug(m, sp, phi_offs_ms.to_int() as i8);
                 self.triac.set_phi_offs_ms(m, phi_offs_ms);

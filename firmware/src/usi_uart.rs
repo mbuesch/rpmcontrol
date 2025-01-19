@@ -6,11 +6,12 @@ use crate::{
     hw::{interrupt, mcu},
     mutex::{CriticalSection, IrqCtx, LazyMainInit, MainInitCtx, Mutex},
     ports::PORTB,
+    debug,
 };
 use core::cell::Cell;
 
 const FCPU: u32 = 16_000_000;
-const BAUD: u32 = 9600;
+const BAUD: u32 = 19_200;
 const PORTB_BIT: usize = 1;
 const TC0_PS: u32 = 8;
 const TC0_OCR: u8 = (FCPU / (BAUD * TC0_PS)) as u8;
@@ -42,7 +43,7 @@ static MODE: Mutex<Cell<Mode>> = Mutex::new(Cell::new(Mode::Rx));
 static TXDATA: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
 impl Dp {
-    pub fn setup(&self, c: &MainInitCtx) {
+    pub fn setup(&self, _c: &MainInitCtx) {
         self.USI.usidr.write(|w| w.bits(0xFF));
         //TODO enable PCINT
     }
@@ -65,35 +66,47 @@ pub fn irq_handler_usi_ovf(c: &IrqCtx) {
     let mode = MODE.borrow(cs);
     match mode.get() {
         Mode::Rx => {
+            let data = bit_rev(DP.USI.usidr.read().bits());
+
+            DP.TC0.tccr0b.write(|w| w);
+
+            DP.USI.usicr.modify(|_, w| w.usioie().clear_bit());
+            DP.USI.usisr.modify(|_, w| w.usioif().set_bit());
+
             //TODO
+
+            debug::rx_complete_callback(c, data);
         }
         Mode::Tx0 => {
-crate::system::debug(1);//XXX
             let data = TXDATA.borrow(cs).get();
             DP.USI.usidr.write(|w| w.bits((data << 3) | 0x07));
             DP.USI.usisr.write(|w| {
                 w.usicnt().bits(16 - 6)
                  .usioif().set_bit()
             });
+
             mode.set(Mode::Tx1);
         }
         Mode::Tx1 => {
-crate::system::debug(1);//XXX
             DP.USI.usidr.write(|w| w.bits(0xFF));
             DP.USI.usicr.modify(|_, w| w.usioie().clear_bit());
             DP.USI.usisr.modify(|_, w| w.usioif().set_bit());
+
             DP.TC0.tccr0b.write(|w| w);
+
             PORTB.set(PORTB_BIT, true);
             PORTB.input(PORTB_BIT);
+
             //TODO enable PCINT
+
             mode.set(Mode::Rx);
+            debug::tx_complete_callback(c);
         }
     }
 }
 
 #[rustfmt::skip]
 pub fn uart_tx_cs(cs: CriticalSection<'_>, mut data: u8) -> bool {
-crate::system::debug(1);//XXX
     let mode = MODE.borrow(cs);
     match mode.get() {
         Mode::Rx => {
@@ -130,6 +143,7 @@ crate::system::debug(1);//XXX
     }
 }
 
+#[allow(dead_code)]
 pub fn uart_tx(data: u8) -> bool {
     interrupt::free(|cs| uart_tx_cs(cs, data))
 }
