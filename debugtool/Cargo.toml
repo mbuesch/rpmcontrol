@@ -1,0 +1,13 @@
+[package]
+name = "debugtool"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = [ "derive" ] }
+gtk4 = "0.9"
+plotters = "0.3"
+plotters-cairo = "0.7"
+serialport = "4"
