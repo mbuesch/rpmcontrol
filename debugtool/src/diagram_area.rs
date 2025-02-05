@@ -5,7 +5,7 @@ use plotters_cairo::CairoBackend;
 use std::{cell::RefCell, rc::Rc};
 
 pub struct DiagramArea {
-    _area: gtk::DrawingArea,
+    area: gtk::DrawingArea,
 }
 
 impl DiagramArea {
@@ -20,7 +20,11 @@ impl DiagramArea {
             draw(CairoBackend::new(cr, (width as u32, height as u32)).unwrap())
         });
 
-        Rc::new(RefCell::new(Self { _area: area }))
+        Rc::new(RefCell::new(Self { area }))
+    }
+
+    pub fn redraw(&self) {
+        self.area.queue_draw();
     }
 }
 // vim: ts=4 sw=4 expandtab

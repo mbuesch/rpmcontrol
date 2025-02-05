@@ -6,7 +6,7 @@ mod diagram_area;
 mod main_window;
 mod serial;
 
-use crate::serial::{run_serial, SerBuf};
+use crate::serial::{run_serial, SerDat};
 use anyhow as ah;
 use clap::Parser;
 use gtk4::{self as gtk, gio, prelude::*};
@@ -21,7 +21,7 @@ struct Opts {
     port: Option<String>,
 }
 
-fn app_fn(app: &gtk::Application, ser_notify_rx: Arc<mpsc::Receiver<SerBuf>>) {
+fn app_fn(app: &gtk::Application, ser_notify_rx: Arc<mpsc::Receiver<SerDat>>) {
     let window = main_window::MainWindow::new(app, ser_notify_rx).unwrap();
     window.borrow().application_window().present();
 }
@@ -36,7 +36,7 @@ fn main() -> ah::Result<()> {
             if let Err(e) = run_serial(&opts.port, &ser_notify_tx) {
                 eprintln!("Serial error: {e:?}");
             }
-            thread::sleep(Duration::from_millis(5000));
+            thread::sleep(Duration::from_millis(1000));
         });
 
         let ser_notify_rx = Arc::new(ser_notify_rx);
