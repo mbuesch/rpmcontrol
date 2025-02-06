@@ -82,7 +82,7 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
     area.fill(&WHITE).unwrap();
 
     let n_min = 0.0;
-    let n_max = 3000.0;
+    let n_max = 10000.0;
 
     let t_min = diagram_data.oldest_timestamp();
     let t_max = diagram_data.newest_timestamp();
@@ -102,17 +102,23 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
         .draw()
         .unwrap();
 
-    let items = [
-        (&diagram_data.speedo, "speedo", &RED),
-        (&diagram_data.setpoint, "setpoint", &BLUE),
-        (&diagram_data.pid_y, "pid-Y", &GREEN),
-    ];
-    for (buf, name, color) in &items {
-        chart
-            .draw_series(LineSeries::new(buf.iter().copied(), color))
-            .unwrap()
-            .label(*name); //.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], color));
-    }
+    chart
+        .draw_series(LineSeries::new(diagram_data.speedo.iter().copied(), RED))
+        .unwrap()
+        .label("speedo")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], RED));
+
+    chart
+        .draw_series(LineSeries::new(diagram_data.setpoint.iter().copied(), BLUE))
+        .unwrap()
+        .label("setpoint")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], BLUE));
+
+    chart
+        .draw_series(LineSeries::new(diagram_data.pid_y.iter().copied(), MAGENTA))
+        .unwrap()
+        .label("pid-Y")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], MAGENTA));
 
     chart
         .configure_series_labels()
