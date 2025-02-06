@@ -2,9 +2,9 @@
 
 use anyhow::{self as ah, format_err as err, Context as _};
 use std::{
+    collections::VecDeque,
     sync::mpsc,
     time::{Duration, Instant},
-    collections::VecDeque,
 };
 
 const BAUD: u32 = 19_200;
@@ -16,6 +16,7 @@ pub enum SerDat {
     Speedo(Instant, f64),
     Setpoint(Instant, f64),
     PidY(Instant, f64),
+    #[allow(dead_code)]
     Sync(Instant),
 }
 

@@ -5,12 +5,11 @@ use anyhow as ah;
 use gtk4::{self as gtk, glib, prelude::*};
 use plotters::prelude::*;
 use plotters_cairo::CairoBackend;
-use rand::prelude::*;
 use std::{
     cell::RefCell,
     collections::VecDeque,
     rc::Rc,
-    sync::{mpsc, Arc},
+    sync::mpsc,
     time::{Duration, Instant},
 };
 
@@ -31,6 +30,20 @@ impl DiagramData {
             setpoint: VecDeque::new(),
             pid_y: VecDeque::new(),
         }
+    }
+
+    pub fn oldest_timestamp(&self) -> f64 {
+        let a = self.speedo.front().map(|(t, _)| *t).unwrap_or(0.0);
+        let b = self.setpoint.front().map(|(t, _)| *t).unwrap_or(0.0);
+        let c = self.pid_y.front().map(|(t, _)| *t).unwrap_or(0.0);
+        a.min(b).min(c)
+    }
+
+    pub fn newest_timestamp(&self) -> f64 {
+        let a = self.speedo.back().map(|(t, _)| *t).unwrap_or(20.0);
+        let b = self.setpoint.back().map(|(t, _)| *t).unwrap_or(20.0);
+        let c = self.pid_y.back().map(|(t, _)| *t).unwrap_or(20.0);
+        a.max(b).max(c)
     }
 
     fn timestamp(&self, t: Instant) -> f64 {
@@ -63,47 +76,54 @@ impl DiagramData {
 }
 
 fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
+    let diagram_data = diagram_data.borrow();
+
     let area = backend.into_drawing_area();
     area.fill(&WHITE).unwrap();
+
+    let n_min = 0.0;
+    let n_max = 3000.0;
+
+    let t_min = diagram_data.oldest_timestamp();
+    let t_max = diagram_data.newest_timestamp();
+
     let mut chart = ChartBuilder::on(&area)
         .caption("rpmcontrol", ("sans-serif", 12).into_font())
         .margin(10)
         .x_label_area_size(30)
-        .y_label_area_size(30)
-        .build_cartesian_2d(0.0..20.0, 0.0..3000.0)
+        .y_label_area_size(60)
+        .build_cartesian_2d(t_min..t_max, n_min..n_max)
         .unwrap();
+
     chart
         .configure_mesh()
         .x_desc("time")
         .y_desc("RPM")
         .draw()
         .unwrap();
-    /*
-    chart
-        .draw_series(LineSeries::new((0..10).map(|x| (x, x * x)), &RED))
-        .unwrap()
-        .label("speedo")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));*/
-    let mut rng = rand::rng();
-    let fac: f64 = rng.random_range(1.0..3.0);
-    chart
-        .draw_series(LineSeries::new(
-            (5..500).map(|x| (x as f64 / 50.0, x as f64 * fac)),
-            &BLUE,
-        ))
-        .unwrap()
-        .label("setpoint")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLUE));
+
+    let items = [
+        (&diagram_data.speedo, "speedo", &RED),
+        (&diagram_data.setpoint, "setpoint", &BLUE),
+        (&diagram_data.pid_y, "pid-Y", &GREEN),
+    ];
+    for (buf, name, color) in &items {
+        chart
+            .draw_series(LineSeries::new(buf.iter().copied(), color))
+            .unwrap()
+            .label(*name); //.legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], color));
+    }
+
     chart
         .configure_series_labels()
-        .background_style(&WHITE)
-        .border_style(&BLACK)
+        .background_style(WHITE)
+        .border_style(BLACK)
         .draw()
         .unwrap();
 }
 
 fn periodic_work(
-    ser_rx: Arc<mpsc::Receiver<SerDat>>,
+    ser_rx: Rc<mpsc::Receiver<SerDat>>,
     diagram_area: Rc<RefCell<DiagramArea>>,
     diagram_data: Rc<RefCell<DiagramData>>,
 ) {
@@ -118,14 +138,14 @@ fn periodic_work(
 
 pub struct MainWindow {
     appwindow: gtk::ApplicationWindow,
-    diagram_area: Rc<RefCell<DiagramArea>>,
-    diagram_data: Rc<RefCell<DiagramData>>,
+    _diagram_area: Rc<RefCell<DiagramArea>>,
+    _diagram_data: Rc<RefCell<DiagramData>>,
 }
 
 impl MainWindow {
     pub fn new(
         app: &gtk::Application,
-        ser_rx: Arc<mpsc::Receiver<SerDat>>,
+        ser_rx: Rc<mpsc::Receiver<SerDat>>,
     ) -> ah::Result<Rc<RefCell<Self>>> {
         let builder = gtk::Builder::from_string(include_str!("main_window.glade"));
 
@@ -145,7 +165,7 @@ impl MainWindow {
             let diagram_data = Rc::clone(&diagram_data);
             move || {
                 periodic_work(
-                    Arc::clone(&ser_rx),
+                    Rc::clone(&ser_rx),
                     Rc::clone(&diagram_area),
                     Rc::clone(&diagram_data),
                 );
@@ -155,8 +175,8 @@ impl MainWindow {
 
         Ok(Rc::new(RefCell::new(Self {
             appwindow,
-            diagram_area,
-            diagram_data,
+            _diagram_area: diagram_area,
+            _diagram_data: diagram_data,
         })))
     }
 

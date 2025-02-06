@@ -10,18 +10,14 @@ use crate::serial::{run_serial, SerDat};
 use anyhow as ah;
 use clap::Parser;
 use gtk4::{self as gtk, gio, prelude::*};
-use std::{
-    sync::{mpsc, Arc},
-    thread,
-    time::Duration,
-};
+use std::{rc::Rc, sync::mpsc, thread, time::Duration};
 
 #[derive(Parser, Debug)]
 struct Opts {
     port: Option<String>,
 }
 
-fn app_fn(app: &gtk::Application, ser_notify_rx: Arc<mpsc::Receiver<SerDat>>) {
+fn app_fn(app: &gtk::Application, ser_notify_rx: Rc<mpsc::Receiver<SerDat>>) {
     let window = main_window::MainWindow::new(app, ser_notify_rx).unwrap();
     window.borrow().application_window().present();
 }
@@ -39,13 +35,13 @@ fn main() -> ah::Result<()> {
             thread::sleep(Duration::from_millis(1000));
         });
 
-        let ser_notify_rx = Arc::new(ser_notify_rx);
+        let ser_notify_rx = Rc::new(ser_notify_rx);
 
         let app = gtk::Application::builder()
             .flags(gio::ApplicationFlags::FLAGS_NONE)
             .application_id("ch.bues.rpmcontrol.debugtool")
             .build();
-        app.connect_activate(move |app| app_fn(app, Arc::clone(&ser_notify_rx)));
+        app.connect_activate(move |app| app_fn(app, Rc::clone(&ser_notify_rx)));
         let args: Vec<&str> = vec![];
         std::process::exit(app.run_with_args(&args).into())
     });
