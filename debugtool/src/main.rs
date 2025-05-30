@@ -6,7 +6,7 @@ mod diagram_area;
 mod main_window;
 mod serial;
 
-use crate::serial::{run_serial, SerDat};
+use crate::serial::{SerDat, run_serial};
 use anyhow as ah;
 use clap::Parser;
 use gtk4::{self as gtk, gio, prelude::*};
@@ -28,11 +28,13 @@ fn main() -> ah::Result<()> {
     let (ser_notify_tx, ser_notify_rx) = mpsc::channel();
 
     thread::scope(|s| {
-        s.spawn(|| loop {
-            if let Err(e) = run_serial(&opts.port, &ser_notify_tx) {
-                eprintln!("Serial error: {e:?}");
+        s.spawn(|| {
+            loop {
+                if let Err(e) = run_serial(&opts.port, &ser_notify_tx) {
+                    eprintln!("Serial error: {e:?}");
+                }
+                thread::sleep(Duration::from_millis(1000));
             }
-            thread::sleep(Duration::from_millis(1000));
         });
 
         let ser_notify_rx = Rc::new(ser_notify_rx);

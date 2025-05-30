@@ -67,7 +67,9 @@ impl DiagramData {
         let age_thres = self.timestamp(now - T_INTERVAL);
         match dat {
             SerDat::Speedo(t, val) => self.speedo.push_back((self.timestamp(t), val)),
-            SerDat::SpeedoStatus(t, val) => self.speedo_status.push_back((self.timestamp(t), val as f64 * 100.0)),
+            SerDat::SpeedoStatus(t, val) => self
+                .speedo_status
+                .push_back((self.timestamp(t), val as f64 * 100.0)),
             SerDat::Setpoint(t, val) => self.setpoint.push_back((self.timestamp(t), val)),
             SerDat::PidY(t, val) => self.pid_y.push_back((self.timestamp(t), val)),
             SerDat::Sync(_) => (),

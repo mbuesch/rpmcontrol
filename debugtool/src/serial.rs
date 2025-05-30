@@ -1,6 +1,6 @@
 // -*- coding: utf-8 -*-
 
-use anyhow::{self as ah, format_err as err, Context as _};
+use anyhow::{self as ah, Context as _, format_err as err};
 use std::{
     collections::VecDeque,
     sync::mpsc,
