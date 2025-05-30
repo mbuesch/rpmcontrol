@@ -1,7 +1,7 @@
 (kicad_sch
-	(version 20231120)
+	(version 20250114)
 	(generator "eeschema")
-	(generator_version "8.0")
+	(generator_version "9.0")
 	(uuid "bf304f6f-7332-4fe0-a076-86722bdadf88")
 	(paper "A4")
 	(title_block
@@ -12,9 +12,13 @@
 	)
 	(lib_symbols
 		(symbol "Device:L"
-			(pin_numbers hide)
+			(pin_numbers
+				(hide yes)
+			)
 			(pin_names
-				(offset 1.016) hide)
+				(offset 1.016)
+				(hide yes)
+			)
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
@@ -81,32 +85,8 @@
 			)
 			(symbol "L_0_1"
 				(arc
-					(start 0 -2.54)
-					(mid 0.6323 -1.905)
-					(end 0 -1.27)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 0 -1.27)
-					(mid 0.6323 -0.635)
-					(end 0 0)
-					(stroke
-						(width 0)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(arc
-					(start 0 0)
-					(mid 0.6323 0.635)
+					(start 0 2.54)
+					(mid 0.6323 1.905)
 					(end 0 1.27)
 					(stroke
 						(width 0)
@@ -118,8 +98,32 @@
 				)
 				(arc
 					(start 0 1.27)
-					(mid 0.6323 1.905)
-					(end 0 2.54)
+					(mid 0.6323 0.635)
+					(end 0 0)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 0)
+					(mid 0.6323 -0.635)
+					(end 0 -1.27)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start 0 -1.27)
+					(mid 0.6323 -1.905)
+					(end 0 -2.54)
 					(stroke
 						(width 0)
 						(type default)
@@ -167,7 +171,18 @@
 					)
 				)
 			)
+			(embedded_fonts no)
 		)
+	)
+	(text "4-pole rotating magnet\ninduces current into L"
+		(exclude_from_sim no)
+		(at 144.526 68.326 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "0d278a40-2216-4b99-a375-dd540ffb4219")
 	)
 	(wire
 		(pts
@@ -209,20 +224,9 @@
 		)
 		(uuid "d4e85621-c179-45c6-a87b-92ce2390ae8c")
 	)
-	(text "4-pole rotating magnet\ninduces current into L"
-		(exclude_from_sim no)
-		(at 144.526 68.326 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "0d278a40-2216-4b99-a375-dd540ffb4219")
-	)
-	(hierarchical_label "neg"
+	(hierarchical_label "b"
 		(shape input)
 		(at 152.4 90.17 270)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -231,10 +235,9 @@
 		)
 		(uuid "c37081d7-374b-4e53-a8b8-238ed509f590")
 	)
-	(hierarchical_label "pos"
+	(hierarchical_label "a"
 		(shape input)
 		(at 137.16 90.17 270)
-		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
