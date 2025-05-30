@@ -39,14 +39,14 @@ macro_rules! impl_port {
             #[allow(dead_code)]
             pub fn get(&self, bit: usize) -> bool {
                 match bit {
-                    0 => $name.$name.$pin.read().$bit0().bit(),
-                    1 => $name.$name.$pin.read().$bit1().bit(),
-                    2 => $name.$name.$pin.read().$bit2().bit(),
-                    3 => $name.$name.$pin.read().$bit3().bit(),
-                    4 => $name.$name.$pin.read().$bit4().bit(),
-                    5 => $name.$name.$pin.read().$bit5().bit(),
-                    6 => $name.$name.$pin.read().$bit6().bit(),
-                    7 => $name.$name.$pin.read().$bit7().bit(),
+                    0 => $name.$name.$pin().read().$bit0().bit(),
+                    1 => $name.$name.$pin().read().$bit1().bit(),
+                    2 => $name.$name.$pin().read().$bit2().bit(),
+                    3 => $name.$name.$pin().read().$bit3().bit(),
+                    4 => $name.$name.$pin().read().$bit4().bit(),
+                    5 => $name.$name.$pin().read().$bit5().bit(),
+                    6 => $name.$name.$pin().read().$bit6().bit(),
+                    7 => $name.$name.$pin().read().$bit7().bit(),
                     _ => unreachable!(),
                 }
             }
@@ -55,48 +55,48 @@ macro_rules! impl_port {
             #[allow(dead_code)]
             pub fn set(&self, bit: usize, value: bool) {
                 match bit {
-                    0 => $name.$name.$port.modify(|_, w| w.$bit0().bit(value)),
-                    1 => $name.$name.$port.modify(|_, w| w.$bit1().bit(value)),
-                    2 => $name.$name.$port.modify(|_, w| w.$bit2().bit(value)),
-                    3 => $name.$name.$port.modify(|_, w| w.$bit3().bit(value)),
-                    4 => $name.$name.$port.modify(|_, w| w.$bit4().bit(value)),
-                    5 => $name.$name.$port.modify(|_, w| w.$bit5().bit(value)),
-                    6 => $name.$name.$port.modify(|_, w| w.$bit6().bit(value)),
-                    7 => $name.$name.$port.modify(|_, w| w.$bit7().bit(value)),
+                    0 => $name.$name.$port().modify(|_, w| w.$bit0().bit(value)),
+                    1 => $name.$name.$port().modify(|_, w| w.$bit1().bit(value)),
+                    2 => $name.$name.$port().modify(|_, w| w.$bit2().bit(value)),
+                    3 => $name.$name.$port().modify(|_, w| w.$bit3().bit(value)),
+                    4 => $name.$name.$port().modify(|_, w| w.$bit4().bit(value)),
+                    5 => $name.$name.$port().modify(|_, w| w.$bit5().bit(value)),
+                    6 => $name.$name.$port().modify(|_, w| w.$bit6().bit(value)),
+                    7 => $name.$name.$port().modify(|_, w| w.$bit7().bit(value)),
                     _ => unreachable!(),
-                }
+                };
             }
 
             #[inline(always)]
             #[allow(dead_code)]
             pub fn output(&self, bit: usize) {
                 match bit {
-                    0 => $name.$name.$ddr.modify(|_, w| w.$bit0().set_bit()),
-                    1 => $name.$name.$ddr.modify(|_, w| w.$bit1().set_bit()),
-                    2 => $name.$name.$ddr.modify(|_, w| w.$bit2().set_bit()),
-                    3 => $name.$name.$ddr.modify(|_, w| w.$bit3().set_bit()),
-                    4 => $name.$name.$ddr.modify(|_, w| w.$bit4().set_bit()),
-                    5 => $name.$name.$ddr.modify(|_, w| w.$bit5().set_bit()),
-                    6 => $name.$name.$ddr.modify(|_, w| w.$bit6().set_bit()),
-                    7 => $name.$name.$ddr.modify(|_, w| w.$bit7().set_bit()),
+                    0 => $name.$name.$ddr().modify(|_, w| w.$bit0().set_bit()),
+                    1 => $name.$name.$ddr().modify(|_, w| w.$bit1().set_bit()),
+                    2 => $name.$name.$ddr().modify(|_, w| w.$bit2().set_bit()),
+                    3 => $name.$name.$ddr().modify(|_, w| w.$bit3().set_bit()),
+                    4 => $name.$name.$ddr().modify(|_, w| w.$bit4().set_bit()),
+                    5 => $name.$name.$ddr().modify(|_, w| w.$bit5().set_bit()),
+                    6 => $name.$name.$ddr().modify(|_, w| w.$bit6().set_bit()),
+                    7 => $name.$name.$ddr().modify(|_, w| w.$bit7().set_bit()),
                     _ => unreachable!(),
-                }
+                };
             }
 
             #[inline(always)]
             #[allow(dead_code)]
             pub fn input(&self, bit: usize) {
                 match bit {
-                    0 => $name.$name.$ddr.modify(|_, w| w.$bit0().clear_bit()),
-                    1 => $name.$name.$ddr.modify(|_, w| w.$bit1().clear_bit()),
-                    2 => $name.$name.$ddr.modify(|_, w| w.$bit2().clear_bit()),
-                    3 => $name.$name.$ddr.modify(|_, w| w.$bit3().clear_bit()),
-                    4 => $name.$name.$ddr.modify(|_, w| w.$bit4().clear_bit()),
-                    5 => $name.$name.$ddr.modify(|_, w| w.$bit5().clear_bit()),
-                    6 => $name.$name.$ddr.modify(|_, w| w.$bit6().clear_bit()),
-                    7 => $name.$name.$ddr.modify(|_, w| w.$bit7().clear_bit()),
+                    0 => $name.$name.$ddr().modify(|_, w| w.$bit0().clear_bit()),
+                    1 => $name.$name.$ddr().modify(|_, w| w.$bit1().clear_bit()),
+                    2 => $name.$name.$ddr().modify(|_, w| w.$bit2().clear_bit()),
+                    3 => $name.$name.$ddr().modify(|_, w| w.$bit3().clear_bit()),
+                    4 => $name.$name.$ddr().modify(|_, w| w.$bit4().clear_bit()),
+                    5 => $name.$name.$ddr().modify(|_, w| w.$bit5().clear_bit()),
+                    6 => $name.$name.$ddr().modify(|_, w| w.$bit6().clear_bit()),
+                    7 => $name.$name.$ddr().modify(|_, w| w.$bit7().clear_bit()),
                     _ => unreachable!(),
-                }
+                };
             }
         }
     };
@@ -128,7 +128,7 @@ impl PortA {
     pub fn setup(&self, _: &MainInitCtx) {
         // SAFETY: Called with interrupts disabled. Ensured by &MainInitCtx.
         unsafe {
-            self.PORTA.porta.write(|w| {
+            self.PORTA.porta().write(|w| {
                 w.bits(
                     pin_floating(0) | // setpoint, single ended ADC
                     pin_floating(1) | // vsense, single ended ADC
@@ -140,7 +140,7 @@ impl PortA {
                     pin_floating(7), // speedoref, AD comparator neg
                 )
             });
-            self.PORTA.ddra.write(|w| {
+            self.PORTA.ddra().write(|w| {
                 w.bits(
                     pin_input(0) | // setpoint, single ended ADC
                     pin_input(1) | // vsense, single ended ADC
@@ -160,7 +160,7 @@ impl PortB {
     pub fn setup(&self, _: &MainInitCtx) {
         // SAFETY: Called with interrupts disabled. Ensured by &MainInitCtx.
         unsafe {
-            self.PORTB.portb.write(|w| {
+            self.PORTB.portb().write(|w| {
                 w.bits(
                     pin_low(0) | // ISP MOSI + UART DI
                     pin_pullup(1) | // ISP MISO + UART DO
@@ -172,7 +172,7 @@ impl PortB {
                     pin_floating(7), // RESET, active low
                 )
             });
-            self.PORTB.ddrb.write(|w| {
+            self.PORTB.ddrb().write(|w| {
                 w.bits(
                     pin_input(0) | // ISP MOSI + UART DI
                     pin_input(1) | // ISP MISO + UART DO

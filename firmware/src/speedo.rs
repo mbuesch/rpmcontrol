@@ -1,9 +1,10 @@
 use crate::{
     analog::AcCapture,
+    debug::Debug,
     fixpt::Fixpt,
     mutex::{MainCtx, MutexCell},
     system::SysPeriph,
-    timer::{timer_get, RelTimestamp, Timestamp, TIMER_TICK_US},
+    timer::{timer_get_large, LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US},
 };
 
 /// 2 edge (rising falling) in AC capture.
@@ -22,9 +23,8 @@ impl MotorSpeed {
         Self(Fixpt::from_int(0))
     }
 
-    fn from_period_dur(dur: RelTimestamp) -> Self {
-        let dur: i8 = dur.into();
-        let dur: u8 = dur as _;
+    fn from_period_dur(dur: RelLargeTimestamp) -> Self {
+        let dur: i16 = dur.into();
 
         // fact 2 to avoid rounding error.
         let num = (1_000_000 / (TIMER_TICK_US as u32 * (SPEEDO_FACT / 2))) as u16;
@@ -40,15 +40,15 @@ impl MotorSpeed {
 
 pub struct Speedo {
     ok_count: MutexCell<u8>,
-    prev_stamp: MutexCell<Timestamp>,
-    dur: [MutexCell<u8>; 4],
+    prev_stamp: MutexCell<LargeTimestamp>,
+    dur: [MutexCell<i16>; 4],
 }
 
 impl Speedo {
     pub const fn new() -> Self {
         Self {
             ok_count: MutexCell::new(0),
-            prev_stamp: MutexCell::new(Timestamp::new()),
+            prev_stamp: MutexCell::new(LargeTimestamp::new()),
             dur: [
                 MutexCell::new(0),
                 MutexCell::new(0),
@@ -66,27 +66,26 @@ impl Speedo {
         }
     }
 
-    pub fn get_dur(&self, m: &MainCtx<'_>) -> RelTimestamp {
-        let a = self.dur[0].get(m) as u16;
-        let b = self.dur[1].get(m) as u16;
-        let c = self.dur[2].get(m) as u16;
-        let d = self.dur[3].get(m) as u16;
-        let dur: u8 = ((a + b + c + d) / 4) as _;
-        let dur: i8 = dur as _;
+    fn get_dur(&self, m: &MainCtx<'_>) -> RelLargeTimestamp {
+        let a = self.dur[0].get(m) as i32;
+        let b = self.dur[1].get(m) as i32;
+        let c = self.dur[2].get(m) as i32;
+        let d = self.dur[3].get(m) as i32;
+        let dur: i16 = ((a + b + c + d) / 4) as _;
         dur.into()
     }
 
-    fn new_duration(&self, m: &MainCtx<'_>, dur: RelTimestamp) {
-        let dur: i8 = dur.into();
+    fn new_duration(&self, m: &MainCtx<'_>, dur: RelLargeTimestamp) {
+        let dur: i16 = dur.into();
         self.dur[0].set(m, self.dur[1].get(m));
         self.dur[1].set(m, self.dur[2].get(m));
         self.dur[2].set(m, self.dur[3].get(m));
-        self.dur[3].set(m, dur as _);
+        self.dur[3].set(m, dur);
         self.ok_count.set(m, self.ok_count.get(m).saturating_add(1));
     }
 
     pub fn update(&self, m: &MainCtx<'_>, _sp: &SysPeriph, ac: &AcCapture) {
-        let now = timer_get();
+        let now = timer_get_large();
         let prev_stamp = self.prev_stamp.get(m);
         if now < prev_stamp {
             // prev_stamp wrapped. Drop it.
@@ -103,6 +102,8 @@ impl Speedo {
             }
             self.prev_stamp.set(m, ac_stamp);
         }
+
+        Debug::SpeedoStatus.log_u16(self.ok_count.get(m) as u16);
     }
 }
 

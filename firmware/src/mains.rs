@@ -40,10 +40,11 @@ impl Mains {
 
     pub fn run(&self, m: &MainCtx<'_>) -> PhaseUpdate {
         let vsense = self.read_vsense(m);
-        let now = timer_get_large(m);
+        let now = timer_get_large();
         let mut ret = PhaseUpdate::NotChanged;
         match self.phase.get(m) {
             Phase::Notsync | Phase::NegHalfwave => {
+                //TODO filter
                 if !self.prev_vsense.get(m) && vsense {
                     self.phaseref.set(m, now);
                     self.phase.set(m, Phase::PosHalfwave);

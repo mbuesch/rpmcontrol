@@ -1,7 +1,8 @@
 use crate::{
-    hw::mcu,
-    mutex::{LazyMainInit, MainCtx, MutexCell},
+    hw::{interrupt, mcu, Mutex},
+    mutex::{CriticalSection, LazyMainInit, MainCtx},
 };
+use core::cell::Cell;
 
 #[allow(non_snake_case)]
 pub struct Dp {
@@ -11,7 +12,7 @@ pub struct Dp {
 // SAFETY: Is initialized when constructing the MainCtx.
 pub static DP: LazyMainInit<Dp> = unsafe { LazyMainInit::uninit() };
 
-static TIMER_UPPER: MutexCell<u8> = MutexCell::new(0);
+static TIMER_UPPER: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
 pub const TIMER_TICK_US: u8 = 16; // 16 us per tick.
 
@@ -19,41 +20,44 @@ pub const TIMER_TICK_US: u8 = 16; // 16 us per tick.
 pub fn timer_init(_m: &MainCtx) {
     // Timer 1 configuration:
     // CS: 256 -> 16 us per timer tick.
-    DP.TC1.tc1h.write(|w| w);
-    DP.TC1.tcnt1.write(|w| w);
-    DP.TC1.tccr1a.write(|w| w);
-    DP.TC1.tccr1c.write(|w| w);
-    DP.TC1.tccr1d.write(|w| w);
-    DP.TC1.tccr1e.write(|w| w);
-    DP.TC1.ocr1a.write(|w| w.bits(0xFF));
-    DP.TC1.ocr1b.write(|w| w.bits(0xFF));
-    DP.TC1.ocr1c.write(|w| w.bits(0xFF)); // TOP value
-    DP.TC1.ocr1d.write(|w| w.bits(0xFF));
-    DP.TC1.dt1.write(|w| w);
-    DP.TC1.tccr1b.write(|w| w.cs1().prescale_256());
+    DP.TC1.tc1h().write(|w| w);
+    DP.TC1.tcnt1().write(|w| w);
+    DP.TC1.tccr1a().write(|w| w);
+    DP.TC1.tccr1c().write(|w| w);
+    DP.TC1.tccr1d().write(|w| w);
+    DP.TC1.tccr1e().write(|w| w);
+    DP.TC1.ocr1a().write(|w| unsafe { w.bits(0xFF) });
+    DP.TC1.ocr1b().write(|w| unsafe { w.bits(0xFF) });
+    DP.TC1.ocr1c().write(|w| unsafe { w.bits(0xFF) }); // TOP value
+    DP.TC1.ocr1d().write(|w| unsafe { w.bits(0xFF) });
+    DP.TC1.dt1().write(|w| w);
+    DP.TC1.tccr1b().write(|w| w.cs1().prescale_256());
 }
 
 // SAFETY: This function may only do atomic-read-only accesses, because it's
 //         called from all contexts, including interrupt context.
 #[inline(always)]
 pub fn timer_get() -> Timestamp {
-    DP.TC1.tcnt1.read().bits().into()
+    DP.TC1.tcnt1().read().bits().into()
 }
 
-#[inline(never)]
-pub fn timer_get_large(m: &MainCtx) -> LargeTimestamp {
-    let mut upper = TIMER_UPPER.get(m);
-    let mut lower = DP.TC1.tcnt1.read().bits();
+pub fn timer_get_large_cs(cs: CriticalSection<'_>) -> LargeTimestamp {
+    let mut upper = TIMER_UPPER.borrow(cs).get();
+    let mut lower = DP.TC1.tcnt1().read().bits();
 
     // Increment the upper part, if the lower part had an overflow.
-    if DP.TC1.tifr.read().tov1().bit() {
-        DP.TC1.tifr.write(|w| w.tov1().set_bit());
-        lower = DP.TC1.tcnt1.read().bits();
+    if DP.TC1.tifr().read().tov1().bit() {
+        DP.TC1.tifr().write(|w| w.tov1().set_bit());
+        lower = DP.TC1.tcnt1().read().bits();
         upper = upper.wrapping_add(1);
-        TIMER_UPPER.set(m, upper);
+        TIMER_UPPER.borrow(cs).set(upper);
     }
 
     ((upper as u16) << 8 | lower as u16).into()
+}
+
+pub fn timer_get_large() -> LargeTimestamp {
+    interrupt::free(timer_get_large_cs)
 }
 
 macro_rules! impl_timestamp {

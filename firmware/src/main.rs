@@ -2,7 +2,6 @@
 #![no_main]
 #![feature(abi_avr_interrupt)]
 #![feature(asm_experimental_arch)]
-#![feature(asm_const)]
 
 mod analog;
 mod debug;
@@ -20,11 +19,11 @@ mod usi_uart;
 
 use crate::{
     analog::ac_capture_get,
+    debug::debug_init,
     hw::{interrupt, mcu, Peripherals},
     mutex::{unwrap_option, MainCtx},
     system::{SysPeriph, System},
     timer::timer_init,
-    debug::debug_init,
 };
 
 static SYSTEM: System = System::new();

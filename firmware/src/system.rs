@@ -1,5 +1,6 @@
 use crate::{
     analog::{Ac, AcCapture, Adc, AdcChannel},
+    debug::Debug,
     fixpt::{fixpt, Fixpt},
     hw::mcu,
     mains::Mains,
@@ -9,15 +10,15 @@ use crate::{
     speedo::{MotorSpeed, Speedo},
     timer::{timer_get, timer_get_large, LargeTimestamp, RelLargeTimestamp, RelTimestamp},
     triac::Triac,
-    debug::Debug,
 };
 
 const RPMPI_DT: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
 const RPMPI_PARAMS: PiParams = PiParams {
-    kp: fixpt!(10 / 1), //TODO
-    ki: fixpt!(1 / 10), //TODO
-    ilim: fixpt!(10 / 1),
+    kp: fixpt!(2 / 1), //TODO
+    ki: fixpt!(0 / 2), //TODO
+    ilim: fixpt!(1 / 1),
 };
+const RPM_SYNC_THRES_16HZ: Fixpt = fixpt!(1 / 4);
 
 /// Convert 0..0x3FF to 0..128 Hz to 0..8 16Hz
 fn setpoint_to_f(adc: u16) -> Fixpt {
@@ -53,15 +54,19 @@ pub fn debug(ticks: i8) {
 #[repr(u8)]
 enum SysState {
     /// POR system check.
-    Check,
+    PorCheck,
+    /// Speedometer syncing.
+    Syncing,
     /// Up and running.
-    Run,
+    Running,
 }
 
 pub struct System {
+    state: MutexCell<SysState>,
     ac: Ac,
     adc: Adc,
     speedo: Speedo,
+    prev_speed: MutexCell<MotorSpeed>,
     mains: Mains,
     rpm_pi: Pi,
     next_rpm_pi: MutexCell<LargeTimestamp>,
@@ -71,9 +76,11 @@ pub struct System {
 impl System {
     pub const fn new() -> Self {
         Self {
+            state: MutexCell::new(SysState::PorCheck),
             ac: Ac::new(),
             adc: Adc::new(),
             speedo: Speedo::new(),
+            prev_speed: MutexCell::new(MotorSpeed::zero()),
             mains: Mains::new(),
             rpm_pi: Pi::new(),
             next_rpm_pi: MutexCell::new(LargeTimestamp::new()),
@@ -117,7 +124,33 @@ impl System {
 
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph, ac: AcCapture) {
         self.speedo.update(m, sp, &ac);
-        let speedo_hz = self.speedo.get_speed(m).unwrap_or(MotorSpeed::zero());
+        let mut speedo_hz;
+
+        let phase_update = self.mains.run(m);
+        match self.state.get(m) {
+            SysState::PorCheck => {
+                //TODO
+                self.state.set(m, SysState::Syncing);
+                speedo_hz = fixpt!(0 / 1);
+            }
+            SysState::Syncing => {
+                self.prev_speed.set(m, MotorSpeed::zero());
+                speedo_hz = fixpt!(0 / 1);
+                if self.speedo.get_speed(m).is_some() {
+                    self.state.set(m, SysState::Running);
+                }
+            }
+            SysState::Running => {
+                let speed = self.speedo.get_speed(m);
+                if let Some(speed) = speed {
+                    speedo_hz = speed.as_16hz();
+                    self.prev_speed.set(m, speed);
+                } else {
+                    self.prev_speed.set(m, MotorSpeed::zero());
+                    speedo_hz = self.prev_speed.get(m).as_16hz();
+                }
+            }
+        }
 
         let phase_update = self.mains.run(m);
         let phase = self.mains.get_phase(m);
@@ -128,16 +161,25 @@ impl System {
         let shuntdiff = self.adc.get_result(m, AdcChannel::ShuntDiff);
         let shunthi = self.adc.get_result(m, AdcChannel::ShuntHi);
 
-        let now = timer_get_large(m);
+        let now = timer_get_large();
         if now >= self.next_rpm_pi.get(m) {
             self.next_rpm_pi.set(m, now + RPMPI_DT);
 
             if let Some(setpoint) = setpoint {
                 let setpoint = setpoint_to_f(setpoint);
+
+                if setpoint <= RPM_SYNC_THRES_16HZ {
+                    self.state.set(m, SysState::Syncing);
+                }
+                if self.state.get(m) == SysState::Syncing {
+                    speedo_hz = MotorSpeed::zero().as_16hz();
+                }
+
+                //TODO                let reset_i = self.state.get(m) == SysState::Syncing;
+                let reset_i = false;
                 let y = self
                     .rpm_pi
-                    .run(m, &RPMPI_PARAMS, setpoint, speedo_hz.as_16hz(), false);
-                //let y = setpoint;
+                    .run(m, &RPMPI_PARAMS, setpoint, speedo_hz, reset_i);
                 Debug::Speedo.log_fixpt(speedo_hz);
                 Debug::Setpoint.log_fixpt(setpoint);
                 Debug::PidY.log_fixpt(y);

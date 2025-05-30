@@ -2,13 +2,19 @@
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-use crate::{fixpt::Fixpt, mutex::{Mutex, IrqCtx, MainInitCtx}, hw::interrupt, usi_uart::uart_tx_cs};
+use crate::{
+    fixpt::Fixpt,
+    hw::interrupt,
+    mutex::{IrqCtx, MainInitCtx, Mutex},
+    usi_uart::uart_tx_cs,
+};
 use core::cell::Cell;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Debug {
     Speedo,
+    SpeedoStatus,
     Setpoint,
     PidY,
 }
@@ -17,11 +23,8 @@ const NRVALUES: usize = 3;
 const INDEXSHIFT: usize = 2;
 const INDEXMASK: u8 = (1 << INDEXSHIFT) - 1;
 
-static VALUES: Mutex<[Cell<u16>; NRVALUES]> = Mutex::new([
-    Cell::new(0),
-    Cell::new(0),
-    Cell::new(0),
-]);
+static VALUES: Mutex<[Cell<u16>; NRVALUES]> =
+    Mutex::new([Cell::new(0), Cell::new(0), Cell::new(0)]);
 static INDEX: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
 pub fn rx_complete_callback(_c: &IrqCtx, _data: u8) {

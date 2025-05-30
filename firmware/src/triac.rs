@@ -107,7 +107,7 @@ impl Triac {
             return;
         }
 
-        let now = timer_get_large(m);
+        let now = timer_get_large();
         let phi_offs_ms = self.phi_offs_ms.get(m);
 
         match self.state.get(m) {

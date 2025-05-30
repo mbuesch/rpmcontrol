@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::{
+    debug,
     hw::{interrupt, mcu},
     mutex::{CriticalSection, IrqCtx, LazyMainInit, MainInitCtx, Mutex},
     ports::PORTB,
-    debug,
 };
 use core::cell::Cell;
 
@@ -44,7 +44,7 @@ static TXDATA: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
 impl Dp {
     pub fn setup(&self, _c: &MainInitCtx) {
-        self.USI.usidr.write(|w| w.bits(0xFF));
+        self.USI.usidr().write(|w| w.set(0xFF));
         //TODO enable PCINT
     }
 }
@@ -66,12 +66,12 @@ pub fn irq_handler_usi_ovf(c: &IrqCtx) {
     let mode = MODE.borrow(cs);
     match mode.get() {
         Mode::Rx => {
-            let data = bit_rev(DP.USI.usidr.read().bits());
+            let data = bit_rev(DP.USI.usidr().read().bits());
 
-            DP.TC0.tccr0b.write(|w| w);
+            DP.TC0.tccr0b().write(|w| w);
 
-            DP.USI.usicr.modify(|_, w| w.usioie().clear_bit());
-            DP.USI.usisr.modify(|_, w| w.usioif().set_bit());
+            DP.USI.usicr().modify(|_, w| w.usioie().clear_bit());
+            DP.USI.usisr().modify(|_, w| w.usioif().set_bit());
 
             //TODO
 
@@ -79,20 +79,20 @@ pub fn irq_handler_usi_ovf(c: &IrqCtx) {
         }
         Mode::Tx0 => {
             let data = TXDATA.borrow(cs).get();
-            DP.USI.usidr.write(|w| w.bits((data << 3) | 0x07));
-            DP.USI.usisr.write(|w| {
-                w.usicnt().bits(16 - 6)
+            DP.USI.usidr().write(|w| w.set((data << 3) | 0x07));
+            DP.USI.usisr().write(|w| {
+                w.usicnt().set(16 - 6)
                  .usioif().set_bit()
             });
 
             mode.set(Mode::Tx1);
         }
         Mode::Tx1 => {
-            DP.USI.usidr.write(|w| w.bits(0xFF));
-            DP.USI.usicr.modify(|_, w| w.usioie().clear_bit());
-            DP.USI.usisr.modify(|_, w| w.usioif().set_bit());
+            DP.USI.usidr().write(|w| w.set(0xFF));
+            DP.USI.usicr().modify(|_, w| w.usioie().clear_bit());
+            DP.USI.usisr().modify(|_, w| w.usioif().set_bit());
 
-            DP.TC0.tccr0b.write(|w| w);
+            DP.TC0.tccr0b().write(|w| w);
 
             PORTB.set(PORTB_BIT, true);
             PORTB.input(PORTB_BIT);
@@ -113,28 +113,28 @@ pub fn uart_tx_cs(cs: CriticalSection<'_>, mut data: u8) -> bool {
             data = bit_rev(data);
             TXDATA.borrow(cs).set(data);
 
-            DP.TC0.tccr0b.write(|w| w);
+            DP.TC0.tccr0b().write(|w| w);
 
             PORTB.set(PORTB_BIT, true);
             PORTB.output(PORTB_BIT);
 
-            DP.USI.usidr.write(|w| w.bits((data >> 2) | 0x80));
-            DP.USI.usisr.write(|w| {
-                w.usicnt().bits(16 - 5)
+            DP.USI.usidr().write(|w| w.set((data >> 2) | 0x80));
+            DP.USI.usisr().write(|w| {
+                w.usicnt().set(16 - 5)
                  .usioif().set_bit()
             });
-            DP.USI.usicr.write(|w| {
+            DP.USI.usicr().write(|w| {
                 w.usioie().set_bit()
                  .usiwm().three_wire()
                  .usics().tc0()
             });
-            DP.USI.usipp.write(|w| w);
+            DP.USI.usipp().write(|w| w);
 
-            DP.TC0.tccr0a.write(|w| w.ctc0().set_bit());
-            DP.TC0.tcnt0h.write(|w| w);
-            DP.TC0.tcnt0l.write(|w| w);
-            DP.TC0.ocr0a.write(|w| w.bits(TC0_OCR));
-            DP.TC0.tccr0b.write(|w| w.cs0().prescale_8());
+            DP.TC0.tccr0a().write(|w| w.ctc0().set_bit());
+            DP.TC0.tcnt0h().write(|w| w);
+            DP.TC0.tcnt0l().write(|w| w);
+            DP.TC0.ocr0a().write(|w| w.set(TC0_OCR));
+            DP.TC0.tccr0b().write(|w| w.cs0().prescale_8());
 
             mode.set(Mode::Tx0);
             true
