@@ -18,6 +18,11 @@ const RPMPI_PARAMS: PiParams = PiParams {
     ki: fixpt!(0 / 2), //TODO
     ilim: fixpt!(1 / 1),
 };
+const RPMPI_PARAMS_SYNCING: PiParams = PiParams {
+    kp: fixpt!(2 / 1),
+    ki: fixpt!(0 / 1),
+    ilim: fixpt!(0 / 1),
+};
 const RPM_SYNC_THRES_16HZ: Fixpt = fixpt!(1 / 4);
 
 /// Convert 0..0x3FF to 0..128 Hz to 0..8 16Hz
@@ -171,15 +176,20 @@ impl System {
                 if setpoint <= RPM_SYNC_THRES_16HZ {
                     self.state.set(m, SysState::Syncing);
                 }
-                if self.state.get(m) == SysState::Syncing {
+
+                let rpmpi_params;
+                if self.state.get(m) == SysState::Running {
+                    rpmpi_params = &RPMPI_PARAMS;
+                } else {
                     speedo_hz = MotorSpeed::zero().as_16hz();
+                    rpmpi_params = &RPMPI_PARAMS_SYNCING;
                 }
 
                 //TODO                let reset_i = self.state.get(m) == SysState::Syncing;
                 let reset_i = false;
                 let y = self
                     .rpm_pi
-                    .run(m, &RPMPI_PARAMS, setpoint, speedo_hz, reset_i);
+                    .run(m, rpmpi_params, setpoint, speedo_hz, reset_i);
                 Debug::Speedo.log_fixpt(speedo_hz);
                 Debug::Setpoint.log_fixpt(setpoint);
                 Debug::PidY.log_fixpt(y);
