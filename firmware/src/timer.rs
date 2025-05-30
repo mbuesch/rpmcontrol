@@ -26,10 +26,10 @@ pub fn timer_init(_m: &MainCtx) {
     DP.TC1.tccr1c().write(|w| w);
     DP.TC1.tccr1d().write(|w| w);
     DP.TC1.tccr1e().write(|w| w);
-    DP.TC1.ocr1a().write(|w| unsafe { w.bits(0xFF) });
-    DP.TC1.ocr1b().write(|w| unsafe { w.bits(0xFF) });
-    DP.TC1.ocr1c().write(|w| unsafe { w.bits(0xFF) }); // TOP value
-    DP.TC1.ocr1d().write(|w| unsafe { w.bits(0xFF) });
+    DP.TC1.ocr1a().write(|w| w.set(0xFF));
+    DP.TC1.ocr1b().write(|w| w.set(0xFF));
+    DP.TC1.ocr1c().write(|w| w.set(0xFF)); // TOP value
+    DP.TC1.ocr1d().write(|w| w.set(0xFF));
     DP.TC1.dt1().write(|w| w);
     DP.TC1.tccr1b().write(|w| w.cs1().prescale_256());
 }
