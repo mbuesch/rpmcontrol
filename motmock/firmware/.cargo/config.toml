@@ -1,5 +1,6 @@
 [build]
 target = "./avr-atmega8.json"
+rustflags = ["-C", "target-cpu=atmega8"]
 
 [unstable]
 build-std = ["core"]

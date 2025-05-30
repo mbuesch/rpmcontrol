@@ -2,7 +2,6 @@
 #![no_main]
 #![feature(abi_avr_interrupt)]
 #![feature(asm_experimental_arch)]
-#![feature(asm_const)]
 
 use avr_device::atmega8::{Peripherals, PORTB, PORTC, PORTD, TC1, TC2};
 
@@ -24,7 +23,7 @@ pub unsafe fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
     }
 
     // PORTB
-    pb.portb.write(|w| {
+    pb.portb().write(|w| {
         // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
@@ -37,7 +36,7 @@ pub unsafe fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
             )
         }
     });
-    pb.ddrb.write(|w| {
+    pb.ddrb().write(|w| {
         // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
@@ -52,7 +51,7 @@ pub unsafe fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
     });
 
     // PORTC
-    pc.portc.write(|w| {
+    pc.portc().write(|w| {
         // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
@@ -67,7 +66,7 @@ pub unsafe fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
             )
         }
     });
-    pc.ddrc.write(|w| {
+    pc.ddrc().write(|w| {
         // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
@@ -84,7 +83,7 @@ pub unsafe fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
     });
 
     // PORTD
-    pd.portd.write(|w| {
+    pd.portd().write(|w| {
         // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
@@ -99,7 +98,7 @@ pub unsafe fn ports_init(pb: &PORTB, pc: &PORTC, pd: &PORTD) {
             )
         }
     });
-    pd.ddrd.write(|w| {
+    pd.ddrd().write(|w| {
         // SAFETY: We are running in init with IRQs disabled.
         unsafe {
             w.bits(
@@ -120,21 +119,21 @@ const TIMER1_DUTYMAX: u16 = 0xFF;
 
 #[rustfmt::skip]
 fn timer1_init(tc1: &TC1) {
-    tc1.icr1.write(|w| w.bits(TIMER1_DUTYMAX));
-    tc1.ocr1a.write(|w| w.bits(0x00));
-    tc1.tccr1a.write(|w| {
+    tc1.icr1().write(|w| w.set(TIMER1_DUTYMAX));
+    tc1.ocr1a().write(|w| w.set(0x00));
+    tc1.tccr1a().write(|w| {
         w.com1a().match_clear()
          .com1b().disconnected()
-         .wgm1().bits(2)
+         .wgm1().set(2)
     });
-    tc1.tccr1b.write(|w| {
+    tc1.tccr1b().write(|w| {
         w.cs1().prescale_256()
-         .wgm1().bits(2)
+         .wgm1().set(2)
     });
 }
 
 fn timer1_duty(tc1: &TC1, duty: u16) {
-    tc1.ocr1a.write(|w| w.bits(duty));
+    tc1.ocr1a().write(|w| w.set(duty));
 }
 
 const TIMER2_MAX: u8 = 78;
@@ -143,8 +142,8 @@ const TIMER2_CUTOFF: u8 = 2;
 #[rustfmt::skip]
 fn timer2_init(tc2: &TC2) {
     // Timer2 init; ctc, 100 Hz.
-    tc2.ocr2.write(|w| w.bits(TIMER2_MAX));
-    tc2.tccr2.write(|w| {
+    tc2.ocr2().write(|w| w.set(TIMER2_MAX));
+    tc2.tccr2().write(|w| {
         w.cs2().prescale_1024()
          .wgm20().clear_bit()
          .wgm21().set_bit()
@@ -152,15 +151,15 @@ fn timer2_init(tc2: &TC2) {
 }
 
 fn timer2_event(tc2: &TC2) -> bool {
-    let ocf = tc2.tifr.read().ocf2().bit();
+    let ocf = tc2.tifr().read().ocf2().bit();
     if ocf {
-        tc2.tifr.write(|w| w.ocf2().set_bit());
+        tc2.tifr().write(|w| w.ocf2().set_bit());
     }
     ocf
 }
 
 fn timer2_value(tc2: &TC2) -> u8 {
-    tc2.tcnt2.read().bits().min(TIMER2_MAX)
+    tc2.tcnt2().read().bits().min(TIMER2_MAX)
 }
 
 #[avr_device::entry]
@@ -177,7 +176,7 @@ fn main() -> ! {
     let mut hz50 = false;
     let mut in_trig = false;
     loop {
-        let trig = dp.PORTD.pind.read().pd2().bit();
+        let trig = dp.PORTD.pind().read().pd2().bit();
         if trig && !in_trig {
             let mut val: u8 = TIMER2_MAX - timer2_value(&dp.TC2);
             if val <= TIMER2_CUTOFF {
@@ -192,7 +191,7 @@ fn main() -> ! {
         in_trig = trig;
 
         hz50 ^= timer2_event(&dp.TC2);
-        dp.PORTC.portc.modify(|_, w| w.pc0().bit(hz50));
+        dp.PORTC.portc().modify(|_, w| w.pc0().bit(hz50));
     }
 }
 
