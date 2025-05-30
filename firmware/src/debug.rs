@@ -18,13 +18,13 @@ pub enum Debug {
     Setpoint,
     PidY,
 }
+const NRVALUES: usize = 4;
 
-const NRVALUES: usize = 3;
 const INDEXSHIFT: usize = 2;
 const INDEXMASK: u8 = (1 << INDEXSHIFT) - 1;
 
 static VALUES: Mutex<[Cell<u16>; NRVALUES]> =
-    Mutex::new([Cell::new(0), Cell::new(0), Cell::new(0)]);
+    Mutex::new([Cell::new(0), Cell::new(0), Cell::new(0), Cell::new(0)]);
 static INDEX: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
 pub fn rx_complete_callback(_c: &IrqCtx, _data: u8) {
@@ -84,7 +84,6 @@ impl Debug {
         self.log_u16(value.into())
     }
 
-    #[allow(dead_code)]
     pub fn log_fixpt(&self, value: Fixpt) {
         self.log_u16(value.to_q() as _);
     }
