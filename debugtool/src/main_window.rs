@@ -16,6 +16,7 @@ use std::{
 struct DiagramData {
     reference: Instant,
     speedo: VecDeque<(f64, f64)>,
+    speedo_status: VecDeque<(f64, f64)>,
     setpoint: VecDeque<(f64, f64)>,
     pid_y: VecDeque<(f64, f64)>,
 }
@@ -27,6 +28,7 @@ impl DiagramData {
         Self {
             reference: Instant::now(),
             speedo: VecDeque::new(),
+            speedo_status: VecDeque::new(),
             setpoint: VecDeque::new(),
             pid_y: VecDeque::new(),
         }
@@ -65,6 +67,7 @@ impl DiagramData {
         let age_thres = self.timestamp(now - T_INTERVAL);
         match dat {
             SerDat::Speedo(t, val) => self.speedo.push_back((self.timestamp(t), val)),
+            SerDat::SpeedoStatus(t, val) => self.speedo_status.push_back((self.timestamp(t), val as f64 * 100.0)),
             SerDat::Setpoint(t, val) => self.setpoint.push_back((self.timestamp(t), val)),
             SerDat::PidY(t, val) => self.pid_y.push_back((self.timestamp(t), val)),
             SerDat::Sync(_) => (),
@@ -103,22 +106,40 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
         .unwrap();
 
     chart
-        .draw_series(LineSeries::new(diagram_data.speedo.iter().copied(), RED))
+        .draw_series(LineSeries::new(
+            diagram_data.speedo.iter().copied(),
+            full_palette::RED,
+        ))
         .unwrap()
         .label("speedo")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], RED));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], full_palette::RED));
 
     chart
-        .draw_series(LineSeries::new(diagram_data.setpoint.iter().copied(), BLUE))
+        .draw_series(LineSeries::new(
+            diagram_data.speedo_status.iter().copied(),
+            full_palette::BLACK,
+        ))
+        .unwrap()
+        .label("speedo-stat")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], full_palette::BLACK));
+
+    chart
+        .draw_series(LineSeries::new(
+            diagram_data.setpoint.iter().copied(),
+            full_palette::BLUE,
+        ))
         .unwrap()
         .label("setpoint")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], BLUE));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], full_palette::BLUE));
 
     chart
-        .draw_series(LineSeries::new(diagram_data.pid_y.iter().copied(), MAGENTA))
+        .draw_series(LineSeries::new(
+            diagram_data.pid_y.iter().copied(),
+            full_palette::ORANGE,
+        ))
         .unwrap()
         .label("pid-Y")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], MAGENTA));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], full_palette::ORANGE));
 
     chart
         .configure_series_labels()

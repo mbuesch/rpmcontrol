@@ -14,6 +14,7 @@ type SerBuf = [u8; 3];
 #[derive(Debug, Clone)]
 pub enum SerDat {
     Speedo(Instant, f64),
+    SpeedoStatus(Instant, u16),
     Setpoint(Instant, f64),
     PidY(Instant, f64),
     #[allow(dead_code)]
@@ -44,8 +45,9 @@ impl SerDat {
         let val = u16::from_le_bytes([buf[1], buf[2]]);
         match buf[0] {
             0 => Ok(SerDat::Speedo(now, fixpt_to_rpm(val))),
-            1 => Ok(SerDat::Setpoint(now, fixpt_to_rpm(val))),
-            2 => Ok(SerDat::PidY(now, fixpt_to_rpm(val))),
+            1 => Ok(SerDat::SpeedoStatus(now, val)),
+            2 => Ok(SerDat::Setpoint(now, fixpt_to_rpm(val))),
+            3 => Ok(SerDat::PidY(now, fixpt_to_rpm(val))),
             0xFF => Ok(SerDat::Sync(now)),
             cmd => Err(err!("SerBuf::parse: Unknown command 0x{cmd:02X}")),
         }
