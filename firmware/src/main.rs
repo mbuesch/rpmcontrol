@@ -20,8 +20,8 @@ mod usi_uart;
 use crate::{
     analog::ac_capture_get,
     debug::debug_init,
-    hw::{interrupt, mcu, Peripherals},
-    mutex::{unwrap_option, MainCtx},
+    hw::{Peripherals, interrupt, mcu},
+    mutex::{MainCtx, unwrap_option},
     system::{SysPeriph, System},
     timer::timer_init,
 };

@@ -10,7 +10,8 @@ macro_rules! define_isr {
         fn $name() {
             // SAFETY: We are inside of an interrupt handler.
             // Therefore, it is safe to construct an `IrqCtx`.
-            $handler(unsafe { &IrqCtx::new() });
+            let c = unsafe { IrqCtx::new() };
+            $handler(&c);
         }
     };
 }

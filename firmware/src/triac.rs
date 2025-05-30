@@ -1,10 +1,10 @@
 use crate::{
-    fixpt::{fixpt, Fixpt},
+    fixpt::{Fixpt, fixpt},
     mains::{Phase, PhaseUpdate},
     mutex::{MainCtx, MutexCell},
     ports::PORTB,
     timer::{
-        timer_get_large, LargeTimestamp, RelLargeTimestamp, RelTimestamp, Timestamp, TIMER_TICK_US,
+        LargeTimestamp, RelLargeTimestamp, RelTimestamp, TIMER_TICK_US, Timestamp, timer_get_large,
     },
 };
 

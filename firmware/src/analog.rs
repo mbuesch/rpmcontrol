@@ -2,7 +2,7 @@ use crate::{
     hw::interrupt,
     mutex::{IrqCtx, MainCtx, MutexCell},
     system::SysPeriph,
-    timer::{timer_get_large_cs, LargeTimestamp, RelLargeTimestamp},
+    timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large_cs},
 };
 
 #[derive(Clone, Copy)]

@@ -4,7 +4,7 @@ use crate::{
     fixpt::Fixpt,
     mutex::{MainCtx, MutexCell},
     system::SysPeriph,
-    timer::{timer_get_large, LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US},
+    timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
 
 /// 2 edge (rising falling) in AC capture.

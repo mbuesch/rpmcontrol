@@ -1,5 +1,5 @@
 use crate::{
-    hw::{interrupt, mcu, Mutex},
+    hw::{Mutex, interrupt, mcu},
     mutex::{CriticalSection, LazyMainInit, MainCtx},
 };
 use core::cell::Cell;

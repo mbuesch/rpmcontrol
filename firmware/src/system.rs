@@ -1,14 +1,14 @@
 use crate::{
     analog::{Ac, AcCapture, Adc, AdcChannel},
     debug::Debug,
-    fixpt::{fixpt, Fixpt},
+    fixpt::{Fixpt, fixpt},
     hw::mcu,
     mains::Mains,
     mutex::{MainCtx, MutexCell},
     pi::{Pi, PiParams},
     ports::PORTB,
     speedo::{MotorSpeed, Speedo},
-    timer::{timer_get, timer_get_large, LargeTimestamp, RelLargeTimestamp, RelTimestamp},
+    timer::{LargeTimestamp, RelLargeTimestamp, RelTimestamp, timer_get, timer_get_large},
     triac::Triac,
 };
 

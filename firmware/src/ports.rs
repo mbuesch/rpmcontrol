@@ -102,8 +102,12 @@ macro_rules! impl_port {
     };
 }
 
-impl_port!(PortA, PORTA, porta, pina, ddra, pa0, pa1, pa2, pa3, pa4, pa5, pa6, pa7);
-impl_port!(PortB, PORTB, portb, pinb, ddrb, pb0, pb1, pb2, pb3, pb4, pb5, pb6, pb7);
+impl_port!(
+    PortA, PORTA, porta, pina, ddra, pa0, pa1, pa2, pa3, pa4, pa5, pa6, pa7
+);
+impl_port!(
+    PortB, PORTB, portb, pinb, ddrb, pb0, pb1, pb2, pb3, pb4, pb5, pb6, pb7
+);
 
 fn pin_input(_bit: usize) -> u8 {
     0

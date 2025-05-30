@@ -1,7 +1,7 @@
 use crate::{
     mutex::{MainCtx, MutexCell},
     ports::PORTA,
-    timer::{timer_get_large, LargeTimestamp, RelLargeTimestamp},
+    timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
 
 const HALFWAVE_DUR: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
