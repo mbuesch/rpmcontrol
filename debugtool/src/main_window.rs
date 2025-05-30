@@ -23,6 +23,16 @@ struct DiagramData {
 
 const T_INTERVAL: Duration = Duration::from_millis(10000);
 
+macro_rules! check_ts {
+    ($var:ident, $deque:expr, $fun:ident) => {
+        if let Some(t) = $deque.map(|(t, _)| *t) {
+            $var.$fun(t)
+        } else {
+            $var
+        }
+    };
+}
+
 impl DiagramData {
     pub fn new() -> Self {
         Self {
@@ -35,17 +45,21 @@ impl DiagramData {
     }
 
     pub fn oldest_timestamp(&self) -> f64 {
-        let a = self.speedo.front().map(|(t, _)| *t).unwrap_or(0.0);
-        let b = self.setpoint.front().map(|(t, _)| *t).unwrap_or(0.0);
-        let c = self.pid_y.front().map(|(t, _)| *t).unwrap_or(0.0);
-        a.min(b).min(c)
+        let mut oldest = f64::MAX;
+        oldest = check_ts!(oldest, self.speedo.front(), min);
+        oldest = check_ts!(oldest, self.speedo_status.front(), min);
+        oldest = check_ts!(oldest, self.setpoint.front(), min);
+        oldest = check_ts!(oldest, self.pid_y.front(), min);
+        if oldest < f64::MAX { oldest } else { 0.0 }
     }
 
     pub fn newest_timestamp(&self) -> f64 {
-        let a = self.speedo.back().map(|(t, _)| *t).unwrap_or(20.0);
-        let b = self.setpoint.back().map(|(t, _)| *t).unwrap_or(20.0);
-        let c = self.pid_y.back().map(|(t, _)| *t).unwrap_or(20.0);
-        a.max(b).max(c)
+        let mut newest = 0.0_f64;
+        newest = check_ts!(newest, self.speedo.back(), max);
+        newest = check_ts!(newest, self.speedo_status.back(), max);
+        newest = check_ts!(newest, self.setpoint.back(), max);
+        newest = check_ts!(newest, self.pid_y.back(), max);
+        newest
     }
 
     fn timestamp(&self, t: Instant) -> f64 {
@@ -75,6 +89,7 @@ impl DiagramData {
             SerDat::Sync(_) => (),
         }
         Self::prune_items(&mut self.speedo, age_thres);
+        Self::prune_items(&mut self.speedo_status, age_thres);
         Self::prune_items(&mut self.setpoint, age_thres);
         Self::prune_items(&mut self.pid_y, age_thres);
     }
