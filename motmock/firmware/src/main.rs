@@ -3,7 +3,7 @@
 #![feature(abi_avr_interrupt)]
 #![feature(asm_experimental_arch)]
 
-use avr_device::atmega8::{Peripherals, PORTB, PORTC, PORTD, TC1, TC2};
+use avr_device::atmega8::{PORTB, PORTC, PORTD, Peripherals, TC1, TC2};
 
 /// # Safety
 ///
