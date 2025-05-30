@@ -21,12 +21,48 @@ use crate::{
     analog::ac_capture_get,
     debug::debug_init,
     hw::{Peripherals, interrupt, mcu},
-    mutex::{MainCtx, unwrap_option},
+    mutex::MainCtx,
     system::{SysPeriph, System},
     timer::timer_init,
 };
 
 static SYSTEM: System = System::new();
+
+/// Cheaper Option::unwrap() alternative.
+///
+/// This is cheaper, because it doesn't call into the panic unwind path.
+/// Therefore, it does not impose caller-saves overhead onto the calling function.
+#[inline(always)]
+pub fn unwrap_option<T>(value: Option<T>) -> T {
+    match value {
+        Some(value) => value,
+        None => reset_system(),
+    }
+}
+
+/// Cheaper Result::unwrap() alternative.
+///
+/// This is cheaper, because it doesn't call into the panic unwind path.
+/// Therefore, it does not impose caller-saves overhead onto the calling function.
+#[inline(always)]
+#[allow(dead_code)]
+pub fn unwrap_result<T, E>(value: Result<T, E>) -> T {
+    match value {
+        Ok(value) => value,
+        Err(_) => reset_system(),
+    }
+}
+
+/// Reset the system.
+#[inline(always)]
+#[allow(clippy::empty_loop)]
+pub fn reset_system() -> ! {
+    loop {
+        // Wait for the watchdog timer to trigger and reset the system.
+        // We don't need to disable interrupts here.
+        // No interrupt will reset the watchdog timer.
+    }
+}
 
 fn wdt_init() {
     // SAFETY: The asm code only accesses the WDT registers
@@ -98,6 +134,11 @@ fn main() -> ! {
         SYSTEM.run(&m, &sp, ac_capture);
         wdt_poke(&dp.WDT);
     }
+}
+
+#[panic_handler]
+fn panic(_: &core::panic::PanicInfo) -> ! {
+    reset_system();
 }
 
 // vim: ts=4 sw=4 expandtab
