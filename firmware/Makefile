@@ -13,7 +13,7 @@ AVRDUDE_PROG:=avrisp2
 AVRDUDE_SPEED:=1
 AVRDUDE_SPEED_SLOW:=10
 
-# Fuses: ext-high-freq-crystal-4ms; BOD-4V; debugWire
+# Fuses: ext-high-freq-crystal=4ms; BOD=4.3V; debugWire
 LFUSE:=0xEF
 HFUSE:=0x8C
 EFUSE:=0xFF
