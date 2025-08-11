@@ -4,6 +4,7 @@ use crate::{
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
 
+const MAINS_RUN_DT: RelLargeTimestamp = RelLargeTimestamp::from_micros(100);
 const HALFWAVE_DUR: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -23,6 +24,7 @@ pub struct Mains {
     prev_vsense: MutexCell<bool>,
     phase: MutexCell<Phase>,
     phaseref: MutexCell<LargeTimestamp>,
+    next_run: MutexCell<LargeTimestamp>,
 }
 
 impl Mains {
@@ -31,6 +33,7 @@ impl Mains {
             prev_vsense: MutexCell::new(false),
             phase: MutexCell::new(Phase::Notsync),
             phaseref: MutexCell::new(LargeTimestamp::new()),
+            next_run: MutexCell::new(LargeTimestamp::new()),
         }
     }
 
@@ -39,28 +42,32 @@ impl Mains {
     }
 
     pub fn run(&self, m: &MainCtx<'_>) -> PhaseUpdate {
-        let vsense = self.read_vsense(m);
-        let now = timer_get_large();
         let mut ret = PhaseUpdate::NotChanged;
-        match self.phase.get(m) {
-            Phase::Notsync | Phase::NegHalfwave => {
-                //TODO filter
-                if !self.prev_vsense.get(m) && vsense {
-                    self.phaseref.set(m, now);
-                    self.phase.set(m, Phase::PosHalfwave);
-                    ret = PhaseUpdate::Changed;
+
+        let now = timer_get_large();
+        if now >= self.next_run.get(m) {
+
+            let vsense = self.read_vsense(m);
+            match self.phase.get(m) {
+                Phase::Notsync | Phase::NegHalfwave => {
+                    if !self.prev_vsense.get(m) && vsense {
+                        self.phaseref.set(m, now);
+                        self.phase.set(m, Phase::PosHalfwave);
+                        self.next_run.set(m, now + MAINS_RUN_DT);
+                        ret = PhaseUpdate::Changed;
+                    }
+                }
+                Phase::PosHalfwave => {
+                    let nextref = self.phaseref.get(m) + HALFWAVE_DUR;
+                    if now >= nextref {
+                        self.phaseref.set(m, nextref);
+                        self.phase.set(m, Phase::NegHalfwave);
+                        ret = PhaseUpdate::Changed;
+                    }
                 }
             }
-            Phase::PosHalfwave => {
-                let nextref = self.phaseref.get(m) + HALFWAVE_DUR;
-                if now >= nextref {
-                    self.phaseref.set(m, nextref);
-                    self.phase.set(m, Phase::NegHalfwave);
-                    ret = PhaseUpdate::Changed;
-                }
-            }
+            self.prev_vsense.set(m, vsense);
         }
-        self.prev_vsense.set(m, vsense);
         ret
     }
 
