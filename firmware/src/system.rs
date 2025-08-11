@@ -131,7 +131,6 @@ impl System {
         self.speedo.update(m, sp, &ac);
         let mut speedo_hz;
 
-        let phase_update = self.mains.run(m);
         match self.state.get(m) {
             SysState::PorCheck => {
                 //TODO
