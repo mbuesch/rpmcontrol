@@ -2694,7 +2694,7 @@
 	)
 	(text "snubber"
 		(exclude_from_sim no)
-		(at 152.908 49.276 0)
+		(at 140.716 57.912 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2721,6 +2721,16 @@
 			)
 		)
 		(uuid "b704665c-fa9c-4587-b5b1-f8a1edcc85cd")
+	)
+	(text "WARNING:\nPot spindles reaching touchable surfaces\nmust be non-metal\nand must be capable of insulating 400 V."
+		(exclude_from_sim no)
+		(at 240.284 136.398 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "b9bd4b11-984b-4a3f-9fd2-a3f6ae527ff0")
 	)
 	(text "TODO: use a differential amplifier?"
 		(exclude_from_sim no)
