@@ -8,15 +8,21 @@ use crate::{
     },
 };
 
-/// Triac trigger pulse length.
-const PULSE_LEN: RelTimestamp = RelTimestamp::from_micros(64);
+/// Triac trigger pulse length set-duration or clear-duration.
+const HALF_PULSE_LEN: RelTimestamp = RelTimestamp::from_micros(64);
+
+/// Mains sine wave period (50 Hz).
+const MAINS_PERIOD: RelLargeTimestamp = RelLargeTimestamp::from_micros(20_000);
+
+/// Mains sine wave half-wave length.
+const HALFWAVE_LEN: RelLargeTimestamp = MAINS_PERIOD.div(2);
 
 /// The last point a trigger can happen.
 /// Relative to the halfwave start.
 const MAX_TRIG_OFFS: RelLargeTimestamp = RelLargeTimestamp::from_micros(9_850);
 
-fn t_plus_trig_offs(t: LargeTimestamp, ms: Fixpt) -> LargeTimestamp {
-    // We must convert `ms` to a corresponding number of ticks.
+fn ms_to_reltimestamp(ms: Fixpt) -> RelLargeTimestamp {
+    // We must convert `ms` milliseconds to a corresponding number of ticks.
     //
     // Basically, we want to do:
     //  let ticks = (ms * 1000) / TIMER_TICK_US;
@@ -54,40 +60,58 @@ fn t_plus_trig_offs(t: LargeTimestamp, ms: Fixpt) -> LargeTimestamp {
     let ticks = scaled.to_q() >> (Fixpt::SHIFT - 5);
 
     // Limit to last possible moment.
-    let trig_offs = RelLargeTimestamp::from_ticks(ticks).min(MAX_TRIG_OFFS);
+    RelLargeTimestamp::from_ticks(ticks).min(MAX_TRIG_OFFS)
+}
 
-    // Halfwave start + offset is trigger start.
-    t + trig_offs
+fn calc_trig_count(trig_offs: RelLargeTimestamp) -> u8 {
+    let retrig_thres = HALFWAVE_LEN.div(4);
+
+    let retrig_dur = if trig_offs < retrig_thres {
+        retrig_thres - trig_offs
+    } else if trig_offs > HALFWAVE_LEN - retrig_thres {
+        HALFWAVE_LEN - trig_offs
+    } else {
+        RelLargeTimestamp::from_micros(0)
+    };
+
+    let retrig_dur: i16 = retrig_dur.into();
+    let half_pulse_len: i8 = HALF_PULSE_LEN.into();
+    let pulse_len = half_pulse_len as i16 * 2;
+
+    ((retrig_dur / pulse_len) as u8).max(1)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum TriacState {
-    Idle,
-    Triggering,
+    WaitForTrig,
+    TriggeringSet,
+    TriggeringClr,
     Triggered,
 }
 
 pub struct Triac {
-    phi_offs_ms: MutexCell<Fixpt>,
+    phi_offs: MutexCell<RelLargeTimestamp>,
     state: MutexCell<TriacState>,
-    trig_time: MutexCell<Timestamp>,
+    pulse_end_time: MutexCell<Timestamp>,
+    trig_count: MutexCell<u8>,
 }
 
 impl Triac {
     pub const fn new() -> Self {
         Self {
-            phi_offs_ms: MutexCell::new(Fixpt::from_int(0)),
-            state: MutexCell::new(TriacState::Idle),
-            trig_time: MutexCell::new(Timestamp::new()),
+            phi_offs: MutexCell::new(RelLargeTimestamp::new()),
+            state: MutexCell::new(TriacState::WaitForTrig),
+            pulse_end_time: MutexCell::new(Timestamp::new()),
+            trig_count: MutexCell::new(0),
         }
     }
 
     pub fn set_phi_offs_ms(&self, m: &MainCtx<'_>, ms: Fixpt) {
-        self.phi_offs_ms.set(m, ms);
+        self.phi_offs.set(m, ms_to_reltimestamp(ms));
     }
 
     pub fn shutoff(&self, m: &MainCtx<'_>) {
-        self.phi_offs_ms.set(m, Fixpt::from_int(20));
+        self.phi_offs.set(m, MAINS_PERIOD);
     }
 
     fn set_trigger(&self, _m: &MainCtx<'_>, trigger: bool) {
@@ -107,37 +131,56 @@ impl Triac {
             return;
         }
 
+        if phase_update == PhaseUpdate::Changed {
+            self.set_trigger(m, false);
+            self.state.set(m, TriacState::WaitForTrig);
+        }
+
         let now = timer_get_large();
-        let phi_offs_ms = self.phi_offs_ms.get(m);
 
         match self.state.get(m) {
-            TriacState::Idle => {
-                let must_trigger = now >= t_plus_trig_offs(phaseref, phi_offs_ms);
-                if must_trigger {
-                    self.state.set(m, TriacState::Triggering);
+            TriacState::WaitForTrig => {
+                let trig_offs = self.phi_offs.get(m);
+                let trig_time = phaseref + trig_offs;
+
+                if now >= trig_time {
                     self.set_trigger(m, true);
-                    self.trig_time.set(m, now.into());
+                    self.state.set(m, TriacState::TriggeringSet);
+
+                    let now: Timestamp = now.into();
+                    self.pulse_end_time.set(m, now + HALF_PULSE_LEN);
+                    self.trig_count.set(m, calc_trig_count(trig_offs));
                 }
             }
-            TriacState::Triggering => {
+            TriacState::TriggeringSet => {
                 let now: Timestamp = now.into();
-                if now >= self.trig_time.get(m) + PULSE_LEN {
-                    self.state.set(m, TriacState::Triggered);
+                if now >= self.pulse_end_time.get(m) {
                     self.set_trigger(m, false);
+
+                    let trig_count = self.trig_count.get(m) - 1;
+                    self.trig_count.set(m, trig_count);
+
+                    if trig_count == 0 {
+                        self.state.set(m, TriacState::Triggered);
+                    } else {
+                        self.pulse_end_time
+                            .set(m, self.pulse_end_time.get(m) + HALF_PULSE_LEN);
+                        self.state.set(m, TriacState::TriggeringClr);
+                    }
                 }
-                if phase_update == PhaseUpdate::Changed {
-                    self.state.set(m, TriacState::Idle);
-                    self.set_trigger(m, false);
+            }
+            TriacState::TriggeringClr => {
+                let now: Timestamp = now.into();
+                if now >= self.pulse_end_time.get(m) {
+                    self.set_trigger(m, true);
+
+                    self.pulse_end_time
+                        .set(m, self.pulse_end_time.get(m) + HALF_PULSE_LEN);
+                    self.state.set(m, TriacState::TriggeringSet);
                 }
             }
             TriacState::Triggered => {
-                if phase_update == PhaseUpdate::Changed {
-                    self.state.set(m, TriacState::Idle);
-                    self.set_trigger(m, false);
-                }
-                //TODO re-trigger if:
-                // - the triac lost trigger (measure voltage) and
-                // - it's still earlier than MAX_TRIG_OFFS from beginning.
+                // Waiting for PhaseUpdate::Changed (handled above).
             }
         }
     }
