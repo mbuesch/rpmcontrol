@@ -173,6 +173,11 @@ macro_rules! impl_reltimestamp {
             pub const fn from_millis(ms: i32) -> $rel {
                 $rel(((ms * 1000) / TIMER_TICK_US as i32) as $reltype)
             }
+
+            #[inline]
+            pub const fn div(&self, d: $reltype) -> $rel {
+                $rel(self.0 / d)
+            }
         }
 
         impl Default for $rel {
