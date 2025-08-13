@@ -46,7 +46,6 @@ impl Mains {
 
         let now = timer_get_large();
         if now >= self.next_run.get(m) {
-
             let vsense = self.read_vsense(m);
             match self.phase.get(m) {
                 Phase::Notsync | Phase::NegHalfwave => {
