@@ -1,11 +1,9 @@
 use crate::{
-    fixpt::{Fixpt, fixpt},
+    fixpt::Fixpt,
     mains::{Phase, PhaseUpdate},
     mutex::{MainCtx, MutexCell},
     ports::PORTB,
-    timer::{
-        LargeTimestamp, RelLargeTimestamp, RelTimestamp, TIMER_TICK_US, Timestamp, timer_get_large,
-    },
+    timer::{LargeTimestamp, RelLargeTimestamp, RelTimestamp, Timestamp, timer_get_large},
 };
 
 /// Triac trigger pulse length set-duration or clear-duration.
@@ -20,48 +18,6 @@ const HALFWAVE_LEN: RelLargeTimestamp = MAINS_PERIOD.div(2);
 /// The last point a trigger can happen.
 /// Relative to the halfwave start.
 const MAX_TRIG_OFFS: RelLargeTimestamp = RelLargeTimestamp::from_micros(9_850);
-
-fn ms_to_reltimestamp(ms: Fixpt) -> RelLargeTimestamp {
-    // We must convert `ms` milliseconds to a corresponding number of ticks.
-    //
-    // Basically, we want to do:
-    //  let ticks = (ms * 1000) / TIMER_TICK_US;
-    //
-    // But we must avoid overflows and minimize rounding errors.
-    //
-    // assumptions:
-    //  1000 / TIMER_TICK_US = 62.5
-    //  We use a bias of 32 = 1 << 5.
-    //
-    // Therefore, we calculate:
-    //
-    //         ms * 62.5 * 32
-    // ticks = --------------
-    //              32
-    //
-    // But we split it up into a Fixpt calculation and the final bias shift.
-    //
-    // Fixpt calculation:
-    //
-    //         ms * 62.5
-    // ticks = ---------
-    //              32
-
-    // The microseconds per tick value is embedded in the constants below.
-    // See comment above.
-    assert_eq!(TIMER_TICK_US, 16);
-
-    // First part: Fixpt multiplication.
-    let fac = fixpt!(125 / 64); // 62.5 / 32
-    let scaled = ms * fac;
-
-    // Second part: Bias multiplication.
-    // Get the raw fixpt value and shift by 5.
-    let ticks = scaled.to_q() >> (Fixpt::SHIFT - 5);
-
-    // Limit to last possible moment.
-    RelLargeTimestamp::from_ticks(ticks).min(MAX_TRIG_OFFS)
-}
 
 fn calc_trig_count(trig_offs: RelLargeTimestamp) -> u8 {
     let retrig_thres = HALFWAVE_LEN.div(4);
@@ -107,7 +63,8 @@ impl Triac {
     }
 
     pub fn set_phi_offs_ms(&self, m: &MainCtx<'_>, ms: Fixpt) {
-        self.phi_offs.set(m, ms_to_reltimestamp(ms));
+        self.phi_offs
+            .set(m, RelLargeTimestamp::from_ms_fixpt(ms).min(MAX_TRIG_OFFS));
     }
 
     pub fn shutoff(&self, m: &MainCtx<'_>) {

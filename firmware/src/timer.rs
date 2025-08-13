@@ -1,4 +1,5 @@
 use crate::{
+    fixpt::{Fixpt, fixpt},
     hw::{Mutex, interrupt, mcu},
     mutex::{CriticalSection, LazyMainInit, MainCtx},
 };
@@ -231,6 +232,49 @@ impl From<LargeTimestamp> for Timestamp {
     #[inline]
     fn from(stamp: LargeTimestamp) -> Timestamp {
         (stamp.0 as u8).into()
+    }
+}
+
+impl RelLargeTimestamp {
+    pub fn from_ms_fixpt(ms: Fixpt) -> RelLargeTimestamp {
+        // We must convert `ms` milliseconds to a corresponding number of ticks.
+        //
+        // Basically, we want to do:
+        //  let ticks = (ms * 1000) / TIMER_TICK_US;
+        //
+        // But we must avoid overflows and minimize rounding errors.
+        //
+        // assumptions:
+        //  1000 / TIMER_TICK_US = 62.5
+        //  We use a bias of 32 = 1 << 5.
+        //
+        // Therefore, we calculate:
+        //
+        //         ms * 62.5 * 32
+        // ticks = --------------
+        //              32
+        //
+        // But we split it up into a Fixpt calculation and the final bias shift.
+        //
+        // Fixpt calculation:
+        //
+        //         ms * 62.5
+        // ticks = ---------
+        //              32
+
+        // The microseconds per tick value is embedded in the constants below.
+        // See comment above.
+        assert_eq!(TIMER_TICK_US, 16);
+
+        // First part: Fixpt multiplication with bias.
+        let fac = fixpt!(125 / 64); // 62.5 / 32
+        let scaled = ms * fac;
+
+        // Second part: Bias division.
+        // Get the raw fixpt value and shift by 5.
+        let ticks = scaled.to_q() >> (Fixpt::SHIFT - 5);
+
+        Self::from_ticks(ticks)
     }
 }
 
