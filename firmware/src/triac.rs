@@ -63,8 +63,7 @@ impl Triac {
     }
 
     pub fn set_phi_offs_ms(&self, m: &MainCtx<'_>, ms: Fixpt) {
-        self.phi_offs
-            .set(m, RelLargeTimestamp::from_ms_fixpt(ms).min(MAX_TRIG_OFFS));
+        self.phi_offs.set(m, RelLargeTimestamp::from_ms_fixpt(ms));
     }
 
     pub fn shutoff(&self, m: &MainCtx<'_>) {
@@ -98,15 +97,19 @@ impl Triac {
         match self.state.get(m) {
             TriacState::WaitForTrig => {
                 let trig_offs = self.phi_offs.get(m);
-                let trig_time = phaseref + trig_offs;
+                if trig_offs <= MAX_TRIG_OFFS {
+                    let trig_time = phaseref + trig_offs;
 
-                if now >= trig_time {
-                    self.set_trigger(m, true);
-                    self.state.set(m, TriacState::TriggeringSet);
+                    if now >= trig_time {
+                        self.set_trigger(m, true);
+                        self.state.set(m, TriacState::TriggeringSet);
 
-                    let now: Timestamp = now.into();
-                    self.pulse_end_time.set(m, now + HALF_PULSE_LEN);
-                    self.trig_count.set(m, calc_trig_count(trig_offs));
+                        let now: Timestamp = now.into();
+                        self.pulse_end_time.set(m, now + HALF_PULSE_LEN);
+                        self.trig_count.set(m, calc_trig_count(trig_offs));
+                    }
+                } else {
+                    self.set_trigger(m, false);
                 }
             }
             TriacState::TriggeringSet => {
