@@ -14,10 +14,6 @@ impl Filter {
         }
     }
 
-    pub fn reset(&self, m: &MainCtx<'_>) {
-        self.buf.set(m, Fixpt::zero());
-    }
-
     pub fn run(&self, m: &MainCtx<'_>, input: Fixpt, div: Fixpt) -> Fixpt {
         let mut buf = self.buf.get(m);
         buf -= buf / div;
