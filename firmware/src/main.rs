@@ -14,6 +14,7 @@ mod pi;
 mod ports;
 mod speedo;
 mod system;
+mod temp;
 mod timer;
 mod triac;
 mod usi_uart;
