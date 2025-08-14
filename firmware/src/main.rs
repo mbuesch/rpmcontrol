@@ -5,6 +5,7 @@
 
 mod analog;
 mod debug;
+mod filter;
 mod fixpt;
 mod hw;
 mod mains;
