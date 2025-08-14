@@ -179,15 +179,16 @@ impl System {
                 Debug::Speedo.log_fixpt(speedo_hz);
 
                 let rpmpi_params;
+                let reset_i;
                 if self.state.get(m) == SysState::Running {
                     rpmpi_params = &RPMPI_PARAMS;
+                    reset_i = false;
                 } else {
                     speedo_hz = MotorSpeed::zero().as_16hz();
                     rpmpi_params = &RPMPI_PARAMS_SYNCING;
+                    reset_i = true;
                 }
 
-                //TODO                let reset_i = self.state.get(m) == SysState::Syncing;
-                let reset_i = false;
                 let y = self
                     .rpm_pi
                     .run(m, rpmpi_params, setpoint, speedo_hz, reset_i);
