@@ -176,6 +176,8 @@ impl System {
                     self.state.set(m, SysState::Syncing);
                 }
 
+                Debug::Speedo.log_fixpt(speedo_hz);
+
                 let rpmpi_params;
                 if self.state.get(m) == SysState::Running {
                     rpmpi_params = &RPMPI_PARAMS;
@@ -189,7 +191,6 @@ impl System {
                 let y = self
                     .rpm_pi
                     .run(m, rpmpi_params, setpoint, speedo_hz, reset_i);
-                Debug::Speedo.log_fixpt(speedo_hz);
                 Debug::Setpoint.log_fixpt(setpoint);
                 Debug::PidY.log_fixpt(y);
 
