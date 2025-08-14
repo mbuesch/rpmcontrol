@@ -87,7 +87,7 @@ fn synchronize(serial: &mut Box<dyn serialport::SerialPort>) -> ah::Result<()> {
 }
 
 pub fn run_serial(port: &Option<String>, notify_tx: &mpsc::Sender<SerDat>) -> ah::Result<()> {
-    let port = port.as_deref().unwrap_or("/dev/ttyUSB0");
+    let port = port.as_deref().unwrap_or("/dev/ttyUSB1");
     let mut serial = serialport::new(port, BAUD)
         .data_bits(serialport::DataBits::Eight)
         .parity(serialport::Parity::None)
