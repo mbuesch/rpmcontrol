@@ -20,6 +20,10 @@ pub(crate) use fixpt;
 impl Fixpt {
     pub const SHIFT: usize = 8;
 
+    pub const fn zero() -> Self {
+        Self(0)
+    }
+
     pub const fn from_int(int: i16) -> Self {
         Self(int << Self::SHIFT)
     }
@@ -72,11 +76,23 @@ impl core::ops::Add for Fixpt {
     }
 }
 
+impl core::ops::AddAssign for Fixpt {
+    fn add_assign(&mut self, other: Self) {
+        self.0 = (*self + other).0;
+    }
+}
+
 impl core::ops::Sub for Fixpt {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
         Self(self.0 - other.0)
+    }
+}
+
+impl core::ops::SubAssign for Fixpt {
+    fn sub_assign(&mut self, other: Self) {
+        self.0 = (*self - other).0;
     }
 }
 
@@ -89,10 +105,16 @@ impl core::ops::Mul for Fixpt {
     }
 }
 
-/*
+impl core::ops::MulAssign for Fixpt {
+    fn mul_assign(&mut self, other: Self) {
+        self.0 = (*self * other).0;
+    }
+}
+
 impl core::ops::Div for Fixpt {
     type Output = Self;
 
+    #[inline(never)]
     fn div(self, other: Self) -> Self {
         let mut tmp: i32 = self.0.into();
         tmp <<= Self::SHIFT;
@@ -100,7 +122,12 @@ impl core::ops::Div for Fixpt {
         Self(tmp as i16)
     }
 }
-*/
+
+impl core::ops::DivAssign for Fixpt {
+    fn div_assign(&mut self, other: Self) {
+        self.0 = (*self / other).0;
+    }
+}
 
 impl core::ops::Neg for Fixpt {
     type Output = Self;
