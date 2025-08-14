@@ -14,6 +14,9 @@ macro_rules! fixpt {
     ($numerator:ident / $denominator:ident) => {
         Fixpt::from_fraction($numerator, $denominator)
     };
+    (0) => {
+        Fixpt::zero()
+    };
 }
 pub(crate) use fixpt;
 

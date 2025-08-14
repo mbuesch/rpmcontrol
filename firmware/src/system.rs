@@ -20,8 +20,8 @@ const RPMPI_PARAMS: PiParams = PiParams {
 };
 const RPMPI_PARAMS_SYNCING: PiParams = PiParams {
     kp: fixpt!(2 / 1),
-    ki: fixpt!(0 / 1),
-    ilim: fixpt!(0 / 1),
+    ki: fixpt!(0),
+    ilim: fixpt!(0),
 };
 const RPM_SYNC_THRES_16HZ: Fixpt = fixpt!(1 / 4);
 
@@ -135,11 +135,11 @@ impl System {
             SysState::PorCheck => {
                 //TODO
                 self.state.set(m, SysState::Syncing);
-                speedo_hz = fixpt!(0 / 1);
+                speedo_hz = fixpt!(0);
             }
             SysState::Syncing => {
                 self.prev_speed.set(m, MotorSpeed::zero());
-                speedo_hz = fixpt!(0 / 1);
+                speedo_hz = fixpt!(0);
                 if self.speedo.get_speed(m).is_some() {
                     self.state.set(m, SysState::Running);
                 }
