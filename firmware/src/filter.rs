@@ -1,5 +1,5 @@
 use crate::{
-    fixpt::Fixpt,
+    fixpt::{Fixpt, fixpt},
     mutex::{MainCtx, MutexCell},
 };
 
@@ -10,7 +10,7 @@ pub struct Filter {
 impl Filter {
     pub const fn new() -> Self {
         Self {
-            buf: MutexCell::new(Fixpt::zero()),
+            buf: MutexCell::new(fixpt!(0)),
         }
     }
 
