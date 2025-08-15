@@ -14,8 +14,11 @@ macro_rules! fixpt {
     ($numerator:ident / $denominator:ident) => {
         Fixpt::from_fraction($numerator, $denominator)
     };
-    (0) => {
-        Fixpt::zero()
+    ($numerator:literal) => {
+        Fixpt::from_int($numerator)
+    };
+    ($numerator:ident) => {
+        Fixpt::from_int($numerator)
     };
 }
 pub(crate) use fixpt;
