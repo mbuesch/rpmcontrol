@@ -1,6 +1,7 @@
 use crate::{
     analog::{Ac, AcCapture, Adc, AdcChannel},
     debug::Debug,
+    filter::Filter,
     fixpt::{Fixpt, fixpt},
     hw::mcu,
     mains::Mains,
@@ -26,6 +27,8 @@ const RPMPI_PARAMS_SYNCING: PiParams = PiParams {
 const RPM_SYNC_THRES_16HZ: Fixpt = fixpt!(25 / 24); // 1000/min
 
 const MAX_16HZ: i16 = 25; // 400 Hz, 24000/min
+
+const SETPOINT_FILTER_DIV: Fixpt = fixpt!(5 / 1);
 
 /// Convert 0..0x3FF to 0..400 Hz to 0..25 16Hz
 fn setpoint_to_f(adc: u16) -> Fixpt {
@@ -72,6 +75,7 @@ pub struct System {
     state: MutexCell<SysState>,
     ac: Ac,
     adc: Adc,
+    setpoint_filter: Filter,
     speedo: Speedo,
     prev_speed: MutexCell<MotorSpeed>,
     mains: Mains,
@@ -86,6 +90,7 @@ impl System {
             state: MutexCell::new(SysState::PorCheck),
             ac: Ac::new(),
             adc: Adc::new(),
+            setpoint_filter: Filter::new(),
             speedo: Speedo::new(),
             prev_speed: MutexCell::new(MotorSpeed::zero()),
             mains: Mains::new(),
@@ -173,6 +178,7 @@ impl System {
 
             if let Some(setpoint) = setpoint {
                 let setpoint = setpoint_to_f(setpoint);
+                let setpoint = self.setpoint_filter.run(m, setpoint, SETPOINT_FILTER_DIV);
 
                 if setpoint <= RPM_SYNC_THRES_16HZ {
                     self.state.set(m, SysState::Syncing);
