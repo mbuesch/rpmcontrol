@@ -14,30 +14,32 @@ use crate::{
 
 const RPMPI_DT: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
 const RPMPI_PARAMS: PiParams = PiParams {
-    kp: fixpt!(2 / 1), //TODO
-    ki: fixpt!(0 / 2), //TODO
-    ilim: fixpt!(1 / 1),
+    kp: fixpt!(5 / 2),
+    ki: fixpt!(1 / 8),
+    ilim: fixpt!(12 / 1),
 };
 const RPMPI_PARAMS_SYNCING: PiParams = PiParams {
-    kp: fixpt!(2 / 1),
+    kp: fixpt!(5 / 2),
     ki: fixpt!(0),
     ilim: fixpt!(0),
 };
-const RPM_SYNC_THRES_16HZ: Fixpt = fixpt!(1 / 4);
+const RPM_SYNC_THRES_16HZ: Fixpt = fixpt!(25 / 24); // 1000/min
 
-/// Convert 0..0x3FF to 0..128 Hz to 0..8 16Hz
+const MAX_16HZ: i16 = 25; // 400 Hz, 24000/min
+
+/// Convert 0..0x3FF to 0..400 Hz to 0..25 16Hz
 fn setpoint_to_f(adc: u16) -> Fixpt {
-    Fixpt::from_fraction(adc as i16, 8 * 16)
+    Fixpt::from_fraction(adc as i16, 8) / fixpt!(128 / 25)
 }
 
-/// Convert -8..8 16Hz into pi..0 radians.
+/// Convert -25..25 16Hz into pi..0 radians.
 /// Convert pi..0 radians into 20..0 ms.
 fn f_to_trig_offs(f: Fixpt) -> Fixpt {
-    let fmin = Fixpt::from_int(-8);
-    let fmax = Fixpt::from_int(8);
+    let fmin = Fixpt::from_int(-MAX_16HZ);
+    let fmax = Fixpt::from_int(MAX_16HZ);
     let f = f.max(fmin);
     let f = f.min(fmax);
-    let fact = fixpt!(20 / 16);
+    let fact = fixpt!(20 / 50);
     (fmax - f) * fact
 }
 
