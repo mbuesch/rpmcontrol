@@ -29,6 +29,7 @@ impl AdcChannel {
 
 pub struct Adc {
     chan: MutexCell<AdcChannel>,
+    settled: MutexCell<bool>,
     enabled: MutexCell<u8>,
     running: MutexCell<bool>,
     result: [MutexCell<u16>; 3],
@@ -39,6 +40,7 @@ impl Adc {
     pub const fn new() -> Self {
         Self {
             chan: MutexCell::new(AdcChannel::Setpoint),
+            settled: MutexCell::new(false),
             enabled: MutexCell::new(0),
             running: MutexCell::new(false),
             result: [MutexCell::new(0), MutexCell::new(0), MutexCell::new(0)],
@@ -46,22 +48,26 @@ impl Adc {
         }
     }
 
+    #[rustfmt::skip]
     fn update_mux(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         match self.chan.get(m) {
             AdcChannel::Setpoint => {
-                sp.ADC.admux().write(|w| w.refs().vcc().mux().adc0());
+                sp.ADC.admux().write(|w| {
+                    w.refs().vcc().mux().adc0()
+                });
             }
             AdcChannel::ShuntDiff => {
-                sp.ADC
-                    .admux()
-                    .write(|w| w.refs().vcc().mux().adc4_adc3_20x());
+                sp.ADC.admux().write(|w| {
+                    w.refs().vcc().mux().adc4_adc3_20x()
+                });
             }
             AdcChannel::ShuntHi => {
-                sp.ADC.admux().write(|w| w.refs().vcc().mux().adc4());
+                sp.ADC.admux().write(|w| {
+                    w.refs().vcc().mux().adc4()
+                });
             }
         }
-
-        //TODO settle time
+        self.set_settled(m, false);
     }
 
     #[rustfmt::skip]
@@ -98,25 +104,50 @@ impl Adc {
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         let chan = self.chan.get(m);
         if !self.is_enabled(m, chan) {
-            self.ok.set(m, self.ok.get(m) & !chan.mask());
-            self.chan.set(m, chan.select_next());
-            self.running.set(m, false);
+            self.set_ok(m, chan, false);
+            self.select_next_chan(m);
+            self.set_running(m, false);
         }
 
         let chan = self.chan.get(m);
-        if self.running.get(m) && self.is_enabled(m, chan) && self.conversion_done(m, sp) {
-            self.result[chan as usize].set(m, sp.ADC.adc().read().bits());
-            self.ok.set(m, self.ok.get(m) | chan.mask());
-            self.chan.set(m, self.chan.get(m).select_next());
-            self.running.set(m, false);
+        if self.is_enabled(m, chan) && self.is_running(m) && self.conversion_done(m, sp) {
+            if self.is_settled(m) {
+                self.result[chan as usize].set(m, sp.ADC.adc().read().bits());
+                self.set_ok(m, chan, true);
+                self.select_next_chan(m);
+                self.set_running(m, false);
+            } else {
+                self.set_settled(m, true);
+                self.start_conversion(m, sp);
+            }
         }
 
         let chan = self.chan.get(m);
-        if !self.running.get(m) && self.is_enabled(m, chan) {
+        if self.is_enabled(m, chan) && !self.is_running(m) {
             self.update_mux(m, sp);
             self.start_conversion(m, sp);
-            self.running.set(m, true);
+            self.set_running(m, true);
         }
+    }
+
+    fn select_next_chan(&self, m: &MainCtx<'_>) {
+        self.chan.set(m, self.chan.get(m).select_next());
+    }
+
+    fn is_running(&self, m: &MainCtx<'_>) -> bool {
+        self.running.get(m)
+    }
+
+    fn set_running(&self, m: &MainCtx<'_>, running: bool) {
+        self.running.set(m, running);
+    }
+
+    fn is_settled(&self, m: &MainCtx<'_>) -> bool {
+        self.settled.get(m)
+    }
+
+    fn set_settled(&self, m: &MainCtx<'_>, settled: bool) {
+        self.settled.set(m, settled);
     }
 
     fn is_enabled(&self, m: &MainCtx<'_>, chan: AdcChannel) -> bool {
@@ -125,6 +156,14 @@ impl Adc {
 
     pub fn enable(&self, m: &MainCtx<'_>, chan_mask: u8) {
         self.enabled.set(m, chan_mask);
+    }
+
+    fn set_ok(&self, m: &MainCtx<'_>, chan: AdcChannel, ok: bool) {
+        if ok {
+            self.ok.set(m, self.ok.get(m) | chan.mask());
+        } else {
+            self.ok.set(m, self.ok.get(m) & !chan.mask());
+        }
     }
 
     pub fn get_result(&self, m: &MainCtx<'_>, chan: AdcChannel) -> Option<u16> {
