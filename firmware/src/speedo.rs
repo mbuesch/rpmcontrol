@@ -13,7 +13,7 @@ const SPEEDO_FACT: u32 = 4;
 
 const OK_THRES: u8 = 4;
 
-const FILTER_DIV: Fixpt = fixpt!(5 / 2);
+const FILTER_DIV: Fixpt = fixpt!(3 / 1);
 
 #[derive(Copy, Clone)]
 pub struct MotorSpeed(Fixpt);
