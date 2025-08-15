@@ -93,6 +93,7 @@
   <dia:layer name="Background" visible="true" connectable="false"/>
   <dia:layer name="Background" visible="true" connectable="false"/>
   <dia:layer name="Background" visible="true" connectable="false"/>
+  <dia:layer name="Background" visible="true" connectable="false"/>
   <dia:layer name="Background" visible="true" connectable="true" active="true">
     <dia:object type="Flowchart - Box" version="0" id="O0">
       <dia:attribute name="obj_pos">
@@ -896,12 +897,12 @@
         <dia:point val="26.9725,17.9371"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="25.5987,17.4996;28.3462,18.3746"/>
+        <dia:rectangle val="25.4163,17.4668;28.5506,18.4074"/>
       </dia:attribute>
       <dia:attribute name="text">
         <dia:composite type="text">
           <dia:attribute name="string">
-            <dia:string>#0..8 16Hz#</dia:string>
+            <dia:string>#0..25 16Hz#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -910,7 +911,7 @@
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="26.9725,18.1846"/>
+            <dia:point val="26.9725,18.1737"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -938,12 +939,12 @@
         <dia:point val="33.4756,26.5"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="32.1018,26.0625;34.8494,26.9375"/>
+        <dia:rectangle val="31.9194,26.0297;35.0537,26.9703"/>
       </dia:attribute>
       <dia:attribute name="text">
         <dia:composite type="text">
           <dia:attribute name="string">
-            <dia:string>#0..8 16Hz#</dia:string>
+            <dia:string>#0..25 16Hz#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -952,7 +953,7 @@
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="33.4756,26.7475"/>
+            <dia:point val="33.4756,26.7366"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -1053,12 +1054,12 @@
         <dia:point val="73.441,26.5"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="72.0135,26.0625;74.8685,26.9375"/>
+        <dia:rectangle val="71.9297,26.0297;74.9741,26.9703"/>
       </dia:attribute>
       <dia:attribute name="text">
         <dia:composite type="text">
           <dia:attribute name="string">
-            <dia:string>#0..1V sine#</dia:string>
+            <dia:string>#0..1 V sine#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -1067,7 +1068,7 @@
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="73.441,26.7475"/>
+            <dia:point val="73.441,26.7366"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -1241,13 +1242,13 @@
         <dia:point val="62.5001,26.5"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="60.9439,25.6625;64.0564,27.3375"/>
+        <dia:rectangle val="61.0514,25.6297;63.9707,27.3703"/>
       </dia:attribute>
       <dia:attribute name="text">
         <dia:composite type="text">
           <dia:attribute name="string">
             <dia:string>#IRQ
-0..1024 Hz#</dia:string>
+0..3.2 kHz#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -1256,7 +1257,7 @@
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="62.5001,26.3475"/>
+            <dia:point val="62.5001,26.3366"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -1326,13 +1327,13 @@
         <dia:point val="80.0914,17.95"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="78.2576,17.1125;81.9252,18.7875"/>
+        <dia:rectangle val="78.2151,17.0797;81.9895,18.8203"/>
       </dia:attribute>
       <dia:attribute name="text">
         <dia:composite type="text">
           <dia:attribute name="string">
-            <dia:string>#f = 0..128 Hz
-7680 1/min#</dia:string>
+            <dia:string>#f = 0..400 Hz
+24000 1/min#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -1341,7 +1342,7 @@
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="80.0914,17.7975"/>
+            <dia:point val="80.0914,17.7866"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -1414,12 +1415,12 @@
         <dia:point val="45.4757,17.95"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="43.9995,17.5125;46.952,18.3875"/>
+        <dia:rectangle val="43.6345,17.4797;47.3388,18.4203"/>
       </dia:attribute>
       <dia:attribute name="text">
         <dia:composite type="text">
           <dia:attribute name="string">
-            <dia:string>#-8..8 16Hz#</dia:string>
+            <dia:string>#-25..25 16Hz#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -1428,7 +1429,7 @@
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="45.4757,18.1975"/>
+            <dia:point val="45.4757,18.1866"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -1758,12 +1759,12 @@ scale to 16Hz#</dia:string>
         <dia:point val="44.5003,26.5"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="42.9441,26.0625;46.0566,26.9375"/>
+        <dia:rectangle val="43.0516,26.0297;45.9709,26.9703"/>
       </dia:attribute>
       <dia:attribute name="text">
         <dia:composite type="text">
           <dia:attribute name="string">
-            <dia:string>#0..1024 Hz#</dia:string>
+            <dia:string>#0..3.2 kHz#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -1772,7 +1773,7 @@ scale to 16Hz#</dia:string>
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="44.5003,26.7475"/>
+            <dia:point val="44.5003,26.7366"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
