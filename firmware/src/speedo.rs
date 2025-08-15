@@ -8,9 +8,8 @@ use crate::{
     timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
 
-/// 2 edge (rising falling) in AC capture.
 /// 4 speedometer edges per motor revolution
-const SPEEDO_FACT: u32 = 4 * 2;
+const SPEEDO_FACT: u32 = 4;
 
 const OK_THRES: u8 = 4;
 
