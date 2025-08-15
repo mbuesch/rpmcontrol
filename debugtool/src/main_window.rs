@@ -102,7 +102,7 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
     area.fill(&WHITE).unwrap();
 
     let n_min = 0.0;
-    let n_max = 10000.0;
+    let n_max = 25000.0;
 
     let t_min = diagram_data.oldest_timestamp();
     let t_max = diagram_data.newest_timestamp();
