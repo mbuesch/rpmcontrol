@@ -4,21 +4,24 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct PiParams {
+pub struct PidParams {
     pub kp: Fixpt,
     pub ki: Fixpt,
+    pub kd: Fixpt,
 }
 
-pub struct Pi {
+pub struct Pid {
     i: MutexCell<Fixpt>,
     ilim: MutexCell<Fixpt>,
+    prev_e: MutexCell<Fixpt>,
 }
 
-impl Pi {
+impl Pid {
     pub const fn new() -> Self {
         Self {
             i: MutexCell::new(Fixpt::from_int(0)),
             ilim: MutexCell::new(Fixpt::from_int(0)),
+            prev_e: MutexCell::new(Fixpt::from_int(0)),
         }
     }
 
@@ -29,7 +32,7 @@ impl Pi {
     pub fn run(
         &self,
         m: &MainCtx<'_>,
-        params: &PiParams,
+        params: &PidParams,
         sp: Fixpt,
         r: Fixpt,
         reset: bool,
@@ -50,7 +53,12 @@ impl Pi {
         }
         self.i.set(m, i);
 
-        p + i
+        // D term
+        let de = e - self.prev_e.get(m);
+        self.prev_e.set(m, e);
+        let d = de * params.kd; // assume constant delta-time between calls
+
+        p + i + d
     }
 }
 

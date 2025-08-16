@@ -10,7 +10,7 @@ mod fixpt;
 mod hw;
 mod mains;
 mod mutex;
-mod pi;
+mod pid;
 mod ports;
 mod speedo;
 mod system;

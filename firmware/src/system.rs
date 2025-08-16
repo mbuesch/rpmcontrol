@@ -6,7 +6,7 @@ use crate::{
     hw::mcu,
     mains::Mains,
     mutex::{MainCtx, MutexCell},
-    pi::{Pi, PiParams},
+    pid::{Pid, PidParams},
     ports::PORTB,
     speedo::Speedo,
     timer::{LargeTimestamp, RelLargeTimestamp, RelTimestamp, timer_get, timer_get_large},
@@ -14,16 +14,18 @@ use crate::{
 };
 use curveipo::Curve;
 
-const RPMPI_DT: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
+const RPMPID_DT: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
 
-const RPMPI_PARAMS: PiParams = PiParams {
+const RPMPI_PARAMS: PidParams = PidParams {
     kp: fixpt!(5 / 2),
     ki: fixpt!(1 / 8),
+    kd: fixpt!(1 / 16),
 };
 
-const RPMPI_PARAMS_SYNCING: PiParams = PiParams {
+const RPMPI_PARAMS_SYNCING: PidParams = PidParams {
     kp: fixpt!(5 / 2),
     ki: fixpt!(0),
+    kd: fixpt!(0),
 };
 
 const RPMPI_ILIM: Curve<Fixpt, (Fixpt, Fixpt), 4> = Curve::new([
@@ -102,8 +104,8 @@ pub struct System {
     speedo: Speedo,
     speed_filter: Filter,
     mains: Mains,
-    rpm_pi: Pi,
-    next_rpm_pi: MutexCell<LargeTimestamp>,
+    rpm_pid: Pid,
+    next_rpm_pid: MutexCell<LargeTimestamp>,
     triac: Triac,
 }
 
@@ -117,8 +119,8 @@ impl System {
             speedo: Speedo::new(),
             speed_filter: Filter::new(),
             mains: Mains::new(),
-            rpm_pi: Pi::new(),
-            next_rpm_pi: MutexCell::new(LargeTimestamp::new()),
+            rpm_pid: Pid::new(),
+            next_rpm_pid: MutexCell::new(LargeTimestamp::new()),
             triac: Triac::new(),
         }
     }
@@ -194,8 +196,8 @@ impl System {
         let shunthi = self.adc.get_result(m, AdcChannel::ShuntHi);
 
         let now = timer_get_large();
-        if now >= self.next_rpm_pi.get(m) {
-            self.next_rpm_pi.set(m, now + RPMPI_DT);
+        if now >= self.next_rpm_pid.get(m) {
+            self.next_rpm_pid.set(m, now + RPMPID_DT);
 
             if let Some(setpoint) = setpoint {
                 let setpoint = setpoint_to_f(setpoint);
@@ -217,10 +219,10 @@ impl System {
                     rpmpi_params = &RPMPI_PARAMS_SYNCING;
                     reset_i = true;
                 }
-                self.rpm_pi.set_ilim(m, RPMPI_ILIM.lin_inter(speedo_hz));
+                self.rpm_pid.set_ilim(m, RPMPI_ILIM.lin_inter(speedo_hz));
 
                 let y = self
-                    .rpm_pi
+                    .rpm_pid
                     .run(m, rpmpi_params, setpoint, speedo_hz, reset_i);
                 Debug::Setpoint.log_fixpt(setpoint);
                 Debug::PidY.log_fixpt(y);
