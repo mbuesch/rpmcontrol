@@ -13,6 +13,7 @@ bench = false
 
 [dependencies]
 avr-device = { version = "0.7", features = [ "attiny861a", "rt" ] }
+curveipo = "1"
 
 [profile.dev]
 panic = "abort"

@@ -12,23 +12,38 @@ use crate::{
     timer::{LargeTimestamp, RelLargeTimestamp, RelTimestamp, timer_get, timer_get_large},
     triac::Triac,
 };
+use curveipo::Curve;
 
 const RPMPI_DT: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
+
 const RPMPI_PARAMS: PiParams = PiParams {
     kp: fixpt!(5 / 2),
     ki: fixpt!(1 / 8),
-    ilim: fixpt!(12 / 1),
 };
+
 const RPMPI_PARAMS_SYNCING: PiParams = PiParams {
     kp: fixpt!(5 / 2),
     ki: fixpt!(0),
-    ilim: fixpt!(0),
 };
-const RPM_SYNC_THRES_16HZ: Fixpt = fixpt!(25 / 24); // 1000/min
 
-const MAX_16HZ: i16 = 25; // 400 Hz, 24000/min
+const RPMPI_ILIM: Curve<Fixpt, (Fixpt, Fixpt), 4> = Curve::new([
+    (rpm(0), fixpt!(0)),
+    (rpm(1000), fixpt!(0)),
+    (rpm(1001), fixpt!(12)),
+    (rpm(24000), fixpt!(24)),
+]);
+
+const RPM_SYNC_THRES_16HZ: Fixpt = rpm(1000);
+
+const MAX_16HZ: i16 = rpm(24000).to_int(); // 24000/min, 400 Hz, 25 16-Hz
 
 const SETPOINT_FILTER_DIV: Fixpt = fixpt!(5 / 1);
+
+/// Convert RPM to fixpt-16Hz
+const fn rpm(rpm: i16) -> Fixpt {
+    // rpm / 60 / 16
+    Fixpt::from_fraction(rpm, 240).div(fixpt!(4))
+}
 
 /// Convert 0..0x3FF to 0..400 Hz to 0..25 16Hz
 fn setpoint_to_f(adc: u16) -> Fixpt {
@@ -196,6 +211,7 @@ impl System {
                     rpmpi_params = &RPMPI_PARAMS_SYNCING;
                     reset_i = true;
                 }
+                self.rpm_pi.set_ilim(m, RPMPI_ILIM.lin_inter(speedo_hz));
 
                 let y = self
                     .rpm_pi

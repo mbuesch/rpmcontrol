@@ -34,7 +34,6 @@ impl Fixpt {
         Self(int << Self::SHIFT)
     }
 
-    #[allow(dead_code)]
     pub const fn from_parts(int: i16, frac: u16) -> Self {
         Self(int << Self::SHIFT | frac as i16)
     }
@@ -46,7 +45,6 @@ impl Fixpt {
         Self(q as i16)
     }
 
-    #[allow(dead_code)]
     pub const fn to_int(self) -> i16 {
         self.0 >> Self::SHIFT
     }
@@ -160,6 +158,32 @@ impl core::ops::Neg for Fixpt {
 
     fn neg(self) -> Self {
         Fixpt::neg(self)
+    }
+}
+
+impl curveipo::CurvePoint<Fixpt> for (Fixpt, Fixpt) {
+    fn x(&self) -> Fixpt {
+        self.0
+    }
+
+    fn y(&self) -> Fixpt {
+        self.1
+    }
+}
+
+impl curveipo::CurveIpo for Fixpt {
+    fn lin_inter(
+        &self,
+        left: &impl curveipo::CurvePoint<Self>,
+        right: &impl curveipo::CurvePoint<Self>,
+    ) -> Self {
+        let dx = right.x() - left.x();
+        let dy = right.y() - left.y();
+        if dx == fixpt!(0) {
+            left.y()
+        } else {
+            ((*self - left.x()) * (dy / dx)) + left.y()
+        }
     }
 }
 

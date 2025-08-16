@@ -108,6 +108,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "790eea4361631c5e7d22598ecd5723ff611904e3344ce8720784c93e3d83d40b"
 
 [[package]]
+name = "curveipo"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a010408570ed3f707167cfa70bc7ffb3ea3ee01539c6fa6f74770a8b3565b7f"
+
+[[package]]
 name = "displaydoc"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -500,6 +506,7 @@ name = "rpmcontrol"
 version = "0.1.0"
 dependencies = [
  "avr-device",
+ "curveipo",
 ]
 
 [[package]]
