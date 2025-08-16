@@ -8,7 +8,7 @@ use crate::{
     mutex::{MainCtx, MutexCell},
     pi::{Pi, PiParams},
     ports::PORTB,
-    speedo::{MotorSpeed, Speedo},
+    speedo::Speedo,
     timer::{LargeTimestamp, RelLargeTimestamp, RelTimestamp, timer_get, timer_get_large},
     triac::Triac,
 };
@@ -45,6 +45,7 @@ const RPM_SYNC_THRES: Fixpt = rpm(1000);
 const MAX_16HZ: i16 = rpm(24000).to_int(); // 24000/min, 400 Hz, 25 16-Hz
 
 const SETPOINT_FILTER_DIV: Fixpt = fixpt!(5 / 1);
+const SPEED_FILTER_DIV: Fixpt = fixpt!(4 / 1);
 
 /// Convert RPM to fixpt-16Hz
 const fn rpm(rpm: i16) -> Fixpt {
@@ -99,7 +100,7 @@ pub struct System {
     adc: Adc,
     setpoint_filter: Filter,
     speedo: Speedo,
-    prev_speed: MutexCell<MotorSpeed>,
+    speed_filter: Filter,
     mains: Mains,
     rpm_pi: Pi,
     next_rpm_pi: MutexCell<LargeTimestamp>,
@@ -114,7 +115,7 @@ impl System {
             adc: Adc::new(),
             setpoint_filter: Filter::new(),
             speedo: Speedo::new(),
-            prev_speed: MutexCell::new(MotorSpeed::zero()),
+            speed_filter: Filter::new(),
             mains: Mains::new(),
             rpm_pi: Pi::new(),
             next_rpm_pi: MutexCell::new(LargeTimestamp::new()),
@@ -165,9 +166,9 @@ impl System {
                 //TODO
                 self.state.set(m, SysState::Syncing);
                 speedo_hz = fixpt!(0);
+                self.speed_filter.reset(m);
             }
             SysState::Syncing => {
-                self.prev_speed.set(m, MotorSpeed::zero());
                 speedo_hz = fixpt!(0);
                 if self.speedo.get_speed(m).is_some() {
                     self.state.set(m, SysState::Running);
@@ -176,11 +177,9 @@ impl System {
             SysState::Running => {
                 let speed = self.speedo.get_speed(m);
                 if let Some(speed) = speed {
-                    speedo_hz = speed.as_16hz();
-                    self.prev_speed.set(m, speed);
+                    speedo_hz = self.speed_filter.run(m, speed.as_16hz(), SPEED_FILTER_DIV);
                 } else {
-                    self.prev_speed.set(m, MotorSpeed::zero());
-                    speedo_hz = self.prev_speed.get(m).as_16hz();
+                    speedo_hz = self.speed_filter.get(m, SPEED_FILTER_DIV);
                 }
             }
         }
