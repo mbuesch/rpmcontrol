@@ -6,9 +6,9 @@ publish = false
 
 [dependencies]
 anyhow = "1"
-clap = { version = "4", features = [ "derive" ] }
+clap = { version = "4", features = [ "std", "help", "usage", "error-context", "derive" ] }
 gtk4 = "0.10"
 plotters = "0.3"
 plotters-cairo = "0.8"
-serialport = "4"
 rand = "0.9"
+serialport = "4"
