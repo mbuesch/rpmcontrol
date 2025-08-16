@@ -27,13 +27,20 @@ const RPMPI_PARAMS_SYNCING: PiParams = PiParams {
 };
 
 const RPMPI_ILIM: Curve<Fixpt, (Fixpt, Fixpt), 4> = Curve::new([
+    // (speedo, I-limit)
     (rpm(0), fixpt!(0)),
     (rpm(1000), fixpt!(0)),
     (rpm(1001), fixpt!(12)),
     (rpm(24000), fixpt!(24)),
 ]);
 
-const RPM_SYNC_THRES_16HZ: Fixpt = rpm(1000);
+const SYNC_SPEEDO_SUBSTITUTE: Curve<Fixpt, (Fixpt, Fixpt), 2> = Curve::new([
+    // (setpoint, speedo-substitute)
+    (rpm(0), rpm(0)),
+    (rpm(1000), rpm(800)),
+]);
+
+const RPM_SYNC_THRES: Fixpt = rpm(1000);
 
 const MAX_16HZ: i16 = rpm(24000).to_int(); // 24000/min, 400 Hz, 25 16-Hz
 
@@ -195,7 +202,7 @@ impl System {
                 let setpoint = setpoint_to_f(setpoint);
                 let setpoint = self.setpoint_filter.run(m, setpoint, SETPOINT_FILTER_DIV);
 
-                if setpoint <= RPM_SYNC_THRES_16HZ {
+                if setpoint <= RPM_SYNC_THRES {
                     self.state.set(m, SysState::Syncing);
                 }
 
@@ -207,7 +214,7 @@ impl System {
                     rpmpi_params = &RPMPI_PARAMS;
                     reset_i = false;
                 } else {
-                    speedo_hz = MotorSpeed::zero().as_16hz();
+                    speedo_hz = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint);
                     rpmpi_params = &RPMPI_PARAMS_SYNCING;
                     reset_i = true;
                 }
