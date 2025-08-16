@@ -54,6 +54,31 @@ impl Fixpt {
     pub const fn to_q(self) -> i16 {
         self.0
     }
+
+    pub const fn add(self, other: Self) -> Self {
+        Self(self.0 + other.0)
+    }
+
+    pub const fn sub(self, other: Self) -> Self {
+        Self(self.0 - other.0)
+    }
+
+    #[inline(never)]
+    pub const fn mul(self, other: Self) -> Self {
+        Self(((self.0 as i32 * other.0 as i32) >> Self::SHIFT) as i16)
+    }
+
+    #[inline(never)]
+    pub const fn div(self, other: Self) -> Self {
+        let mut tmp: i32 = self.0 as i32;
+        tmp <<= Self::SHIFT;
+        tmp /= other.0 as i32;
+        Self(tmp as i16)
+    }
+
+    pub const fn neg(self) -> Self {
+        Self(-self.0)
+    }
 }
 
 impl From<u8> for Fixpt {
@@ -78,7 +103,7 @@ impl core::ops::Add for Fixpt {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        Self(self.0 + other.0)
+        Fixpt::add(self, other)
     }
 }
 
@@ -92,7 +117,7 @@ impl core::ops::Sub for Fixpt {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
-        Self(self.0 - other.0)
+        Fixpt::sub(self, other)
     }
 }
 
@@ -105,9 +130,8 @@ impl core::ops::SubAssign for Fixpt {
 impl core::ops::Mul for Fixpt {
     type Output = Self;
 
-    #[inline(never)]
     fn mul(self, other: Self) -> Self {
-        Self(((self.0 as i32 * other.0 as i32) >> Self::SHIFT) as i16)
+        Fixpt::mul(self, other)
     }
 }
 
@@ -120,12 +144,8 @@ impl core::ops::MulAssign for Fixpt {
 impl core::ops::Div for Fixpt {
     type Output = Self;
 
-    #[inline(never)]
     fn div(self, other: Self) -> Self {
-        let mut tmp: i32 = self.0.into();
-        tmp <<= Self::SHIFT;
-        tmp /= other.0 as i32;
-        Self(tmp as i16)
+        Fixpt::div(self, other)
     }
 }
 
@@ -139,7 +159,7 @@ impl core::ops::Neg for Fixpt {
     type Output = Self;
 
     fn neg(self) -> Self {
-        Self(-self.0)
+        Fixpt::neg(self)
     }
 }
 
