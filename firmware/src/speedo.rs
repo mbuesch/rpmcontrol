@@ -29,7 +29,7 @@ impl MotorSpeed {
         self.0
     }
 
-    fn from_16hz(value: Fixpt) -> Self {
+    pub fn from_16hz(value: Fixpt) -> Self {
         Self(value)
     }
 
