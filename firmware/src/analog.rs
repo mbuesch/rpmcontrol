@@ -185,9 +185,17 @@ impl Ac {
     #[rustfmt::skip]
     pub fn init(&self, sp: &SysPeriph) {
         sp.AC.acsra().write(|w| {
-            w.acie().set_bit()
-             .aci().set_bit()
-             .acis().on_toggle()
+            w.acie().set_bit() // Enable interrupt
+             .aci().set_bit() // Clear interrupt flag
+             .acis().on_toggle() // Interrupt on comparator output toggle
+             .acme().clear_bit() // No ADC mux
+             .acbg().clear_bit() // no BG voltage
+             .acd().clear_bit() // Enable AC
+        });
+        sp.AC.acsrb().write(|w| {
+            w.hsel().set_bit() // Hysteresis select: on
+             .hlev().set_bit() // Hysteresis level: 50 mV
+             .acm().set(0) // Mux: Pos=AIN0, Neg=AIN1
         });
     }
 }
