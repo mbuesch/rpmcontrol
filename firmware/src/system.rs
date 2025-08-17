@@ -4,17 +4,18 @@ use crate::{
     filter::Filter,
     fixpt::{Fixpt, fixpt},
     hw::mcu,
-    mains::Mains,
+    mains::{Mains, PhaseUpdate},
     mutex::{MainCtx, MutexCell},
     pid::{Pid, PidParams},
     ports::PORTB,
     speedo::Speedo,
-    timer::{LargeTimestamp, RelLargeTimestamp, RelTimestamp, timer_get, timer_get_large},
+    timer::{RelLargeTimestamp, RelTimestamp, timer_get},
     triac::Triac,
 };
 use curveipo::Curve;
 
-const RPMPID_DT: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
+/// The position of the PID calculation, relative to mains zero crossing.
+const RPMPID_CALC_POS: RelLargeTimestamp = RelLargeTimestamp::from_millis(5);
 
 const RPMPI_PARAMS: PidParams = PidParams {
     kp: fixpt!(5 / 2),
@@ -85,6 +86,11 @@ pub fn debug(ticks: i8) {
     PORTB.set(6, false);
 }
 
+#[allow(dead_code)]
+pub fn debug_toggle() {
+    PORTB.set(6, !PORTB.get(6));
+}
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
 enum SysState {
@@ -105,7 +111,7 @@ pub struct System {
     speed_filter: Filter,
     mains: Mains,
     rpm_pid: Pid,
-    next_rpm_pid: MutexCell<LargeTimestamp>,
+    rpm_pid_calcd: MutexCell<bool>,
     triac: Triac,
 }
 
@@ -120,7 +126,7 @@ impl System {
             speed_filter: Filter::new(),
             mains: Mains::new(),
             rpm_pid: Pid::new(),
-            next_rpm_pid: MutexCell::new(LargeTimestamp::new()),
+            rpm_pid_calcd: MutexCell::new(false),
             triac: Triac::new(),
         }
     }
@@ -186,19 +192,29 @@ impl System {
             }
         }
 
-        let phase_update = self.mains.run(m);
-        let phase = self.mains.get_phase(m);
-        let phaseref = self.mains.get_phaseref(m);
-
+        // Run the ADC measurements.
         self.adc.run(m, sp);
         let setpoint = self.adc.get_result(m, AdcChannel::Setpoint);
         let shuntdiff = self.adc.get_result(m, AdcChannel::ShuntDiff);
         let shunthi = self.adc.get_result(m, AdcChannel::ShuntHi);
 
-        let now = timer_get_large();
-        if now >= self.next_rpm_pid.get(m) {
-            self.next_rpm_pid.set(m, now + RPMPID_DT);
+        // Update the mains synchronization.
+        let phase_update = self.mains.run(m);
 
+        // Check if we need to run the controller.
+        let mut run_pid = false;
+        if phase_update == PhaseUpdate::Changed {
+            self.rpm_pid_calcd.set(m, false);
+        } else if !self.rpm_pid_calcd.get(m)
+            && let Some(time_since_zerocrossing) = self.mains.get_time_since_zerocrossing(m)
+            && time_since_zerocrossing >= RPMPID_CALC_POS
+        {
+            self.rpm_pid_calcd.set(m, true);
+            run_pid = true;
+        }
+
+        // Run the controller.
+        if run_pid {
             if let Some(setpoint) = setpoint {
                 let setpoint = setpoint_to_f(setpoint);
                 let setpoint = self.setpoint_filter.run(m, setpoint, SETPOINT_FILTER_DIV);
@@ -228,14 +244,18 @@ impl System {
                 Debug::PidY.log_fixpt(y);
 
                 let phi_offs_ms = f_to_trig_offs(y);
-                //debug(m, sp, phi_offs_ms.to_int() as i8);
                 self.triac.set_phi_offs_ms(m, phi_offs_ms);
             } else {
                 self.triac.shutoff(m);
             }
         }
 
+        // Update the triac state.
+        let phase = self.mains.get_phase(m);
+        let phaseref = self.mains.get_phaseref(m);
         self.triac.run(m, phase_update, phase, phaseref);
+
+        debug_toggle();
     }
 }
 

@@ -77,6 +77,14 @@ impl Mains {
     pub fn get_phaseref(&self, m: &MainCtx<'_>) -> LargeTimestamp {
         self.phaseref.get(m)
     }
+
+    pub fn get_time_since_zerocrossing(&self, m: &MainCtx<'_>) -> Option<RelLargeTimestamp> {
+        if self.phase.get(m) == Phase::Notsync {
+            None
+        } else {
+            Some(timer_get_large() - self.phaseref.get(m))
+        }
+    }
 }
 
 // vim: ts=4 sw=4 expandtab
