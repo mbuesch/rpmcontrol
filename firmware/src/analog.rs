@@ -238,7 +238,7 @@ impl AcCapture {
 pub static mut AC_CAPTURE: AcCapture = AcCapture::new();
 
 /// AC events closer than this to the previous valid event are ignored.
-const AC_CAPTURE_MINDIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(256);
+const AC_CAPTURE_MINDIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(100);
 
 /// Analog Comparator interrupt.
 pub fn irq_handler_ana_comp(c: &IrqCtx) {
