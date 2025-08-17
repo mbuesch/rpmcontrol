@@ -187,7 +187,7 @@ impl Ac {
         sp.AC.acsra().write(|w| {
             w.acie().set_bit() // Enable interrupt
              .aci().set_bit() // Clear interrupt flag
-             .acis().on_toggle() // Interrupt on comparator output toggle
+             .acis().on_rising_edge() // Interrupt on comparator output rising edge
              .acme().clear_bit() // No ADC mux
              .acbg().clear_bit() // no BG voltage
              .acd().clear_bit() // Enable AC
@@ -204,7 +204,6 @@ impl Ac {
 pub struct AcCapture {
     stamp: LargeTimestamp,
     new: bool,
-    rising: bool,
 }
 
 impl AcCapture {
@@ -212,16 +211,11 @@ impl AcCapture {
         Self {
             stamp: LargeTimestamp(0),
             new: false,
-            rising: false,
         }
     }
 
     pub fn is_new(&self) -> bool {
         self.new
-    }
-
-    pub fn is_rising(&self) -> bool {
-        self.rising
     }
 
     pub fn stamp(&self) -> LargeTimestamp {
@@ -260,7 +254,6 @@ pub fn irq_handler_ana_comp(c: &IrqCtx) {
             }
             AC_CAPTURE.stamp = now;
             AC_CAPTURE.new = true;
-            AC_CAPTURE.rising = !AC_CAPTURE.rising;
         }
     }
 }

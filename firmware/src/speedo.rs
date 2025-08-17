@@ -108,7 +108,7 @@ impl Speedo {
             // prev_stamp wrapped. Drop it.
             self.ok_count.set(m, 0);
         }
-        if ac.is_new() && ac.is_rising() {
+        if ac.is_new() {
             let ac_stamp = ac.stamp();
             if ac_stamp >= prev_stamp {
                 let dur = ac_stamp - prev_stamp;
