@@ -13,9 +13,9 @@ AVRDUDE_PROG:=avrisp2
 AVRDUDE_SPEED:=1
 AVRDUDE_SPEED_SLOW:=10
 
-# Fuses: ext-high-freq-crystal=4ms; BOD=4.3V; debugWire
+# Fuses: ext-high-freq-crystal=4ms; BOD=2.7V; debugWire; WDT-on
 LFUSE:=0xEF
-HFUSE:=0x8C
+HFUSE:=0x8D
 EFUSE:=0xFF
 
 AVR_CPU_FREQUENCY_HZ:=16000000
