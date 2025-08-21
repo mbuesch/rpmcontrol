@@ -133,6 +133,15 @@ macro_rules! impl_timestamp {
             }
         }
 
+        impl core::ops::Sub<$rel> for $abs {
+            type Output = $abs;
+
+            #[inline]
+            fn sub(self, other: $rel) -> Self::Output {
+                (self.0.wrapping_sub(other.0 as $abstype)).into()
+            }
+        }
+
         impl From<$abstype> for $abs {
             #[inline]
             fn from(stamp: $abstype) -> Self {
