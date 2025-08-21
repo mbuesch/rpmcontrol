@@ -1,7 +1,8 @@
 use crate::{
     fixpt::{Fixpt, fixpt},
-    hw::{Mutex, interrupt, mcu},
-    mutex::{CriticalSection, LazyMainInit, MainCtx},
+    hw::{Mutex, interrupt, mcu, nop3},
+    mutex::{CriticalSection, IrqCtx, LazyMainInit, MainCtx},
+    triac::triac_timer_interrupt,
 };
 use core::cell::Cell;
 
@@ -21,8 +22,8 @@ pub const TIMER_TICK_US: u8 = 16; // 16 us per tick.
 pub fn timer_init(_m: &MainCtx) {
     // Timer 1 configuration:
     // CS: 256 -> 16 us per timer tick.
-    DP.TC1.tc1h().write(|w| w);
-    DP.TC1.tcnt1().write(|w| w);
+    DP.TC1.tc1h().write(|w| w.set(0));
+    DP.TC1.tcnt1().write(|w| w.set(0));
     DP.TC1.tccr1a().write(|w| w);
     DP.TC1.tccr1c().write(|w| w);
     DP.TC1.tccr1d().write(|w| w);
@@ -60,6 +61,82 @@ pub fn timer_get_large_cs(cs: CriticalSection<'_>) -> LargeTimestamp {
 pub fn timer_get_large() -> LargeTimestamp {
     interrupt::free(timer_get_large_cs)
 }
+
+// Wait for register write to synchronize to timer hardware.
+#[inline(always)]
+fn timer_sync_wait() {
+    nop3();
+}
+
+macro_rules! define_timer_interrupt {
+    ($arm_fn:ident, $irq_fn:ident, $handler_fn:path, $ocr:ident, $ocie:ident, $ocf:ident) => {
+        #[allow(dead_code)]
+        pub fn $arm_fn(trigger_time: Timestamp) {
+            interrupt::free(|_| {
+                // Ensure it doesn't trigger right away by pushing OCR into the future.
+                let now_ticks: u8 = timer_get().into();
+                DP.TC1.tc1h().write(|w| w.set(0));
+                DP.TC1.$ocr().write(|w| w.set(now_ticks.wrapping_add(0x7F)));
+                timer_sync_wait();
+
+                // Clear trigger flag and enable interrupt.
+                DP.TC1.tifr().write(|w| w.$ocf().set_bit());
+                DP.TC1.timsk().modify(|_, w| w.$ocie().set_bit());
+
+                // Program the compare register.
+                DP.TC1.tc1h().write(|w| w.set(0));
+                DP.TC1.$ocr().write(|w| w.set(trigger_time.into()));
+                timer_sync_wait();
+                let now = timer_get();
+
+                // Trigger is in the past and has not triggered, yet?
+                if trigger_time <= now && !DP.TC1.tifr().read().$ocf().bit() {
+                    loop {
+                        // Enforce trigger now.
+                        let trigger_time = timer_get() + RelTimestamp::from_ticks(1);
+                        DP.TC1.tc1h().write(|w| w.set(0));
+                        DP.TC1.$ocr().write(|w| w.set(trigger_time.into()));
+                        timer_sync_wait();
+                        let now = timer_get();
+
+                        /* Is it going to trigger or did it trigger already? */
+                        if trigger_time > now || DP.TC1.tifr().read().$ocf().bit() {
+                            break; /* Done. IRQ is pending. */
+                        }
+                    }
+                }
+            });
+        }
+
+        pub fn $irq_fn(c: &IrqCtx<'_>) {
+            DP.TC1.timsk().modify(|_, w| w.$ocie().clear_bit());
+            DP.TC1.tifr().write(|w| w.$ocf().set_bit());
+            let trig_time: Timestamp = DP.TC1.$ocr().read().bits().into();
+            $handler_fn(c, trig_time);
+        }
+    };
+}
+
+define_timer_interrupt!(
+    timer_interrupt_a_arm,
+    irq_handler_timer1_compa,
+    triac_timer_interrupt,
+    ocr1a,
+    ocie1a,
+    ocf1a
+);
+
+fn b_handler_dummy(_c: &IrqCtx<'_>, _now: Timestamp) {
+}
+
+define_timer_interrupt!(
+    timer_interrupt_b_arm,
+    irq_handler_timer1_compb,
+    b_handler_dummy,
+    ocr1b,
+    ocie1b,
+    ocf1b
+);
 
 macro_rules! impl_timestamp {
     ($rel:ident, $abs:ident, $reltype:ty, $abstype:ty) => {
