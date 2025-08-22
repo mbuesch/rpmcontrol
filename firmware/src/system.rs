@@ -141,30 +141,6 @@ impl System {
         self.triac.shutoff(m);
     }
 
-    /*
-    fn run_initial_check(&self, cs: CriticalSection<'_>, _sp: &SysPeriph) {
-        let adc = self.adc.borrow(cs);
-
-        let Some(_setpoint) = adc.get_result(AdcChannel::Setpoint) else {
-            return;
-        };
-        //TODO
-
-        let Some(_shuntdiff) = adc.get_result(AdcChannel::ShuntDiff) else {
-            return;
-        };
-        //TODO
-
-        let Some(_shunthi) = adc.get_result(AdcChannel::ShuntHi) else {
-            return;
-        };
-        //TODO
-
-        self.speedo.borrow_mut(cs).reset();
-        self.state.set(cs, SysState::Run);
-    }
-    */
-
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph, ac: AcCapture) {
         self.speedo.update(m, sp, &ac);
         let mut speedo_hz;
@@ -194,9 +170,6 @@ impl System {
 
         // Run the ADC measurements.
         self.adc.run(m, sp);
-        let setpoint = self.adc.get_result(m, AdcChannel::Setpoint);
-        let shuntdiff = self.adc.get_result(m, AdcChannel::ShuntDiff);
-        let shunthi = self.adc.get_result(m, AdcChannel::ShuntHi);
 
         // Update the mains synchronization.
         let phase_update = self.mains.run(m);
@@ -215,6 +188,7 @@ impl System {
 
         // Run the controller.
         if run_pid {
+            let setpoint = self.adc.get_result(m, AdcChannel::Setpoint);
             if let Some(setpoint) = setpoint {
                 let setpoint = setpoint_to_f(setpoint);
                 let setpoint = self.setpoint_filter.run(m, setpoint, SETPOINT_FILTER_DIV);

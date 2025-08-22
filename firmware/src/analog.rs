@@ -102,19 +102,18 @@ impl Adc {
     }
 
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
-        let chan = self.chan.get(m);
+        let mut chan = self.chan.get(m);
         if !self.is_enabled(m, chan) {
             self.set_ok(m, chan, false);
-            self.select_next_chan(m);
+            chan = self.select_next_chan(m);
             self.set_running(m, false);
         }
 
-        let chan = self.chan.get(m);
         if self.is_enabled(m, chan) && self.is_running(m) && self.conversion_done(m, sp) {
             if self.is_settled(m) {
                 self.result[chan as usize].set(m, sp.ADC.adc().read().bits());
                 self.set_ok(m, chan, true);
-                self.select_next_chan(m);
+                chan = self.select_next_chan(m);
                 self.set_running(m, false);
             } else {
                 self.set_settled(m, true);
@@ -122,7 +121,6 @@ impl Adc {
             }
         }
 
-        let chan = self.chan.get(m);
         if self.is_enabled(m, chan) && !self.is_running(m) {
             self.update_mux(m, sp);
             self.start_conversion(m, sp);
@@ -130,8 +128,10 @@ impl Adc {
         }
     }
 
-    fn select_next_chan(&self, m: &MainCtx<'_>) {
-        self.chan.set(m, self.chan.get(m).select_next());
+    fn select_next_chan(&self, m: &MainCtx<'_>) -> AdcChannel {
+        let next = self.chan.get(m).select_next();
+        self.chan.set(m, next);
+        next
     }
 
     fn is_running(&self, m: &MainCtx<'_>) -> bool {
