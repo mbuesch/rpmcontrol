@@ -139,10 +139,10 @@ impl PortA {
                     pin_floating(1) | // vsense
                     pin_low(2) | // DNC
                     pin_floating(3) | // AREF
-                    pin_floating(4) | // shunt_lo, differential ADC
-                    pin_floating(5) | // shunt_hi, differential ADC + single ended ADC
+                    pin_floating(4) | // DNC  //TODO output
+                    pin_floating(5) | // motor temperature, single ended ADC
                     pin_floating(6) | // speedo, AD comparator pos
-                    pin_floating(7), // speedoref, AD comparator neg
+                    pin_floating(7), // speedo, AD comparator neg
                 )
             });
             self.PORTA.ddra().write(|w| {
@@ -151,10 +151,10 @@ impl PortA {
                     pin_input(1) | // vsense
                     pin_output(2) | // DNC
                     pin_input(3) | // AREF
-                    pin_input(4) | // shunt_lo, differential ADC
-                    pin_input(5) | // shunt_hi, differential ADC + single ended ADC
+                    pin_input(4) | // DNC  //TODO output
+                    pin_input(5) | // motor temperature, single ended ADC
                     pin_input(6) | // speedo, AD comparator pos
-                    pin_input(7), // speedoref, AD comparator neg
+                    pin_input(7), // speedo, AD comparator neg
                 )
             });
         }
@@ -174,7 +174,7 @@ impl PortB {
                     pin_floating(4) | // XTAL1
                     pin_floating(5) | // XTAL2
                     pin_low(6) | // Debug
-                    pin_floating(7), // RESET, active low
+                    pin_floating(7), // RESET, Debug-Wire
                 )
             });
             self.PORTB.ddrb().write(|w| {
@@ -186,7 +186,7 @@ impl PortB {
                     pin_input(4) | // XTAL1
                     pin_input(5) | // XTAL2
                     pin_output(6) | // Debug
-                    pin_input(7), // RESET, active low
+                    pin_input(7), // RESET, Debug-Wire
                 )
             });
         }

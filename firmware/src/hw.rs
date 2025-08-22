@@ -26,6 +26,7 @@ define_isr!(ANA_COMP, crate::analog::irq_handler_ana_comp);
 #[inline(always)]
 #[rustfmt::skip]
 pub fn nop3() {
+    // SAFETY: Asm block doesn't access anything.
     unsafe {
         core::arch::asm!(
             "rjmp 1",
