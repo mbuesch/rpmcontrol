@@ -31,7 +31,6 @@ impl AdcChannel {
 pub struct Adc {
     chan: MutexCell<AdcChannel>,
     settled: MutexCell<bool>,
-    enabled: MutexCell<u8>,
     running: MutexCell<bool>,
     result: [MutexCell<u16>; 3],
     ok: MutexCell<u8>,
@@ -42,7 +41,6 @@ impl Adc {
         Self {
             chan: MutexCell::new(AdcChannel::Setpoint),
             settled: MutexCell::new(false),
-            enabled: MutexCell::new(0),
             running: MutexCell::new(false),
             result: [MutexCell::new(0), MutexCell::new(0), MutexCell::new(0)],
             ok: MutexCell::new(0),
@@ -105,18 +103,12 @@ impl Adc {
     }
 
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
-        let mut chan = self.chan.get(m);
-        if !self.is_enabled(m, chan) {
-            self.set_ok(m, chan, false);
-            chan = self.select_next_chan(m);
-            self.set_running(m, false);
-        }
-
-        if self.is_enabled(m, chan) && self.is_running(m) && self.conversion_done(m, sp) {
+        if self.is_running(m) && self.conversion_done(m, sp) {
             if self.is_settled(m) {
+                let chan = self.chan.get(m);
                 self.result[chan as usize].set(m, sp.ADC.adc().read().bits());
                 self.set_ok(m, chan, true);
-                chan = self.select_next_chan(m);
+                self.select_next_chan(m);
                 self.set_running(m, false);
             } else {
                 self.set_settled(m, true);
@@ -124,17 +116,16 @@ impl Adc {
             }
         }
 
-        if self.is_enabled(m, chan) && !self.is_running(m) {
+        if !self.is_running(m) {
             self.update_mux(m, sp);
             self.start_conversion(m, sp);
             self.set_running(m, true);
         }
     }
 
-    fn select_next_chan(&self, m: &MainCtx<'_>) -> AdcChannel {
+    fn select_next_chan(&self, m: &MainCtx<'_>) {
         let next = self.chan.get(m).select_next();
         self.chan.set(m, next);
-        next
     }
 
     fn is_running(&self, m: &MainCtx<'_>) -> bool {
@@ -151,14 +142,6 @@ impl Adc {
 
     fn set_settled(&self, m: &MainCtx<'_>, settled: bool) {
         self.settled.set(m, settled);
-    }
-
-    fn is_enabled(&self, m: &MainCtx<'_>, chan: AdcChannel) -> bool {
-        self.enabled.get(m) & chan.mask() != 0
-    }
-
-    pub fn enable(&self, m: &MainCtx<'_>, chan_mask: u8) {
-        self.enabled.set(m, chan_mask);
     }
 
     fn set_ok(&self, m: &MainCtx<'_>, chan: AdcChannel, ok: bool) {

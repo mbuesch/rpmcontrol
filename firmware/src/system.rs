@@ -133,10 +133,6 @@ impl System {
 
     pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         self.adc.init(m, sp);
-        self.adc.enable(
-            m,
-            AdcChannel::Setpoint.mask() | AdcChannel::ShuntDiff.mask() | AdcChannel::ShuntHi.mask(),
-        );
         self.ac.init(sp);
         self.triac.shutoff(m);
     }
@@ -228,8 +224,6 @@ impl System {
         let phase = self.mains.get_phase(m);
         let phaseref = self.mains.get_phaseref(m);
         self.triac.run(m, phase_update, phase, phaseref);
-
-        debug_toggle();
     }
 }
 
