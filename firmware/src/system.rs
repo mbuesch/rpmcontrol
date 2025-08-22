@@ -140,7 +140,7 @@ impl System {
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         let ac = ac_capture_get();
 
-        self.speedo.update(m, sp, &ac);
+        self.speedo.update(m, sp, ac);
         let mut speedo_hz;
 
         match self.state.get(m) {

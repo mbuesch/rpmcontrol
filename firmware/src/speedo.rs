@@ -101,7 +101,7 @@ impl Speedo {
         self.speed_filtered.set(m, MotorSpeed::from_16hz(speed));
     }
 
-    pub fn update(&self, m: &MainCtx<'_>, _sp: &SysPeriph, ac: &AcCapture) {
+    pub fn update(&self, m: &MainCtx<'_>, _sp: &SysPeriph, ac: AcCapture) {
         let now = timer_get_large();
         let prev_stamp = self.prev_stamp.get(m);
         if now < prev_stamp {
