@@ -162,6 +162,21 @@ macro_rules! impl_timestamp {
             pub const fn from_millis(ms: u32) -> $abs {
                 $abs(((ms * 1000) / TIMER_TICK_US as u32) as $abstype)
             }
+
+            #[inline]
+            pub const fn add(self, other: $rel) -> $abs {
+                $abs(self.0.wrapping_add(other.0 as $abstype))
+            }
+
+            #[inline]
+            pub const fn sub(self, other: $abs) -> $rel {
+                $rel(self.0.wrapping_sub(other.0) as $reltype)
+            }
+
+            #[inline]
+            pub const fn sub_rel(self, other: $rel) -> $abs {
+                $abs(self.0.wrapping_sub(other.0 as $abstype))
+            }
         }
 
         impl Default for $abs {
@@ -196,7 +211,7 @@ macro_rules! impl_timestamp {
 
             #[inline]
             fn add(self, other: $rel) -> Self::Output {
-                self.0.wrapping_add(other.0 as $abstype).into()
+                Self::add(self, other)
             }
         }
 
@@ -205,7 +220,7 @@ macro_rules! impl_timestamp {
 
             #[inline]
             fn sub(self, other: Self) -> Self::Output {
-                (self.0.wrapping_sub(other.0) as $reltype).into()
+                Self::sub(self, other)
             }
         }
 
@@ -214,7 +229,7 @@ macro_rules! impl_timestamp {
 
             #[inline]
             fn sub(self, other: $rel) -> Self::Output {
-                (self.0.wrapping_sub(other.0 as $abstype)).into()
+                Self::sub_rel(self, other)
             }
         }
 
@@ -261,6 +276,11 @@ macro_rules! impl_reltimestamp {
             }
 
             #[inline]
+            pub const fn add(self, other: $rel) -> $rel {
+                $rel(self.0.wrapping_add(other.0))
+            }
+
+            #[inline]
             pub const fn sub(self, other: $rel) -> $rel {
                 $rel(self.0.wrapping_sub(other.0))
             }
@@ -283,7 +303,7 @@ macro_rules! impl_reltimestamp {
 
             #[inline]
             fn add(self, other: $rel) -> Self::Output {
-                self.0.wrapping_add(other.0).into()
+                Self::add(self, other)
             }
         }
 
