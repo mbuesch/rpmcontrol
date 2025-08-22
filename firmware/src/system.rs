@@ -1,5 +1,5 @@
 use crate::{
-    analog::{Ac, AcCapture, Adc, AdcChannel},
+    analog::{Ac, Adc, AdcChannel, ac_capture_get},
     debug::Debug,
     filter::Filter,
     fixpt::{Fixpt, fixpt},
@@ -137,7 +137,9 @@ impl System {
         self.triac.shutoff(m);
     }
 
-    pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph, ac: AcCapture) {
+    pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+        let ac = ac_capture_get();
+
         self.speedo.update(m, sp, &ac);
         let mut speedo_hz;
 

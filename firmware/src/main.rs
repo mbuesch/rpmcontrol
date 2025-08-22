@@ -20,7 +20,6 @@ mod triac;
 mod usi_uart;
 
 use crate::{
-    analog::ac_capture_get,
     debug::debug_init,
     hw::{Peripherals, interrupt, mcu},
     mutex::MainCtx,
@@ -132,8 +131,7 @@ fn main() -> ! {
     unsafe { interrupt::enable() };
 
     loop {
-        let ac_capture = ac_capture_get();
-        SYSTEM.run(&m, &sp, ac_capture);
+        SYSTEM.run(&m, &sp);
         wdt_poke(&dp.WDT);
     }
 }
