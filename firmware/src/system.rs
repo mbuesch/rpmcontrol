@@ -143,11 +143,14 @@ impl System {
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         let mut triac_shutoff = false;
 
+        // Read the speedo Analog Comparator.
         let ac = ac_capture_get();
 
+        // Evaluate the speedo signal.
         self.speedo.update(m, sp, ac);
-        let mut speedo_hz;
 
+        // Get the actual motor speed and sync state.
+        let mut speedo_hz;
         match self.state.get(m) {
             SysState::PorCheck => {
                 //TODO
@@ -235,11 +238,14 @@ impl System {
             }
         }
 
-        // Update the triac state.
-        let phase = self.mains.get_phase(m);
-        let phaseref = self.mains.get_phaseref(m);
-        self.triac
-            .run(m, phase_update, phase, phaseref, triac_shutoff);
+        // Update the triac trigger state.
+        self.triac.run(
+            m,
+            phase_update,
+            self.mains.get_phase(m),
+            self.mains.get_phaseref(m),
+            triac_shutoff,
+        );
     }
 }
 
