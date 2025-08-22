@@ -10,6 +10,8 @@ use crate::{
 #[repr(u8)]
 pub enum AdcChannel {
     Setpoint,
+    MotTemp,
+    UcTemp,
 }
 
 impl AdcChannel {
@@ -19,7 +21,9 @@ impl AdcChannel {
 
     pub fn select_next(&self) -> AdcChannel {
         match self {
-            Self::Setpoint => Self::Setpoint,
+            Self::Setpoint => Self::MotTemp,
+            Self::MotTemp => Self::UcTemp,
+            Self::UcTemp => Self::Setpoint,
         }
     }
 }
@@ -50,6 +54,18 @@ impl Adc {
                 sp.ADC.admux().write(|w| {
                     w.refs().vcc().mux().adc0()
                 });
+            }
+            AdcChannel::MotTemp => {
+                sp.ADC.admux().write(|w| {
+                    w.refs().vcc().mux().adc4()
+                });
+            }
+            AdcChannel::UcTemp => {
+                /*TODO
+                sp.ADC.admux().write(|w| {
+                    w.refs().vcc().mux().adc11()
+                });
+                */
             }
         }
         self.set_settled(m, false);
