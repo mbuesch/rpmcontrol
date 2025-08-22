@@ -261,6 +261,11 @@ macro_rules! impl_reltimestamp {
             }
 
             #[inline]
+            pub const fn sub(self, other: $rel) -> $rel {
+                $rel(self.0.wrapping_sub(other.0))
+            }
+
+            #[inline]
             pub const fn div(&self, d: $reltype) -> $rel {
                 $rel(self.0 / d)
             }
@@ -287,7 +292,7 @@ macro_rules! impl_reltimestamp {
 
             #[inline]
             fn sub(self, other: Self) -> Self::Output {
-                self.0.wrapping_sub(other.0).into()
+                Self::sub(self, other)
             }
         }
 
