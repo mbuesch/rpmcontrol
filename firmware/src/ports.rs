@@ -7,6 +7,7 @@
 use crate::{
     hw::mcu,
     mutex::{LazyMainInit, MainInitCtx},
+    system::SysPeriph,
 };
 
 #[rustfmt::skip]
@@ -135,7 +136,7 @@ impl PortA {
             self.PORTA.porta().write(|w| {
                 w.bits(
                     pin_floating(0) | // setpoint, single ended ADC
-                    pin_floating(1) | // vsense, single ended ADC
+                    pin_floating(1) | // vsense
                     pin_low(2) | // DNC
                     pin_floating(3) | // AREF
                     pin_floating(4) | // shunt_lo, differential ADC
@@ -147,7 +148,7 @@ impl PortA {
             self.PORTA.ddra().write(|w| {
                 w.bits(
                     pin_input(0) | // setpoint, single ended ADC
-                    pin_input(1) | // vsense, single ended ADC
+                    pin_input(1) | // vsense
                     pin_output(2) | // DNC
                     pin_input(3) | // AREF
                     pin_input(4) | // shunt_lo, differential ADC
@@ -190,6 +191,26 @@ impl PortB {
             });
         }
     }
+}
+
+#[rustfmt::skip]
+pub fn setup_didr(sp: &SysPeriph) {
+    sp.ADC.didr0().write(|w| {
+        w.adc0d().set_bit() // PA0: setpoint ADC
+         .adc1d().clear_bit()
+         .adc2d().clear_bit()
+         .arefd().clear_bit()
+         .adc3d().clear_bit()
+         .adc4d().clear_bit()
+         .adc5d().set_bit() // PA6: speedo positive
+         .adc6d().set_bit() // PA7: speedo positive
+    });
+    sp.ADC.didr1().write(|w| {
+        w.adc7d().clear_bit()
+         .adc8d().clear_bit()
+         .adc9d().clear_bit()
+         .adc10d().clear_bit()
+    });
 }
 
 // vim: ts=4 sw=4 expandtab

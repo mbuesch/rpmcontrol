@@ -1,6 +1,7 @@
 use crate::{
     hw::interrupt,
     mutex::{IrqCtx, MainCtx, MutexCell},
+    ports::setup_didr,
     system::SysPeriph,
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large_cs},
 };
@@ -86,6 +87,8 @@ impl Adc {
 
     #[rustfmt::skip]
     pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+        setup_didr(sp);
+
         sp.ADC.adcsra().write(|w| {
             w.adps().prescaler_128()
              .adie().clear_bit()
