@@ -1,7 +1,7 @@
 use crate::{
     fixpt::Fixpt,
     hw::interrupt,
-    mains::{Phase, PhaseUpdate},
+    mains::{MAINS_HALFWAVE_DUR, MAINS_PERIOD, Phase, PhaseUpdate},
     mutex::{IrqCtx, MainCtx, MutexCell},
     ports::PORTB,
     timer::{
@@ -14,15 +14,10 @@ use core::sync::atomic::{Ordering::SeqCst, fence};
 /// Triac trigger pulse length set-duration or clear-duration.
 const HALF_PULSE_LEN: RelTimestamp = RelTimestamp::from_micros(64);
 
-/// Mains sine wave period (50 Hz).
-const MAINS_PERIOD: RelLargeTimestamp = RelLargeTimestamp::from_micros(20_000);
-
-/// Mains sine wave half-wave length.
-const HALFWAVE_LEN: RelLargeTimestamp = MAINS_PERIOD.div(2);
-
 /// The last point a trigger can happen.
 /// Relative to the halfwave start.
-const MAX_TRIG_OFFS: RelLargeTimestamp = RelLargeTimestamp::from_micros(9_850);
+const MAX_TRIG_OFFS: RelLargeTimestamp =
+    MAINS_HALFWAVE_DUR.sub(RelLargeTimestamp::from_micros(150));
 
 fn set_trigger(trigger: bool) {
     let trigger = !trigger; // negative logic at triac gate.
@@ -91,12 +86,13 @@ fn triac_timer_arm(begin_time: Timestamp, count: u8) {
 }
 
 fn calc_trig_count(trig_offs: RelLargeTimestamp) -> u8 {
-    let retrig_thres = HALFWAVE_LEN.div(4);
+    let retrig_thres =
+        MAINS_HALFWAVE_DUR.div(4) + MAINS_HALFWAVE_DUR.div(8) + MAINS_HALFWAVE_DUR.div(16);
 
     let retrig_dur = if trig_offs < retrig_thres {
         retrig_thres - trig_offs
-    } else if trig_offs > HALFWAVE_LEN - retrig_thres {
-        HALFWAVE_LEN - trig_offs
+    } else if trig_offs > MAINS_HALFWAVE_DUR - retrig_thres {
+        MAINS_HALFWAVE_DUR - trig_offs
     } else {
         RelLargeTimestamp::from_micros(0)
     };
@@ -125,7 +121,7 @@ impl Triac {
         self.phi_offs.set(m, RelLargeTimestamp::from_ms_fixpt(ms));
     }
 
-    pub fn shutoff(&self, m: &MainCtx<'_>) {
+    pub fn set_phi_offs_shutoff(&self, m: &MainCtx<'_>) {
         self.phi_offs.set(m, MAINS_PERIOD);
     }
 
@@ -135,8 +131,9 @@ impl Triac {
         phase_update: PhaseUpdate,
         phase: Phase,
         phaseref: LargeTimestamp,
+        shutoff: bool,
     ) {
-        if phase == Phase::Notsync {
+        if phase == Phase::Notsync || shutoff {
             set_trigger(false);
             return;
         }

@@ -47,6 +47,9 @@ const RPM_SYNC_THRES: Fixpt = rpm(1000);
 
 const MAX_16HZ: i16 = rpm(24000).to_int(); // 24000/min, 400 Hz, 25 16-Hz
 
+/// Absolute maximum motor RPM that will trigger a hard triac inhibit.
+const MOT_LIMIT: Fixpt = rpm(24500);
+
 const SETPOINT_FILTER_DIV: Fixpt = fixpt!(5 / 1);
 const SPEED_FILTER_DIV: Fixpt = fixpt!(4 / 1);
 
@@ -134,10 +137,12 @@ impl System {
     pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         self.adc.init(m, sp);
         self.ac.init(sp);
-        self.triac.shutoff(m);
+        self.triac.set_phi_offs_shutoff(m);
     }
 
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+        let mut triac_shutoff = false;
+
         let ac = ac_capture_get();
 
         self.speedo.update(m, sp, ac);
@@ -149,6 +154,7 @@ impl System {
                 self.state.set(m, SysState::Syncing);
                 speedo_hz = fixpt!(0);
                 self.speed_filter.reset(m);
+                triac_shutoff = true;
             }
             SysState::Syncing => {
                 speedo_hz = fixpt!(0);
@@ -164,6 +170,9 @@ impl System {
                     speedo_hz = self.speed_filter.get(m, SPEED_FILTER_DIV);
                 }
             }
+        }
+        if speedo_hz > MOT_LIMIT {
+            triac_shutoff = true;
         }
 
         // Run the ADC measurements.
@@ -218,14 +227,15 @@ impl System {
                 let phi_offs_ms = f_to_trig_offs(y);
                 self.triac.set_phi_offs_ms(m, phi_offs_ms);
             } else {
-                self.triac.shutoff(m);
+                triac_shutoff = true;
             }
         }
 
         // Update the triac state.
         let phase = self.mains.get_phase(m);
         let phaseref = self.mains.get_phaseref(m);
-        self.triac.run(m, phase_update, phase, phaseref);
+        self.triac
+            .run(m, phase_update, phase, phaseref, triac_shutoff);
     }
 }
 
