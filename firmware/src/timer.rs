@@ -126,8 +126,7 @@ define_timer_interrupt!(
     ocf1a
 );
 
-fn b_handler_dummy(_c: &IrqCtx<'_>, _now: Timestamp) {
-}
+fn b_handler_dummy(_c: &IrqCtx<'_>, _now: Timestamp) {}
 
 define_timer_interrupt!(
     timer_interrupt_b_arm,
