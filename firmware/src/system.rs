@@ -156,18 +156,14 @@ impl System {
                 self.speed_filter.reset(m);
                 triac_shutoff = true;
             }
-            SysState::Syncing => {
-                speedo_hz = fixpt!(0);
-                if self.speedo.get_speed(m).is_some() {
-                    self.state.set(m, SysState::Running);
-                }
-            }
-            SysState::Running => {
-                let speed = self.speedo.get_speed(m);
-                if let Some(speed) = speed {
+            state @ SysState::Syncing | state @ SysState::Running => {
+                if let Some(speed) = self.speedo.get_speed(m) {
                     speedo_hz = self.speed_filter.run(m, speed.as_16hz(), SPEED_FILTER_DIV);
-                } else {
+                    self.state.set(m, SysState::Running);
+                } else if state == SysState::Running {
                     speedo_hz = self.speed_filter.get(m, SPEED_FILTER_DIV);
+                } else {
+                    speedo_hz = fixpt!(0);
                 }
             }
         }
@@ -208,13 +204,21 @@ impl System {
 
                 let rpmpi_params;
                 let reset_i;
-                if self.state.get(m) == SysState::Running {
-                    rpmpi_params = &RPMPI_PARAMS;
-                    reset_i = false;
-                } else {
-                    speedo_hz = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint);
-                    rpmpi_params = &RPMPI_PARAMS_SYNCING;
-                    reset_i = true;
+                match self.state.get(m) {
+                    SysState::PorCheck => {
+                        rpmpi_params = &RPMPI_PARAMS_SYNCING;
+                        reset_i = true;
+                        triac_shutoff = true;
+                    }
+                    SysState::Syncing => {
+                        speedo_hz = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint);
+                        rpmpi_params = &RPMPI_PARAMS_SYNCING;
+                        reset_i = true;
+                    }
+                    SysState::Running => {
+                        rpmpi_params = &RPMPI_PARAMS;
+                        reset_i = false;
+                    }
                 }
                 self.rpm_pid.set_ilim(m, RPMPI_ILIM.lin_inter(speedo_hz));
 
