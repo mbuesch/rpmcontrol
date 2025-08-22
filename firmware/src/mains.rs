@@ -5,9 +5,14 @@ use crate::{
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
 
-const MAINS_PERIOD: RelLargeTimestamp = RelLargeTimestamp::from_millis(20); // 50 Hz
-const HALFWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(2);
-const QUARTERWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(4);
+/// Mains sine wave period (50 Hz).
+pub const MAINS_PERIOD: RelLargeTimestamp = RelLargeTimestamp::from_millis(20); // 50 Hz
+
+/// Mains sine wave half-wave length.
+pub const MAINS_HALFWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(2);
+
+/// Mains sine wave quarter-wave length.
+pub const MAINS_QUARTERWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(4);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Phase {
@@ -65,12 +70,12 @@ impl Mains {
                     }
                 }
                 Phase::PosHalfwave => {
-                    let nextref = self.phaseref.get(m) + HALFWAVE_DUR;
+                    let nextref = self.phaseref.get(m) + MAINS_HALFWAVE_DUR;
                     if now >= nextref {
                         self.phaseref.set(m, nextref);
                         self.phase.set(m, Phase::NegHalfwave);
                         // Mute vsense reading for another quarter wave.
-                        self.next_run.set(m, nextref + QUARTERWAVE_DUR);
+                        self.next_run.set(m, nextref + MAINS_QUARTERWAVE_DUR);
                         ret = PhaseUpdate::Changed;
                     }
                 }
