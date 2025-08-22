@@ -1,17 +1,19 @@
 use crate::{
+    hw::interrupt,
     mutex::{MainCtx, MutexCell},
     ports::PORTA,
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
 
-const MAINS_RUN_DT: RelLargeTimestamp = RelLargeTimestamp::from_micros(100);
-const HALFWAVE_DUR: RelLargeTimestamp = RelLargeTimestamp::from_millis(10);
+const MAINS_PERIOD: RelLargeTimestamp = RelLargeTimestamp::from_millis(20); // 50 Hz
+const HALFWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(2);
+const QUARTERWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(4);
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Phase {
     Notsync,
-    PosHalfwave,
     NegHalfwave,
+    PosHalfwave,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -41,18 +43,24 @@ impl Mains {
         PORTA.get(1)
     }
 
+    /// Run mains vsense pin reading and evaluation.
     pub fn run(&self, m: &MainCtx<'_>) -> PhaseUpdate {
-        let mut ret = PhaseUpdate::NotChanged;
-
-        let now = timer_get_large();
-        if now >= self.next_run.get(m) {
+        // Read vsense pin and timer with IRQs disabled
+        // to not be interrupted and therefore to not skew the timestamp
+        // in unpredictable ways.
+        let (vsense, now) = interrupt::free(|_| {
             let vsense = self.read_vsense(m);
+            let now = timer_get_large();
+            (vsense, now)
+        });
+
+        let mut ret = PhaseUpdate::NotChanged;
+        if now >= self.next_run.get(m) {
             match self.phase.get(m) {
                 Phase::Notsync | Phase::NegHalfwave => {
                     if !self.prev_vsense.get(m) && vsense {
                         self.phaseref.set(m, now);
                         self.phase.set(m, Phase::PosHalfwave);
-                        self.next_run.set(m, now + MAINS_RUN_DT);
                         ret = PhaseUpdate::Changed;
                     }
                 }
@@ -61,6 +69,8 @@ impl Mains {
                     if now >= nextref {
                         self.phaseref.set(m, nextref);
                         self.phase.set(m, Phase::NegHalfwave);
+                        // Mute vsense reading for another quarter wave.
+                        self.next_run.set(m, nextref + QUARTERWAVE_DUR);
                         ret = PhaseUpdate::Changed;
                     }
                 }
