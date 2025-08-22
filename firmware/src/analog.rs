@@ -10,8 +10,6 @@ use crate::{
 #[repr(u8)]
 pub enum AdcChannel {
     Setpoint,
-    ShuntDiff,
-    ShuntHi,
 }
 
 impl AdcChannel {
@@ -21,9 +19,7 @@ impl AdcChannel {
 
     pub fn select_next(&self) -> AdcChannel {
         match self {
-            Self::Setpoint => Self::ShuntDiff,
-            Self::ShuntDiff => Self::ShuntHi,
-            Self::ShuntHi => Self::Setpoint,
+            Self::Setpoint => Self::Setpoint,
         }
     }
 }
@@ -53,16 +49,6 @@ impl Adc {
             AdcChannel::Setpoint => {
                 sp.ADC.admux().write(|w| {
                     w.refs().vcc().mux().adc0()
-                });
-            }
-            AdcChannel::ShuntDiff => {
-                sp.ADC.admux().write(|w| {
-                    w.refs().vcc().mux().adc4_adc3_20x()
-                });
-            }
-            AdcChannel::ShuntHi => {
-                sp.ADC.admux().write(|w| {
-                    w.refs().vcc().mux().adc4()
                 });
             }
         }
@@ -98,8 +84,6 @@ impl Adc {
         self.update_mux(m, sp);
         self.start_conversion(m, sp);
         while !self.conversion_done(m, sp) {}
-
-        //TODO offset compensation
     }
 
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
