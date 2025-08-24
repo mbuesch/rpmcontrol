@@ -4,6 +4,7 @@
 #![feature(asm_experimental_arch)]
 
 mod analog;
+mod debounce;
 mod debug;
 mod filter;
 mod fixpt;
