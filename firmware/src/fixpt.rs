@@ -74,8 +74,17 @@ impl Fixpt {
         Self(tmp as i16)
     }
 
+    #[inline(never)]
     pub const fn neg(self) -> Self {
-        Self(-self.0)
+        if self.0 == i16::MIN {
+            Self(i16::MAX)
+        } else {
+            Self(-self.0)
+        }
+    }
+
+    pub const fn abs(self) -> Self {
+        if self.0 < 0 { self.neg() } else { self }
     }
 }
 
