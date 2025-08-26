@@ -61,11 +61,10 @@ impl Adc {
                 });
             }
             AdcChannel::UcTemp => {
-                /*TODO
                 sp.ADC.admux().write(|w| {
-                    w.refs().vcc().mux().adc11()
+                    //w.refs().vcc().mux().adc11()
+                    w.refs().vcc().mux().set(0x3F) //TODO
                 });
-                */
             }
         }
         self.set_settled(m, false);
