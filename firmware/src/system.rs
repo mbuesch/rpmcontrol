@@ -50,7 +50,7 @@ const MAX_16HZ: i16 = rpm(24000).to_int(); // 24000/min, 400 Hz, 25 16-Hz
 const MOT_SOFT_LIMIT: Fixpt = rpm(24500);
 
 /// Maximum motor RPM that will trigger a monitoring fault.
-pub const MOT_HARD_LIMIT: Fixpt = rpm(25000);
+pub const MOT_HARD_LIMIT: Fixpt = rpm(25500);
 
 const SETPOINT_FILTER_DIV: Fixpt = fixpt!(5 / 1);
 const SPEED_FILTER_DIV: Fixpt = fixpt!(4 / 1);
@@ -62,7 +62,7 @@ pub const fn rpm(rpm: i16) -> Fixpt {
 }
 
 /// Convert 0..0x3FF to 0..400 Hz to 0..25 16Hz
-pub fn setpoint_to_f(adc: u16) -> Fixpt {
+fn setpoint_to_f(adc: u16) -> Fixpt {
     Fixpt::from_fraction(adc as i16, 8) / fixpt!(128 / 25)
 }
 
@@ -159,7 +159,9 @@ impl System {
         let mut speedo_hz;
         match self.state.get(m) {
             SysState::PorCheck => {
-                //TODO
+                //TODO turn on secondary shutoff path and turn off triac.
+                // Then check that speedo=0 for one second.
+
                 self.state.set(m, SysState::Syncing);
                 speedo_hz = fixpt!(0);
                 self.speed_filter.reset(m);
@@ -182,7 +184,13 @@ impl System {
 
         // Run the ADC measurements.
         self.adc.run(m, sp);
-        let setpoint = self.adc.get_result(m, AdcChannel::Setpoint);
+
+        // Convert the setpoint to 16Hz
+        let setpoint = if let Some(setpoint) = self.adc.get_result(m, AdcChannel::Setpoint) {
+            setpoint_to_f(setpoint)
+        } else {
+            rpm(0)
+        };
 
         // Update the mains synchronization.
         let phase_update = self.mains.run(m);
@@ -211,47 +219,42 @@ impl System {
                 },
             );
 
-            if let Some(setpoint) = setpoint {
-                let setpoint = setpoint_to_f(setpoint);
-                let setpoint = self.setpoint_filter.run(m, setpoint, SETPOINT_FILTER_DIV);
-                if setpoint <= RPM_SYNC_THRES {
-                    self.state.set(m, SysState::Syncing);
-                }
-
-                Debug::Speedo.log_fixpt(speedo_hz);
-
-                // Run the RPM controller.
-                let rpmpi_params;
-                let reset_i;
-                match self.state.get(m) {
-                    SysState::PorCheck => {
-                        rpmpi_params = &RPMPI_PARAMS_SYNCING;
-                        reset_i = true;
-                        triac_shutoff = true;
-                    }
-                    SysState::Syncing => {
-                        speedo_hz = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint);
-                        rpmpi_params = &RPMPI_PARAMS_SYNCING;
-                        reset_i = true;
-                    }
-                    SysState::Running => {
-                        rpmpi_params = &RPMPI_PARAMS;
-                        reset_i = false;
-                    }
-                }
-                self.rpm_pid.set_ilim(m, RPMPI_ILIM.lin_inter(speedo_hz));
-                let y = self
-                    .rpm_pid
-                    .run(m, rpmpi_params, setpoint, speedo_hz, reset_i);
-
-                Debug::Setpoint.log_fixpt(setpoint);
-                Debug::PidY.log_fixpt(y);
-
-                let phi_offs_ms = f_to_trig_offs(y);
-                self.triac.set_phi_offs_ms(m, phi_offs_ms);
-            } else {
-                triac_shutoff = true;
+            let setpoint_filt = self.setpoint_filter.run(m, setpoint, SETPOINT_FILTER_DIV);
+            if setpoint_filt <= RPM_SYNC_THRES {
+                self.state.set(m, SysState::Syncing);
             }
+
+            Debug::Speedo.log_fixpt(speedo_hz);
+
+            // Run the RPM controller.
+            let rpmpi_params;
+            let reset_i;
+            match self.state.get(m) {
+                SysState::PorCheck => {
+                    rpmpi_params = &RPMPI_PARAMS_SYNCING;
+                    reset_i = true;
+                    triac_shutoff = true;
+                }
+                SysState::Syncing => {
+                    speedo_hz = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint_filt);
+                    rpmpi_params = &RPMPI_PARAMS_SYNCING;
+                    reset_i = true;
+                }
+                SysState::Running => {
+                    rpmpi_params = &RPMPI_PARAMS;
+                    reset_i = false;
+                }
+            }
+            self.rpm_pid.set_ilim(m, RPMPI_ILIM.lin_inter(speedo_hz));
+            let y = self
+                .rpm_pid
+                .run(m, rpmpi_params, setpoint_filt, speedo_hz, reset_i);
+
+            Debug::Setpoint.log_fixpt(setpoint_filt);
+            Debug::PidY.log_fixpt(y);
+
+            let phi_offs_ms = f_to_trig_offs(y);
+            self.triac.set_phi_offs_ms(m, phi_offs_ms);
         }
 
         // Safety monitoring check.
