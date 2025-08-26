@@ -17,14 +17,20 @@ pub enum Debug {
     SpeedoStatus,
     Setpoint,
     PidY,
+    MonDebounce,
 }
-const NRVALUES: usize = 4;
+const NRVALUES: usize = 5;
 
 const INDEXSHIFT: usize = 2;
 const INDEXMASK: u8 = (1 << INDEXSHIFT) - 1;
 
-static VALUES: Mutex<[Cell<u16>; NRVALUES]> =
-    Mutex::new([Cell::new(0), Cell::new(0), Cell::new(0), Cell::new(0)]);
+static VALUES: Mutex<[Cell<u16>; NRVALUES]> = Mutex::new([
+    Cell::new(0),
+    Cell::new(0),
+    Cell::new(0),
+    Cell::new(0),
+    Cell::new(0),
+]);
 static INDEX: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
 pub fn rx_complete_callback(_c: &IrqCtx, _data: u8) {
@@ -79,7 +85,6 @@ impl Debug {
         });
     }
 
-    #[allow(dead_code)]
     pub fn log_u8(&self, value: u8) {
         self.log_u16(value.into())
     }

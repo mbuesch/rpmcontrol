@@ -17,6 +17,7 @@ pub enum SerDat {
     SpeedoStatus(Instant, u16),
     Setpoint(Instant, f64),
     PidY(Instant, f64),
+    MonDebounce(Instant, u16),
     #[allow(dead_code)]
     Sync(Instant),
 }
@@ -48,6 +49,7 @@ impl SerDat {
             1 => Ok(SerDat::SpeedoStatus(now, val)),
             2 => Ok(SerDat::Setpoint(now, fixpt_to_rpm(val))),
             3 => Ok(SerDat::PidY(now, fixpt_to_rpm(val))),
+            4 => Ok(SerDat::MonDebounce(now, val)),
             0xFF => Ok(SerDat::Sync(now)),
             cmd => Err(err!("SerBuf::parse: Unknown command 0x{cmd:02X}")),
         }

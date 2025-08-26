@@ -19,9 +19,16 @@ struct DiagramData {
     speedo_status: VecDeque<(f64, f64)>,
     setpoint: VecDeque<(f64, f64)>,
     pid_y: VecDeque<(f64, f64)>,
+    mon_debounce: VecDeque<(f64, f64)>,
 }
 
 const T_INTERVAL: Duration = Duration::from_millis(10000);
+
+const N_MIN: f64 = 0.0;
+const N_MAX: f64 = 25_000.0;
+
+const SPEEDO_STATUS_FACT: f64 = 100.0;
+const MON_DEBOUNCE_FACT: f64 = N_MAX / 150.0;
 
 macro_rules! check_ts {
     ($var:ident, $deque:expr, $fun:ident) => {
@@ -41,6 +48,7 @@ impl DiagramData {
             speedo_status: VecDeque::new(),
             setpoint: VecDeque::new(),
             pid_y: VecDeque::new(),
+            mon_debounce: VecDeque::new(),
         }
     }
 
@@ -50,6 +58,7 @@ impl DiagramData {
         oldest = check_ts!(oldest, self.speedo_status.front(), min);
         oldest = check_ts!(oldest, self.setpoint.front(), min);
         oldest = check_ts!(oldest, self.pid_y.front(), min);
+        oldest = check_ts!(oldest, self.mon_debounce.front(), min);
         if oldest < f64::MAX { oldest } else { 0.0 }
     }
 
@@ -59,6 +68,7 @@ impl DiagramData {
         newest = check_ts!(newest, self.speedo_status.back(), max);
         newest = check_ts!(newest, self.setpoint.back(), max);
         newest = check_ts!(newest, self.pid_y.back(), max);
+        newest = check_ts!(newest, self.mon_debounce.back(), max);
         newest
     }
 
@@ -80,18 +90,30 @@ impl DiagramData {
         let now = Instant::now();
         let age_thres = self.timestamp(now - T_INTERVAL);
         match dat {
-            SerDat::Speedo(t, val) => self.speedo.push_back((self.timestamp(t), val)),
-            SerDat::SpeedoStatus(t, val) => self
-                .speedo_status
-                .push_back((self.timestamp(t), val as f64 * 100.0)),
-            SerDat::Setpoint(t, val) => self.setpoint.push_back((self.timestamp(t), val)),
-            SerDat::PidY(t, val) => self.pid_y.push_back((self.timestamp(t), val)),
+            SerDat::Speedo(t, val) => {
+                self.speedo.push_back((self.timestamp(t), val));
+            }
+            SerDat::SpeedoStatus(t, val) => {
+                self.speedo_status
+                    .push_back((self.timestamp(t), val as f64 * SPEEDO_STATUS_FACT));
+            }
+            SerDat::Setpoint(t, val) => {
+                self.setpoint.push_back((self.timestamp(t), val));
+            }
+            SerDat::PidY(t, val) => {
+                self.pid_y.push_back((self.timestamp(t), val));
+            }
+            SerDat::MonDebounce(t, val) => {
+                self.mon_debounce
+                    .push_back((self.timestamp(t), val as f64 * MON_DEBOUNCE_FACT));
+            }
             SerDat::Sync(_) => (),
         }
         Self::prune_items(&mut self.speedo, age_thres);
         Self::prune_items(&mut self.speedo_status, age_thres);
         Self::prune_items(&mut self.setpoint, age_thres);
         Self::prune_items(&mut self.pid_y, age_thres);
+        Self::prune_items(&mut self.mon_debounce, age_thres);
     }
 }
 
@@ -101,9 +123,6 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
     let area = backend.into_drawing_area();
     area.fill(&WHITE).unwrap();
 
-    let n_min = 0.0;
-    let n_max = 25000.0;
-
     let t_min = diagram_data.oldest_timestamp();
     let t_max = diagram_data.newest_timestamp();
 
@@ -112,7 +131,7 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
         .margin(10)
         .x_label_area_size(30)
         .y_label_area_size(60)
-        .build_cartesian_2d(t_min..t_max, n_min..n_max)
+        .build_cartesian_2d(t_min..t_max, N_MIN..N_MAX)
         .unwrap();
 
     chart
@@ -156,6 +175,15 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
         ))
         .unwrap()
         .label("pid-Y")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], full_palette::ORANGE));
+
+    chart
+        .draw_series(LineSeries::new(
+            diagram_data.mon_debounce.iter().copied(),
+            full_palette::GREY,
+        ))
+        .unwrap()
+        .label("mon-debounce")
         .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], full_palette::ORANGE));
 
     chart

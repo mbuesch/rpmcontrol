@@ -4,18 +4,17 @@ use crate::{
     filter::Filter,
     fixpt::{Fixpt, fixpt},
     hw::mcu,
-    mains::{Mains, PhaseUpdate},
+    mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
+    mon::{Mon, MonResult},
     mutex::{MainCtx, MutexCell},
     pid::{Pid, PidParams},
     ports::PORTB,
     speedo::Speedo,
-    timer::{RelLargeTimestamp, RelTimestamp, timer_get},
+    temp::{Temp, TempAdc},
+    timer::{RelTimestamp, timer_get},
     triac::Triac,
 };
 use curveipo::Curve;
-
-/// The position of the PID calculation, relative to mains zero crossing.
-const RPMPID_CALC_POS: RelLargeTimestamp = RelLargeTimestamp::from_millis(5);
 
 const RPMPI_PARAMS: PidParams = PidParams {
     kp: fixpt!(5 / 2),
@@ -47,20 +46,23 @@ const RPM_SYNC_THRES: Fixpt = rpm(1000);
 
 const MAX_16HZ: i16 = rpm(24000).to_int(); // 24000/min, 400 Hz, 25 16-Hz
 
-/// Absolute maximum motor RPM that will trigger a hard triac inhibit.
-const MOT_LIMIT: Fixpt = rpm(24500);
+/// Maximum motor RPM that will trigger a hard triac inhibit.
+const MOT_SOFT_LIMIT: Fixpt = rpm(24500);
+
+/// Maximum motor RPM that will trigger a monitoring fault.
+pub const MOT_HARD_LIMIT: Fixpt = rpm(25000);
 
 const SETPOINT_FILTER_DIV: Fixpt = fixpt!(5 / 1);
 const SPEED_FILTER_DIV: Fixpt = fixpt!(4 / 1);
 
 /// Convert RPM to fixpt-16Hz
-const fn rpm(rpm: i16) -> Fixpt {
+pub const fn rpm(rpm: i16) -> Fixpt {
     // rpm / 60 / 16
     Fixpt::from_fraction(rpm, 240).div(fixpt!(4))
 }
 
 /// Convert 0..0x3FF to 0..400 Hz to 0..25 16Hz
-fn setpoint_to_f(adc: u16) -> Fixpt {
+pub fn setpoint_to_f(adc: u16) -> Fixpt {
     Fixpt::from_fraction(adc as i16, 8) / fixpt!(128 / 25)
 }
 
@@ -112,9 +114,11 @@ pub struct System {
     setpoint_filter: Filter,
     speedo: Speedo,
     speed_filter: Filter,
+    mon: Mon,
+    temp: Temp,
     mains: Mains,
     rpm_pid: Pid,
-    rpm_pid_calcd: MutexCell<bool>,
+    mains_90deg_done: MutexCell<bool>,
     triac: Triac,
 }
 
@@ -127,9 +131,11 @@ impl System {
             setpoint_filter: Filter::new(),
             speedo: Speedo::new(),
             speed_filter: Filter::new(),
+            mon: Mon::new(),
+            temp: Temp::new(),
             mains: Mains::new(),
             rpm_pid: Pid::new(),
-            rpm_pid_calcd: MutexCell::new(false),
+            mains_90deg_done: MutexCell::new(false),
             triac: Triac::new(),
         }
     }
@@ -170,41 +176,51 @@ impl System {
                 }
             }
         }
-        if speedo_hz > MOT_LIMIT {
+        if speedo_hz > MOT_SOFT_LIMIT {
             triac_shutoff = true;
         }
 
         // Run the ADC measurements.
         self.adc.run(m, sp);
+        let setpoint = self.adc.get_result(m, AdcChannel::Setpoint);
 
         // Update the mains synchronization.
         let phase_update = self.mains.run(m);
 
-        // Check if we need to run the controller.
-        let mut run_pid = false;
+        // Check if we are at mains zero crossing + 90 degrees.
+        let mut mains_90deg_trigger = false;
         if phase_update == PhaseUpdate::Changed {
-            self.rpm_pid_calcd.set(m, false);
-        } else if !self.rpm_pid_calcd.get(m)
+            // Zero crossing.
+            self.mains_90deg_done.set(m, false);
+        } else if !self.mains_90deg_done.get(m)
             && let Some(time_since_zerocrossing) = self.mains.get_time_since_zerocrossing(m)
-            && time_since_zerocrossing >= RPMPID_CALC_POS
+            && time_since_zerocrossing >= MAINS_QUARTERWAVE_DUR
         {
-            self.rpm_pid_calcd.set(m, true);
-            run_pid = true;
+            // We are at 90 deg.
+            self.mains_90deg_done.set(m, true);
+            mains_90deg_trigger = true;
         }
 
-        // Run the controller.
-        if run_pid {
-            let setpoint = self.adc.get_result(m, AdcChannel::Setpoint);
+        if mains_90deg_trigger {
+            // Evaluate the temperatures.
+            self.temp.run(
+                m,
+                TempAdc {
+                    uc: self.adc.get_result(m, AdcChannel::UcTemp),
+                    mot: self.adc.get_result(m, AdcChannel::MotTemp),
+                },
+            );
+
             if let Some(setpoint) = setpoint {
                 let setpoint = setpoint_to_f(setpoint);
                 let setpoint = self.setpoint_filter.run(m, setpoint, SETPOINT_FILTER_DIV);
-
                 if setpoint <= RPM_SYNC_THRES {
                     self.state.set(m, SysState::Syncing);
                 }
 
                 Debug::Speedo.log_fixpt(speedo_hz);
 
+                // Run the RPM controller.
                 let rpmpi_params;
                 let reset_i;
                 match self.state.get(m) {
@@ -224,10 +240,10 @@ impl System {
                     }
                 }
                 self.rpm_pid.set_ilim(m, RPMPI_ILIM.lin_inter(speedo_hz));
-
                 let y = self
                     .rpm_pid
                     .run(m, rpmpi_params, setpoint, speedo_hz, reset_i);
+
                 Debug::Setpoint.log_fixpt(setpoint);
                 Debug::PidY.log_fixpt(y);
 
@@ -236,6 +252,13 @@ impl System {
             } else {
                 triac_shutoff = true;
             }
+        }
+
+        // Safety monitoring check.
+        let mon_res = self.mon.check(m, setpoint, speedo_hz);
+        if mon_res == MonResult::Shutoff || triac_shutoff {
+            triac_shutoff = true; // primary shut-off path.
+            //TODO turn the second shutoff path off.
         }
 
         // Update the triac trigger state.
