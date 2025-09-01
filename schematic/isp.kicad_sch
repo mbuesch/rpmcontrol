@@ -5,8 +5,8 @@
 	(uuid "4950e957-bc75-46a6-956f-ccb40fd684f0")
 	(paper "A4")
 	(title_block
-		(title "In System Programmer port - WARNING not isolated")
-		(date "2024-08-21")
+		(title "Motor RPM controller - ISP - WARNING not isolated")
+		(date "2025-09-01")
 		(rev "1.0")
 		(company "Michael Büsch <m@bues.ch>")
 	)
@@ -436,7 +436,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "eab1aed8-230c-41df-a742-41deb5c10e66")
-		(property "Reference" "J5"
+		(property "Reference" "J6"
 			(at 147.32 118.11 0)
 			(effects
 				(font
@@ -500,7 +500,7 @@
 		(instances
 			(project ""
 				(path "/167e0419-9f88-4ea4-ae96-d03af9cd26b8/c3fe41b2-b1c4-4cc7-8832-2a133fbf9896"
-					(reference "J5")
+					(reference "J6")
 					(unit 1)
 				)
 			)

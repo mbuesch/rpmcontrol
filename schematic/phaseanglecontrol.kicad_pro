@@ -432,6 +432,7 @@
       "single_global_label": "ignore",
       "unannotated": "error",
       "unconnected_wire_endpoint": "warning",
+      "undefined_netclass": "error",
       "unit_value_mismatch": "error",
       "unresolved_variable": "error",
       "wire_dangling": "error"
@@ -594,12 +595,24 @@
       "Root"
     ],
     [
-      "4feff0ad-552b-46a7-86c4-9c1a55857bb8",
-      "rpm_generator"
+      "bb8c6d96-af7e-4cb3-a868-b4a7ef100530",
+      "Power supply"
+    ],
+    [
+      "49583429-ecd7-49b9-b636-d7a0d7ebccf5",
+      "Motor temperature NTC"
     ],
     [
       "c3fe41b2-b1c4-4cc7-8832-2a133fbf9896",
       "ISP"
+    ],
+    [
+      "880b4ef5-913d-4da3-a21c-dfaca4123863",
+      "RPM setpoint"
+    ],
+    [
+      "04a351f6-57f1-458a-8b72-1581301148b4",
+      "Motor RPM speedometer"
     ]
   ],
   "text_variables": {}
