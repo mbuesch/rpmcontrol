@@ -9,6 +9,7 @@ use crate::{
     mutex::{MainCtx, MutexCell},
     pid::{Pid, PidParams},
     ports::PORTB,
+    shutoff::{Shutoff, set_secondary_shutoff},
     speedo::Speedo,
     temp::{Temp, TempAdc},
     timer::{RelTimestamp, timer_get},
@@ -141,6 +142,7 @@ impl System {
     }
 
     pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+        set_secondary_shutoff(Shutoff::MachineShutoff);
         self.adc.init(m, sp);
         self.ac.init(sp);
         self.triac.set_phi_offs_shutoff(m);
@@ -259,9 +261,11 @@ impl System {
 
         // Safety monitoring check.
         let mon_res = self.mon.check(m, setpoint, speedo_hz);
-        if mon_res == MonResult::Shutoff || triac_shutoff {
-            triac_shutoff = true; // primary shut-off path.
-            //TODO turn the second shutoff path off.
+        if mon_res == MonResult::Shutoff {
+            triac_shutoff = true;
+            set_secondary_shutoff(Shutoff::MachineShutoff);
+        } else {
+            set_secondary_shutoff(Shutoff::MachineRunning);
         }
 
         // Update the triac trigger state.

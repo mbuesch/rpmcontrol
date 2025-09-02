@@ -139,7 +139,7 @@ impl PortA {
                     pin_floating(1) | // vsense
                     pin_low(2) | // DNC
                     pin_floating(3) | // AREF
-                    pin_floating(4) | // DNC  //TODO output
+                    pin_low(4) | // n_shutoff
                     pin_floating(5) | // motor temperature, single ended ADC
                     pin_floating(6) | // speedo, AD comparator pos
                     pin_floating(7), // speedo, AD comparator neg
@@ -151,7 +151,7 @@ impl PortA {
                     pin_input(1) | // vsense
                     pin_output(2) | // DNC
                     pin_input(3) | // AREF
-                    pin_input(4) | // DNC  //TODO output
+                    pin_output(4) | // n_shutoff
                     pin_input(5) | // motor temperature, single ended ADC
                     pin_input(6) | // speedo, AD comparator pos
                     pin_input(7), // speedo, AD comparator neg

@@ -15,6 +15,7 @@ mod mon;
 mod mutex;
 mod pid;
 mod ports;
+mod shutoff;
 mod speedo;
 mod system;
 mod temp;

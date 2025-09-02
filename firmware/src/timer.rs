@@ -126,17 +126,6 @@ define_timer_interrupt!(
     ocf1a
 );
 
-fn b_handler_dummy(_c: &IrqCtx<'_>, _now: Timestamp) {}
-
-define_timer_interrupt!(
-    timer_interrupt_b_arm,
-    irq_handler_timer1_compb,
-    b_handler_dummy,
-    ocr1b,
-    ocie1b,
-    ocf1b
-);
-
 macro_rules! impl_timestamp {
     ($rel:ident, $abs:ident, $reltype:ty, $abstype:ty) => {
         #[derive(PartialEq, Eq, Copy, Clone)]
