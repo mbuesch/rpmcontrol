@@ -4,6 +4,7 @@ use crate::{
     mains::{MAINS_HALFWAVE_DUR, MAINS_PERIOD, Phase, PhaseUpdate},
     mutex::{IrqCtx, MainCtx, MutexCell},
     ports::PORTB,
+    shutoff::Shutoff,
     timer::{
         LargeTimestamp, RelLargeTimestamp, RelTimestamp, Timestamp, timer_get_large,
         timer_interrupt_a_arm,
@@ -131,9 +132,9 @@ impl Triac {
         phase_update: PhaseUpdate,
         phase: Phase,
         phaseref: LargeTimestamp,
-        shutoff: bool,
+        shutoff: Shutoff,
     ) {
-        if phase == Phase::Notsync || shutoff {
+        if phase == Phase::Notsync || shutoff == Shutoff::MachineShutoff {
             set_trigger(false);
             return;
         }

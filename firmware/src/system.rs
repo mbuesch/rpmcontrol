@@ -149,7 +149,7 @@ impl System {
     }
 
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
-        let mut triac_shutoff = false;
+        let mut triac_shutoff = Shutoff::MachineRunning;
 
         // Read the speedo Analog Comparator.
         let ac = ac_capture_get();
@@ -167,7 +167,7 @@ impl System {
                 self.state.set(m, SysState::Syncing);
                 speedo_hz = fixpt!(0);
                 self.speed_filter.reset(m);
-                triac_shutoff = true;
+                triac_shutoff = Shutoff::MachineShutoff;
             }
             state @ SysState::Syncing | state @ SysState::Running => {
                 if let Some(speed) = self.speedo.get_speed(m) {
@@ -181,7 +181,7 @@ impl System {
             }
         }
         if speedo_hz > MOT_SOFT_LIMIT {
-            triac_shutoff = true;
+            triac_shutoff = Shutoff::MachineShutoff;
         }
 
         // Run the ADC measurements.
@@ -235,7 +235,7 @@ impl System {
                 SysState::PorCheck => {
                     rpmpi_params = &RPMPI_PARAMS_SYNCING;
                     reset_i = true;
-                    triac_shutoff = true;
+                    triac_shutoff = Shutoff::MachineShutoff;
                 }
                 SysState::Syncing => {
                     speedo_hz = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint_filt);
@@ -262,7 +262,7 @@ impl System {
         // Safety monitoring check.
         let mon_res = self.mon.check(m, setpoint, speedo_hz);
         if mon_res == MonResult::Shutoff {
-            triac_shutoff = true;
+            triac_shutoff = Shutoff::MachineShutoff;
             set_secondary_shutoff(Shutoff::MachineShutoff);
         } else {
             set_secondary_shutoff(Shutoff::MachineRunning);
