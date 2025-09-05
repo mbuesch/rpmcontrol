@@ -62,8 +62,8 @@ impl Adc {
             }
             AdcChannel::UcTemp => {
                 sp.ADC.admux().write(|w| {
-                    //w.refs().vcc().mux().adc11()
-                    w.refs().vcc().mux().set(0x3F) //TODO
+                    //w.refs().internal().mux().adc11()
+                    w.refs().internal().mux().set(0x3F) //TODO
                 });
             }
         }
