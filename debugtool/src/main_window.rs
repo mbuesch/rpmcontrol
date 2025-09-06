@@ -245,9 +245,11 @@ impl MainWindow {
         app: &gtk::Application,
         ser_rx: Rc<mpsc::Receiver<SerDat>>,
     ) -> ah::Result<Rc<RefCell<Self>>> {
-        let builder = gtk::Builder::from_string(include_str!("main_window.glade"));
+        let builder = gtk::Builder::from_string(include_str!("gui/main_window.ui"));
 
-        let appwindow: gtk::ApplicationWindow = builder.object("main_window").unwrap();
+        let appwindow: gtk::ApplicationWindow = builder
+            .object("main_window")
+            .expect("Get main_window failed");
         appwindow.set_application(Some(app));
         appwindow.set_title(Some("rpmcontrol debug"));
         appwindow.set_default_size(800, 600);

@@ -17,7 +17,9 @@ impl DiagramArea {
         let area: gtk::DrawingArea = builder.object(area_name).unwrap();
 
         area.set_draw_func(move |_, cr, width, height| {
-            draw(CairoBackend::new(cr, (width as u32, height as u32)).unwrap())
+            if let Ok(backend) = CairoBackend::new(cr, (width as u32, height as u32)) {
+                draw(backend);
+            }
         });
 
         Rc::new(RefCell::new(Self { area }))
