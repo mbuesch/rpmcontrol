@@ -42,6 +42,12 @@ impl Fixpt {
         let mut q: i32 = 1 << Self::SHIFT;
         q *= numerator as i32;
         q /= denominator as i32;
+        if q > i16::MAX as _ {
+            q = i16::MAX as _;
+        }
+        if q < i16::MIN as _ {
+            q = i16::MIN as _;
+        }
         Self(q as i16)
     }
 
