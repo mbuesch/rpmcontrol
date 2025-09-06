@@ -2,7 +2,7 @@
 <!-- Created with Cambalache 0.94.1 -->
 <interface>
   <!-- interface-name main_window.ui -->
-  <requires lib="gtk" version="4.0"/>
+  <requires lib="gtk" version="4.8"/>
   <object class="GtkApplicationWindow" id="main_window">
     <child>
       <object class="GtkBox">
@@ -13,6 +13,53 @@
             <property name="content-width">200</property>
             <property name="hexpand">True</property>
             <property name="vexpand">True</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkCheckButton" id="cb_speedo">
+                    <property name="active">True</property>
+                    <property name="label">speedo</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cb_speedo_stat">
+                    <property name="label">speedo-stat</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cb_setpoint">
+                    <property name="active">True</property>
+                    <property name="label">setpoint</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cb_pid_y">
+                    <property name="label">pid-y</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cb_mon_debounce">
+                    <property name="label">mon-debounce</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cb_temp_mot">
+                    <property name="active">True</property>
+                    <property name="label">temp motor</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cb_temp_uc">
+                    <property name="label">temp uc</property>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
         </child>
       </object>

@@ -13,6 +13,26 @@ use std::{
     time::{Duration, Instant},
 };
 
+struct DiagramVisibility {
+    speedo: bool,
+    speedo_status: bool,
+    setpoint: bool,
+    pid_y: bool,
+    mon_debounce: bool,
+}
+
+impl DiagramVisibility {
+    fn new() -> Self {
+        Self {
+            speedo: true,
+            speedo_status: false,
+            setpoint: true,
+            pid_y: false,
+            mon_debounce: false,
+        }
+    }
+}
+
 struct DiagramData {
     reference: Instant,
     speedo: VecDeque<(f64, f64)>,
@@ -20,6 +40,7 @@ struct DiagramData {
     setpoint: VecDeque<(f64, f64)>,
     pid_y: VecDeque<(f64, f64)>,
     mon_debounce: VecDeque<(f64, f64)>,
+    visibility: DiagramVisibility,
 }
 
 const T_INTERVAL: Duration = Duration::from_millis(10000);
@@ -50,6 +71,7 @@ impl DiagramData {
             setpoint: VecDeque::new(),
             pid_y: VecDeque::new(),
             mon_debounce: VecDeque::new(),
+            visibility: DiagramVisibility::new(),
         }
     }
 
@@ -142,75 +164,85 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
         .draw()
         .unwrap();
 
-    chart
-        .draw_series(LineSeries::new(
-            diagram_data.speedo.iter().copied(),
-            full_palette::RED.stroke_width(STROKE_WIDTH),
-        ))
-        .unwrap()
-        .label("speedo")
-        .legend(|(x, y)| {
-            PathElement::new(
-                vec![(x, y), (x + 20, y)],
+    if diagram_data.visibility.speedo {
+        chart
+            .draw_series(LineSeries::new(
+                diagram_data.speedo.iter().copied(),
                 full_palette::RED.stroke_width(STROKE_WIDTH),
-            )
-        });
+            ))
+            .unwrap()
+            .label("speedo")
+            .legend(|(x, y)| {
+                PathElement::new(
+                    vec![(x, y), (x + 20, y)],
+                    full_palette::RED.stroke_width(STROKE_WIDTH),
+                )
+            });
+    }
 
-    chart
-        .draw_series(LineSeries::new(
-            diagram_data.speedo_status.iter().copied(),
-            full_palette::BLACK.stroke_width(STROKE_WIDTH),
-        ))
-        .unwrap()
-        .label("speedo-stat")
-        .legend(|(x, y)| {
-            PathElement::new(
-                vec![(x, y), (x + 20, y)],
+    if diagram_data.visibility.speedo_status {
+        chart
+            .draw_series(LineSeries::new(
+                diagram_data.speedo_status.iter().copied(),
                 full_palette::BLACK.stroke_width(STROKE_WIDTH),
-            )
-        });
+            ))
+            .unwrap()
+            .label("speedo-stat")
+            .legend(|(x, y)| {
+                PathElement::new(
+                    vec![(x, y), (x + 20, y)],
+                    full_palette::BLACK.stroke_width(STROKE_WIDTH),
+                )
+            });
+    }
 
-    chart
-        .draw_series(LineSeries::new(
-            diagram_data.setpoint.iter().copied(),
-            full_palette::BLUE.stroke_width(STROKE_WIDTH),
-        ))
-        .unwrap()
-        .label("setpoint")
-        .legend(|(x, y)| {
-            PathElement::new(
-                vec![(x, y), (x + 20, y)],
+    if diagram_data.visibility.setpoint {
+        chart
+            .draw_series(LineSeries::new(
+                diagram_data.setpoint.iter().copied(),
                 full_palette::BLUE.stroke_width(STROKE_WIDTH),
-            )
-        });
+            ))
+            .unwrap()
+            .label("setpoint")
+            .legend(|(x, y)| {
+                PathElement::new(
+                    vec![(x, y), (x + 20, y)],
+                    full_palette::BLUE.stroke_width(STROKE_WIDTH),
+                )
+            });
+    }
 
-    chart
-        .draw_series(LineSeries::new(
-            diagram_data.pid_y.iter().copied(),
-            full_palette::ORANGE.stroke_width(STROKE_WIDTH),
-        ))
-        .unwrap()
-        .label("pid-Y")
-        .legend(|(x, y)| {
-            PathElement::new(
-                vec![(x, y), (x + 20, y)],
+    if diagram_data.visibility.pid_y {
+        chart
+            .draw_series(LineSeries::new(
+                diagram_data.pid_y.iter().copied(),
                 full_palette::ORANGE.stroke_width(STROKE_WIDTH),
-            )
-        });
+            ))
+            .unwrap()
+            .label("pid-Y")
+            .legend(|(x, y)| {
+                PathElement::new(
+                    vec![(x, y), (x + 20, y)],
+                    full_palette::ORANGE.stroke_width(STROKE_WIDTH),
+                )
+            });
+    }
 
-    chart
-        .draw_series(LineSeries::new(
-            diagram_data.mon_debounce.iter().copied(),
-            full_palette::GREY.stroke_width(STROKE_WIDTH),
-        ))
-        .unwrap()
-        .label("mon-debounce")
-        .legend(|(x, y)| {
-            PathElement::new(
-                vec![(x, y), (x + 20, y)],
+    if diagram_data.visibility.mon_debounce {
+        chart
+            .draw_series(LineSeries::new(
+                diagram_data.mon_debounce.iter().copied(),
                 full_palette::GREY.stroke_width(STROKE_WIDTH),
-            )
-        });
+            ))
+            .unwrap()
+            .label("mon-debounce")
+            .legend(|(x, y)| {
+                PathElement::new(
+                    vec![(x, y), (x + 20, y)],
+                    full_palette::GREY.stroke_width(STROKE_WIDTH),
+                )
+            });
+    }
 
     chart
         .configure_series_labels()
@@ -259,6 +291,27 @@ impl MainWindow {
             let diagram_data = Rc::clone(&diagram_data);
             move |backend| draw(backend, Rc::clone(&diagram_data))
         });
+
+        macro_rules! connect_cb {
+            ($builder:expr, $name:expr, $field:ident) => {
+                let cb: gtk::CheckButton = $builder.object($name).expect("CheckButton not found");
+                let diagram_data = Rc::clone(&diagram_data);
+                let diagram_area = Rc::clone(&diagram_area);
+                cb.set_active(diagram_data.borrow().visibility.$field);
+                cb.connect_toggled(move |cb| {
+                    diagram_data.borrow_mut().visibility.$field = cb.is_active();
+                    diagram_area.borrow().redraw();
+                });
+            };
+        }
+
+        connect_cb!(builder, "cb_speedo", speedo);
+        connect_cb!(builder, "cb_speedo_stat", speedo_status);
+        connect_cb!(builder, "cb_setpoint", setpoint);
+        connect_cb!(builder, "cb_pid_y", pid_y);
+        connect_cb!(builder, "cb_mon_debounce", mon_debounce);
+        //connect_cb!(builder, "cb_temp_mot", temp_mot);
+        //connect_cb!(builder, "cb_temp_uc", temp_uc);
 
         glib::source::timeout_add_local(Duration::from_millis(100), {
             let diagram_area = Rc::clone(&diagram_area);
