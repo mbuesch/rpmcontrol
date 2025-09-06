@@ -29,6 +29,7 @@ const N_MAX: f64 = 25_000.0;
 
 const SPEEDO_STATUS_FACT: f64 = 100.0;
 const MON_DEBOUNCE_FACT: f64 = N_MAX / 150.0;
+const STROKE_WIDTH: u32 = 3;
 
 macro_rules! check_ts {
     ($var:ident, $deque:expr, $fun:ident) => {
@@ -144,47 +145,72 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
     chart
         .draw_series(LineSeries::new(
             diagram_data.speedo.iter().copied(),
-            full_palette::RED,
+            full_palette::RED.stroke_width(STROKE_WIDTH),
         ))
         .unwrap()
         .label("speedo")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], full_palette::RED));
+        .legend(|(x, y)| {
+            PathElement::new(
+                vec![(x, y), (x + 20, y)],
+                full_palette::RED.stroke_width(STROKE_WIDTH),
+            )
+        });
 
     chart
         .draw_series(LineSeries::new(
             diagram_data.speedo_status.iter().copied(),
-            full_palette::BLACK,
+            full_palette::BLACK.stroke_width(STROKE_WIDTH),
         ))
         .unwrap()
         .label("speedo-stat")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], full_palette::BLACK));
+        .legend(|(x, y)| {
+            PathElement::new(
+                vec![(x, y), (x + 20, y)],
+                full_palette::BLACK.stroke_width(STROKE_WIDTH),
+            )
+        });
 
     chart
         .draw_series(LineSeries::new(
             diagram_data.setpoint.iter().copied(),
-            full_palette::BLUE,
+            full_palette::BLUE.stroke_width(STROKE_WIDTH),
         ))
         .unwrap()
         .label("setpoint")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], full_palette::BLUE));
+        .legend(|(x, y)| {
+            PathElement::new(
+                vec![(x, y), (x + 20, y)],
+                full_palette::BLUE.stroke_width(STROKE_WIDTH),
+            )
+        });
 
     chart
         .draw_series(LineSeries::new(
             diagram_data.pid_y.iter().copied(),
-            full_palette::ORANGE,
+            full_palette::ORANGE.stroke_width(STROKE_WIDTH),
         ))
         .unwrap()
         .label("pid-Y")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], full_palette::ORANGE));
+        .legend(|(x, y)| {
+            PathElement::new(
+                vec![(x, y), (x + 20, y)],
+                full_palette::ORANGE.stroke_width(STROKE_WIDTH),
+            )
+        });
 
     chart
         .draw_series(LineSeries::new(
             diagram_data.mon_debounce.iter().copied(),
-            full_palette::GREY,
+            full_palette::GREY.stroke_width(STROKE_WIDTH),
         ))
         .unwrap()
         .label("mon-debounce")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], full_palette::ORANGE));
+        .legend(|(x, y)| {
+            PathElement::new(
+                vec![(x, y), (x + 20, y)],
+                full_palette::GREY.stroke_width(STROKE_WIDTH),
+            )
+        });
 
     chart
         .configure_series_labels()
