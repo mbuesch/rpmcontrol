@@ -18,13 +18,17 @@ pub enum Debug {
     Setpoint,
     PidY,
     MonDebounce,
+    TempMot,
+    TempUc,
 }
-const NRVALUES: usize = 5;
+const NRVALUES: usize = 7;
 
 const INDEXSHIFT: usize = 2;
 const INDEXMASK: u8 = (1 << INDEXSHIFT) - 1;
 
 static VALUES: Mutex<[Cell<u16>; NRVALUES]> = Mutex::new([
+    Cell::new(0),
+    Cell::new(0),
     Cell::new(0),
     Cell::new(0),
     Cell::new(0),

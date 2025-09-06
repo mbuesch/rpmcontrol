@@ -13,12 +13,24 @@ use std::{
     time::{Duration, Instant},
 };
 
+const T_INTERVAL: Duration = Duration::from_millis(10000);
+
+const N_MIN: f64 = 0.0;
+const N_MAX: f64 = 25_000.0;
+
+const SPEEDO_STATUS_FACT: f64 = 100.0;
+const MON_DEBOUNCE_FACT: f64 = N_MAX / 150.0;
+const TEMP_FACT: f64 = N_MAX / 100.0;
+const STROKE_WIDTH: u32 = 3;
+
 struct DiagramVisibility {
     speedo: bool,
     speedo_status: bool,
     setpoint: bool,
     pid_y: bool,
     mon_debounce: bool,
+    temp_mot: bool,
+    temp_uc: bool,
 }
 
 impl DiagramVisibility {
@@ -29,6 +41,8 @@ impl DiagramVisibility {
             setpoint: true,
             pid_y: false,
             mon_debounce: false,
+            temp_mot: true,
+            temp_uc: false,
         }
     }
 }
@@ -40,17 +54,10 @@ struct DiagramData {
     setpoint: VecDeque<(f64, f64)>,
     pid_y: VecDeque<(f64, f64)>,
     mon_debounce: VecDeque<(f64, f64)>,
+    temp_mot: VecDeque<(f64, f64)>,
+    temp_uc: VecDeque<(f64, f64)>,
     visibility: DiagramVisibility,
 }
-
-const T_INTERVAL: Duration = Duration::from_millis(10000);
-
-const N_MIN: f64 = 0.0;
-const N_MAX: f64 = 25_000.0;
-
-const SPEEDO_STATUS_FACT: f64 = 100.0;
-const MON_DEBOUNCE_FACT: f64 = N_MAX / 150.0;
-const STROKE_WIDTH: u32 = 3;
 
 macro_rules! check_ts {
     ($var:ident, $deque:expr, $fun:ident) => {
@@ -71,6 +78,8 @@ impl DiagramData {
             setpoint: VecDeque::new(),
             pid_y: VecDeque::new(),
             mon_debounce: VecDeque::new(),
+            temp_mot: VecDeque::new(),
+            temp_uc: VecDeque::new(),
             visibility: DiagramVisibility::new(),
         }
     }
@@ -82,6 +91,8 @@ impl DiagramData {
         oldest = check_ts!(oldest, self.setpoint.front(), min);
         oldest = check_ts!(oldest, self.pid_y.front(), min);
         oldest = check_ts!(oldest, self.mon_debounce.front(), min);
+        oldest = check_ts!(oldest, self.temp_mot.front(), min);
+        oldest = check_ts!(oldest, self.temp_uc.front(), min);
         if oldest < f64::MAX { oldest } else { 0.0 }
     }
 
@@ -92,6 +103,8 @@ impl DiagramData {
         newest = check_ts!(newest, self.setpoint.back(), max);
         newest = check_ts!(newest, self.pid_y.back(), max);
         newest = check_ts!(newest, self.mon_debounce.back(), max);
+        newest = check_ts!(newest, self.temp_mot.back(), max);
+        newest = check_ts!(newest, self.temp_uc.back(), max);
         newest
     }
 
@@ -130,13 +143,22 @@ impl DiagramData {
                 self.mon_debounce
                     .push_back((self.timestamp(t), val as f64 * MON_DEBOUNCE_FACT));
             }
-            SerDat::Sync(_) => (),
+            SerDat::TempMot(t, val) => {
+                self.temp_mot
+                    .push_back((self.timestamp(t), val * TEMP_FACT));
+            }
+            SerDat::TempUc(t, val) => {
+                self.temp_uc.push_back((self.timestamp(t), val * TEMP_FACT));
+            }
+            SerDat::Sync => (),
         }
         Self::prune_items(&mut self.speedo, age_thres);
         Self::prune_items(&mut self.speedo_status, age_thres);
         Self::prune_items(&mut self.setpoint, age_thres);
         Self::prune_items(&mut self.pid_y, age_thres);
         Self::prune_items(&mut self.mon_debounce, age_thres);
+        Self::prune_items(&mut self.temp_mot, age_thres);
+        Self::prune_items(&mut self.temp_uc, age_thres);
     }
 }
 
@@ -244,6 +266,38 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
             });
     }
 
+    if diagram_data.visibility.temp_mot {
+        chart
+            .draw_series(LineSeries::new(
+                diagram_data.temp_mot.iter().copied(),
+                full_palette::BLUE_900.stroke_width(STROKE_WIDTH),
+            ))
+            .unwrap()
+            .label("temp-mot")
+            .legend(|(x, y)| {
+                PathElement::new(
+                    vec![(x, y), (x + 20, y)],
+                    full_palette::BLUE_900.stroke_width(STROKE_WIDTH),
+                )
+            });
+    }
+
+    if diagram_data.visibility.temp_uc {
+        chart
+            .draw_series(LineSeries::new(
+                diagram_data.temp_uc.iter().copied(),
+                full_palette::BLUE_200.stroke_width(STROKE_WIDTH),
+            ))
+            .unwrap()
+            .label("temp-uc")
+            .legend(|(x, y)| {
+                PathElement::new(
+                    vec![(x, y), (x + 20, y)],
+                    full_palette::BLUE_200.stroke_width(STROKE_WIDTH),
+                )
+            });
+    }
+
     chart
         .configure_series_labels()
         .background_style(WHITE)
@@ -310,8 +364,8 @@ impl MainWindow {
         connect_cb!(builder, "cb_setpoint", setpoint);
         connect_cb!(builder, "cb_pid_y", pid_y);
         connect_cb!(builder, "cb_mon_debounce", mon_debounce);
-        //connect_cb!(builder, "cb_temp_mot", temp_mot);
-        //connect_cb!(builder, "cb_temp_uc", temp_uc);
+        connect_cb!(builder, "cb_temp_mot", temp_mot);
+        connect_cb!(builder, "cb_temp_uc", temp_uc);
 
         glib::source::timeout_add_local(Duration::from_millis(100), {
             let diagram_area = Rc::clone(&diagram_area);

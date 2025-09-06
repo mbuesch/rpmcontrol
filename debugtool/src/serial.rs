@@ -18,8 +18,9 @@ pub enum SerDat {
     Setpoint(Instant, f64),
     PidY(Instant, f64),
     MonDebounce(Instant, u16),
-    #[allow(dead_code)]
-    Sync(Instant),
+    TempMot(Instant, f64),
+    TempUc(Instant, f64),
+    Sync,
 }
 
 const FIXPT_SHIFT: usize = 8;
@@ -32,12 +33,20 @@ fn hz16_to_hz(val: f64) -> f64 {
     val * 16.0
 }
 
+fn double_celsius_to_celsius(val: f64) -> f64 {
+    val * 2.0
+}
+
 fn fixpt_to_f64(val: u16) -> f64 {
     (val as f64) / ((1 << FIXPT_SHIFT) as f64)
 }
 
 fn fixpt_to_rpm(val: u16) -> f64 {
     hz_to_rpm(hz16_to_hz(fixpt_to_f64(val)))
+}
+
+fn fixpt_to_celsius(val: u16) -> f64 {
+    double_celsius_to_celsius(fixpt_to_f64(val))
 }
 
 impl SerDat {
@@ -50,7 +59,9 @@ impl SerDat {
             2 => Ok(SerDat::Setpoint(now, fixpt_to_rpm(val))),
             3 => Ok(SerDat::PidY(now, fixpt_to_rpm(val))),
             4 => Ok(SerDat::MonDebounce(now, val)),
-            0xFF => Ok(SerDat::Sync(now)),
+            5 => Ok(SerDat::TempMot(now, fixpt_to_celsius(val))),
+            6 => Ok(SerDat::TempUc(now, fixpt_to_celsius(val))),
+            0xFF => Ok(SerDat::Sync),
             cmd => Err(err!("SerBuf::parse: Unknown command 0x{cmd:02X}")),
         }
     }

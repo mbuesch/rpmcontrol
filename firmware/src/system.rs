@@ -172,7 +172,10 @@ impl System {
             state @ SysState::Syncing | state @ SysState::Running => {
                 if let Some(speed) = self.speedo.get_speed(m) {
                     speedo_hz = self.speed_filter.run(m, speed.as_16hz(), SPEED_FILTER_DIV);
-                    self.state.set(m, SysState::Running);
+                    if state != SysState::Running {
+                        self.state.set(m, SysState::Running);
+                        self.temp.init(m);
+                    }
                 } else if state == SysState::Running {
                     speedo_hz = self.speed_filter.get(m, SPEED_FILTER_DIV);
                 } else {
@@ -259,9 +262,14 @@ impl System {
             self.triac.set_phi_offs_ms(m, phi_offs_ms);
         }
 
+        // Temperature shutoff.
+        let temp_shutoff = self.temp.get_shutoff(m);
+
         // Safety monitoring check.
         let mon_res = self.mon.check(m, setpoint, speedo_hz);
-        if mon_res == MonResult::Shutoff {
+
+        // Safety shutoff.
+        if mon_res == MonResult::Shutoff || temp_shutoff == Shutoff::MachineShutoff {
             triac_shutoff = Shutoff::MachineShutoff;
             set_secondary_shutoff(Shutoff::MachineShutoff);
         } else {
