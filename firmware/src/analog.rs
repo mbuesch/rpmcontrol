@@ -55,7 +55,8 @@ impl Adc {
                     w.mux5().clear_bit()
                 });
                 sp.ADC.admux().write(|w| {
-                    w.refs().vcc().mux().adc0()
+                    w.refs().vcc()
+                     .mux().adc0()
                 });
             }
             AdcChannel::MotTemp => {
@@ -63,7 +64,8 @@ impl Adc {
                     w.mux5().clear_bit()
                 });
                 sp.ADC.admux().write(|w| {
-                    w.refs().vcc().mux().adc4()
+                    w.refs().vcc()
+                     .mux().adc4()
                 });
             }
             AdcChannel::UcTemp => {
@@ -71,7 +73,8 @@ impl Adc {
                     w.mux5().set_bit()
                 });
                 sp.ADC.admux().write(|w| {
-                    w.refs().internal().mux().set(0x1F)
+                    w.refs().internal()
+                     .mux().set(0x1F)
                 });
             }
         }
