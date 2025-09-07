@@ -3,7 +3,10 @@
 #![feature(abi_avr_interrupt)]
 #![feature(asm_experimental_arch)]
 
+use crate::filter::Filter;
 use avr_device::atmega8::{PORTB, PORTC, PORTD, Peripherals, TC1, TC2};
+
+mod filter;
 
 /// # Safety
 ///
@@ -127,13 +130,16 @@ fn timer1_init(tc1: &TC1) {
          .wgm1().set(2)
     });
     tc1.tccr1b().write(|w| {
-        w.cs1().prescale_256()
+        w.cs1().prescale_64()
          .wgm1().set(2)
     });
 }
 
 fn timer1_duty(tc1: &TC1, duty: u16) {
     tc1.ocr1a().write(|w| w.set(duty));
+    if tc1.tcnt1().read().bits() > duty {
+        tc1.tcnt1().write(|w| w.set(0));
+    }
 }
 
 const TIMER2_MAX: u8 = 78;
@@ -174,6 +180,8 @@ fn main() -> ! {
     timer2_init(&dp.TC2);
 
     let mut triggered = false;
+    let mut duty_filter = Filter::new();
+    const DUTY_FILTER_SHIFT: u8 = 2;
     loop {
         // Simulated mains zero crossing.
         let zerocrossing = timer2_event(&dp.TC2);
@@ -187,7 +195,8 @@ fn main() -> ! {
         if zerocrossing {
             if !triggered {
                 // No trigger -> Turn PWM off.
-                timer1_duty(&dp.TC1, 0);
+                let duty = duty_filter.run(0, DUTY_FILTER_SHIFT);
+                timer1_duty(&dp.TC1, duty);
             }
             triggered = false;
         }
@@ -203,6 +212,8 @@ fn main() -> ! {
             let val: u16 = val.into();
 
             let duty = val * (TIMER1_DUTYMAX + 1) / (TIMER2_MAX as u16 + 1);
+            let duty = (duty * 3) / 4; // reduce
+            let duty = duty_filter.run(duty, DUTY_FILTER_SHIFT);
 
             timer1_duty(&dp.TC1, duty);
         }
