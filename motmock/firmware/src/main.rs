@@ -175,13 +175,18 @@ fn main() -> ! {
 
     let mut triggered = false;
     loop {
+        // Simulated mains zero crossing.
         let zerocrossing = timer2_event(&dp.TC2);
 
         // 50 Hz output.
-        dp.PORTC.portc().modify(|r, w| w.pc0().bit(r.pc0().bit() ^ zerocrossing));
+        dp.PORTC
+            .portc()
+            .modify(|r, w| w.pc0().bit(r.pc0().bit() ^ zerocrossing));
 
+        // Triac trigger input.
         if zerocrossing {
             if !triggered {
+                // No trigger -> Turn PWM off.
                 timer1_duty(&dp.TC1, 0);
             }
             triggered = false;
@@ -190,6 +195,7 @@ fn main() -> ! {
         if trig && !triggered {
             triggered = true;
 
+            // Output PWM proportionally to triac trigger time.
             let mut val: u8 = TIMER2_MAX - timer2_value(&dp.TC2);
             if val <= TIMER2_CUTOFF {
                 val = 0;
