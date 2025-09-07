@@ -38,17 +38,23 @@ impl Fixpt {
         Self(int << Self::SHIFT | frac as i16)
     }
 
+    #[inline(never)]
     pub const fn from_fraction(numerator: i16, denominator: i16) -> Self {
         let mut q: i32 = 1 << Self::SHIFT;
         q *= numerator as i32;
         q /= denominator as i32;
-        if q > i16::MAX as _ {
-            q = i16::MAX as _;
+        Self::from_q_sat(q)
+    }
+
+    #[inline(never)]
+    const fn from_q_sat(v: i32) -> Self {
+        if v < i16::MIN as i32 {
+            Self(i16::MIN)
+        } else if v > i16::MAX as i32 {
+            Self(i16::MAX)
+        } else {
+            Self(v as i16)
         }
-        if q < i16::MIN as _ {
-            q = i16::MIN as _;
-        }
-        Self(q as i16)
     }
 
     pub const fn to_int(self) -> i16 {
@@ -59,25 +65,28 @@ impl Fixpt {
         self.0
     }
 
+    #[inline(never)]
     pub const fn add(self, other: Self) -> Self {
-        Self(self.0 + other.0)
+        Self(self.0.saturating_add(other.0))
     }
 
+    #[inline(never)]
     pub const fn sub(self, other: Self) -> Self {
-        Self(self.0 - other.0)
+        Self(self.0.saturating_sub(other.0))
     }
 
     #[inline(never)]
     pub const fn mul(self, other: Self) -> Self {
-        Self(((self.0 as i32 * other.0 as i32) >> Self::SHIFT) as i16)
+        let prod = (self.0 as i32 * other.0 as i32) >> Self::SHIFT;
+        Self::from_q_sat(prod)
     }
 
     #[inline(never)]
     pub const fn div(self, other: Self) -> Self {
-        let mut tmp: i32 = self.0 as i32;
+        let mut tmp = self.0 as i32;
         tmp <<= Self::SHIFT;
         tmp /= other.0 as i32;
-        Self(tmp as i16)
+        Self::from_q_sat(tmp)
     }
 
     #[inline(never)]
@@ -89,6 +98,7 @@ impl Fixpt {
         }
     }
 
+    #[inline(never)]
     pub const fn abs(self) -> Self {
         if self.0 < 0 { self.neg() } else { self }
     }
@@ -187,6 +197,7 @@ impl curveipo::CurvePoint<Fixpt> for (Fixpt, Fixpt) {
 }
 
 impl curveipo::CurveIpo for Fixpt {
+    #[inline(never)]
     fn lin_inter(
         &self,
         left: &impl curveipo::CurvePoint<Self>,
