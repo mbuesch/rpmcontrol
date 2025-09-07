@@ -244,10 +244,6 @@ pub fn irq_handler_ana_comp(c: &IrqCtx) {
     //         from [ac_capture_get] with interrupts disabled.
     unsafe {
         if now >= AC_CAPTURE.stamp + AC_CAPTURE_MINDIST {
-            if AC_CAPTURE.new {
-                // ac_capture_get() has not been called frequently enough.
-                //TODO?
-            }
             AC_CAPTURE.stamp = now;
             AC_CAPTURE.new = true;
         }
