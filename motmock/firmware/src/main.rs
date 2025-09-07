@@ -173,11 +173,23 @@ fn main() -> ! {
     timer1_init(&dp.TC1);
     timer2_init(&dp.TC2);
 
-    let mut hz50 = false;
-    let mut in_trig = false;
+    let mut triggered = false;
     loop {
-        let trig = dp.PORTD.pind().read().pd2().bit();
-        if trig && !in_trig {
+        let zerocrossing = timer2_event(&dp.TC2);
+
+        // 50 Hz output.
+        dp.PORTC.portc().modify(|r, w| w.pc0().bit(r.pc0().bit() ^ zerocrossing));
+
+        if zerocrossing {
+            if !triggered {
+                timer1_duty(&dp.TC1, 0);
+            }
+            triggered = false;
+        }
+        let trig = !dp.PORTD.pind().read().pd2().bit();
+        if trig && !triggered {
+            triggered = true;
+
             let mut val: u8 = TIMER2_MAX - timer2_value(&dp.TC2);
             if val <= TIMER2_CUTOFF {
                 val = 0;
@@ -188,10 +200,6 @@ fn main() -> ! {
 
             timer1_duty(&dp.TC1, duty);
         }
-        in_trig = trig;
-
-        hz50 ^= timer2_event(&dp.TC2);
-        dp.PORTC.portc().modify(|_, w| w.pc0().bit(hz50));
     }
 }
 
