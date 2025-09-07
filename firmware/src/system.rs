@@ -18,13 +18,14 @@ use crate::{
 use curveipo::Curve;
 
 const RPMPI_PARAMS: PidParams = PidParams {
-    kp: fixpt!(5 / 2),
-    ki: fixpt!(1 / 8),
-    kd: fixpt!(1 / 16),
+    kp: fixpt!(5 / 1),
+    ki: fixpt!(1 / 4),
+    kd: fixpt!(0),
+    //kd: fixpt!(1 / 16),
 };
 
 const RPMPI_PARAMS_SYNCING: PidParams = PidParams {
-    kp: fixpt!(5 / 2),
+    kp: fixpt!(5 / 1),
     ki: fixpt!(0),
     kd: fixpt!(0),
 };
@@ -67,14 +68,15 @@ fn setpoint_to_f(adc: u16) -> Fixpt {
     Fixpt::from_fraction(adc as i16, 8) / fixpt!(128 / 25)
 }
 
-/// Convert -25..25 16Hz into pi..0 radians.
-/// Convert pi..0 radians into 20..0 ms.
+/// Clamp negative frequency to 0.
+/// Convert 0..25 16Hz into pi..0 radians.
+/// Convert pi..0 radians into 10..0 ms.
 fn f_to_trig_offs(f: Fixpt) -> Fixpt {
-    let fmin = Fixpt::from_int(-MAX_16HZ);
+    let fmin = Fixpt::from_int(0);
     let fmax = Fixpt::from_int(MAX_16HZ);
     let f = f.max(fmin);
     let f = f.min(fmax);
-    let fact = fixpt!(20 / 50);
+    let fact = fixpt!(10 / 25);
     (fmax - f) * fact
 }
 
