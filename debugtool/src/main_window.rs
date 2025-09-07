@@ -15,7 +15,7 @@ use std::{
 
 const T_INTERVAL: Duration = Duration::from_millis(10000);
 
-const N_MIN: f64 = 0.0;
+const N_MIN: f64 = -5_000.0;
 const N_MAX: f64 = 25_000.0;
 
 const SPEEDO_STATUS_FACT: f64 = 100.0;

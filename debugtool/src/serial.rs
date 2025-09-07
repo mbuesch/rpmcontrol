@@ -38,7 +38,7 @@ fn double_celsius_to_celsius(val: f64) -> f64 {
 }
 
 fn fixpt_to_f64(val: u16) -> f64 {
-    (val as f64) / ((1 << FIXPT_SHIFT) as f64)
+    (val as i16 as f64) / ((1 << FIXPT_SHIFT) as f64)
 }
 
 fn fixpt_to_rpm(val: u16) -> f64 {
