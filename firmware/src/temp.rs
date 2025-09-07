@@ -12,8 +12,7 @@ macro_rules! celsius {
     };
 }
 
-const R_1: Fixpt = fixpt!(10); // kOhms
-const R_NTC_REF: Fixpt = fixpt!(10); // kOhms
+const R1: Fixpt = fixpt!(10); // kOhms
 const ADC_UREF: Fixpt = fixpt!(5); // volts
 const ADC_MAX: u16 = 0x3FF;
 const TEMP_LIMIT_HI: Fixpt = celsius!(100);
@@ -44,7 +43,7 @@ fn mot_adc_to_volts(adc: u16) -> Fixpt {
 
 /// Convert motor temperature voltage to resistance of temperature sensor.
 fn mot_volts_to_kohms(u2: Fixpt) -> Fixpt {
-    (R_1 * u2) / (ADC_UREF - u2)
+    (R1 * u2) / (ADC_UREF - u2)
 }
 
 /// Convert kOhms to degree double-Celsius.

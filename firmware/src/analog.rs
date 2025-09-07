@@ -51,19 +51,27 @@ impl Adc {
     fn update_mux(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         match self.chan.get(m) {
             AdcChannel::Setpoint => {
+                sp.ADC.adcsrb().modify(|_, w| {
+                    w.mux5().clear_bit()
+                });
                 sp.ADC.admux().write(|w| {
                     w.refs().vcc().mux().adc0()
                 });
             }
             AdcChannel::MotTemp => {
+                sp.ADC.adcsrb().modify(|_, w| {
+                    w.mux5().clear_bit()
+                });
                 sp.ADC.admux().write(|w| {
                     w.refs().vcc().mux().adc4()
                 });
             }
             AdcChannel::UcTemp => {
+                sp.ADC.adcsrb().modify(|_, w| {
+                    w.mux5().set_bit()
+                });
                 sp.ADC.admux().write(|w| {
-                    //w.refs().internal().mux().adc11()
-                    w.refs().internal().mux().set(0x3F) //TODO
+                    w.refs().internal().mux().set(0x1F)
                 });
             }
         }
