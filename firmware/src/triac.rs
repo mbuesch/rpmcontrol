@@ -1,7 +1,7 @@
 use crate::{
     fixpt::Fixpt,
     hw::interrupt,
-    mains::{MAINS_HALFWAVE_DUR, MAINS_PERIOD, Phase, PhaseUpdate},
+    mains::{MAINS_HALFWAVE_DUR, Phase, PhaseUpdate},
     mutex::{IrqCtx, MainCtx, MutexCell},
     ports::PORTB,
     shutoff::Shutoff,
@@ -123,7 +123,7 @@ impl Triac {
     }
 
     pub fn set_phi_offs_shutoff(&self, m: &MainCtx<'_>) {
-        self.phi_offs.set(m, MAINS_PERIOD);
+        self.phi_offs.set(m, MAINS_HALFWAVE_DUR);
     }
 
     pub fn run(
