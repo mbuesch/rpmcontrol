@@ -1,5 +1,6 @@
 use crate::{
     debug::Debug,
+    filter::Filter,
     fixpt::{Fixpt, fixpt},
     mutex::{MainCtx, MutexCell},
     shutoff::Shutoff,
@@ -17,6 +18,7 @@ const ADC_UREF: Fixpt = fixpt!(5); // volts
 const ADC_MAX: u16 = 0x3FF;
 const TEMP_LIMIT_HI: Fixpt = celsius!(100);
 const TEMP_LIMIT_LO: Fixpt = celsius!(80);
+const TEMP_FILTER_DIV: Fixpt = fixpt!(4);
 
 const NTC_CURVE: Curve<Fixpt, (Fixpt, Fixpt), 7> = Curve::new([
     // (kOhms, double deg Celsius)
@@ -65,12 +67,16 @@ pub struct TempAdc {
 
 pub struct Temp {
     shutoff: MutexCell<Shutoff>,
+    filter_uc: Filter,
+    filter_mot: Filter,
 }
 
 impl Temp {
     pub const fn new() -> Self {
         Self {
             shutoff: MutexCell::new(Shutoff::MachineShutoff),
+            filter_uc: Filter::new(),
+            filter_mot: Filter::new(),
         }
     }
 
@@ -87,6 +93,8 @@ impl Temp {
             let temp_mot_kohms = mot_volts_to_kohms(temp_mot_volts);
             let temp_mot_cel = mot_kohms_to_celsius_double(temp_mot_kohms);
 
+            let temp_mot_cel = self.filter_mot.run(m, temp_mot_cel, TEMP_FILTER_DIV);
+
             if temp_mot_cel > TEMP_LIMIT_HI {
                 above_hi = true;
             } else if temp_mot_cel < TEMP_LIMIT_LO {
@@ -98,6 +106,8 @@ impl Temp {
 
         if let Some(temp_uc) = temp_adc.uc {
             let temp_uc_cel = uc_adc_to_celsius_double(temp_uc);
+
+            let temp_uc_cel = self.filter_uc.run(m, temp_uc_cel, TEMP_FILTER_DIV);
 
             if temp_uc_cel > TEMP_LIMIT_HI {
                 above_hi = true;
