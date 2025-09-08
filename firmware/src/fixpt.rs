@@ -26,6 +26,15 @@ pub(crate) use fixpt;
 impl Fixpt {
     pub const SHIFT: usize = 8;
 
+    pub const fn upgrade(&self) -> BigFixpt {
+        let v = self.0.to_le_bytes();
+        if v[1] & 0x80 == 0 {
+            BigFixpt([v[0], v[1], 0x00])
+        } else {
+            BigFixpt([v[0], v[1], 0xFF])
+        }
+    }
+
     pub const fn zero() -> Self {
         Self(0)
     }
@@ -210,6 +219,111 @@ impl curveipo::CurveIpo for Fixpt {
         } else {
             ((*self - left.x()) * (dy / dx)) + left.y()
         }
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct BigFixpt([u8; 3]);
+
+impl BigFixpt {
+    pub const SHIFT: usize = Fixpt::SHIFT;
+
+    #[inline(never)]
+    pub const fn downgrade(&self) -> Fixpt {
+        Fixpt::from_q_sat(self.to_q())
+    }
+
+    #[inline(never)]
+    const fn to_q(self) -> i32 {
+        if self.0[2] & 0x80 == 0 {
+            i32::from_le_bytes([self.0[0], self.0[1], self.0[2], 0x00])
+        } else {
+            i32::from_le_bytes([self.0[0], self.0[1], self.0[2], 0xFF])
+        }
+    }
+
+    #[inline(never)]
+    const fn from_q_sat(q: i32) -> Self {
+        if q < -0x80_0000 {
+            Self([0x00, 0x00, 0x80])
+        } else if q > 0x7F_FFFF {
+            Self([0xFF, 0xFF, 0x7F])
+        } else {
+            let q = q.to_le_bytes();
+            Self([q[0], q[1], q[2]])
+        }
+    }
+
+    #[inline(never)]
+    pub const fn add(self, other: Self) -> Self {
+        Self::from_q_sat(self.to_q() + other.to_q())
+    }
+
+    #[inline(never)]
+    pub const fn sub(self, other: Self) -> Self {
+        Self::from_q_sat(self.to_q() - other.to_q())
+    }
+
+    #[inline(never)]
+    pub const fn div(self, other: Self) -> Self {
+        let mut tmp = self.to_q();
+        tmp <<= Self::SHIFT;
+        tmp /= other.to_q();
+        Self::from_q_sat(tmp)
+    }
+}
+
+impl From<Fixpt> for BigFixpt {
+    fn from(v: Fixpt) -> BigFixpt {
+        v.upgrade()
+    }
+}
+
+impl From<BigFixpt> for Fixpt {
+    fn from(v: BigFixpt) -> Fixpt {
+        v.downgrade()
+    }
+}
+
+impl core::ops::Add for BigFixpt {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        BigFixpt::add(self, other)
+    }
+}
+
+impl core::ops::AddAssign for BigFixpt {
+    fn add_assign(&mut self, other: Self) {
+        self.0 = (*self + other).0;
+    }
+}
+
+impl core::ops::Sub for BigFixpt {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        BigFixpt::sub(self, other)
+    }
+}
+
+impl core::ops::SubAssign for BigFixpt {
+    fn sub_assign(&mut self, other: Self) {
+        self.0 = (*self - other).0;
+    }
+}
+
+impl core::ops::Div for BigFixpt {
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self {
+        BigFixpt::div(self, other)
+    }
+}
+
+impl core::ops::DivAssign for BigFixpt {
+    fn div_assign(&mut self, other: Self) {
+        self.0 = (*self / other).0;
     }
 }
 
