@@ -18,7 +18,7 @@ const ADC_UREF: Fixpt = fixpt!(5); // volts
 const ADC_MAX: u16 = 0x3FF;
 const TEMP_LIMIT_HI: Fixpt = celsius!(100);
 const TEMP_LIMIT_LO: Fixpt = celsius!(80);
-const TEMP_FILTER_DIV: Fixpt = fixpt!(4);
+const TEMP_FILTER_DIV: Fixpt = fixpt!(16);
 
 const NTC_CURVE: Curve<Fixpt, (Fixpt, Fixpt), 7> = Curve::new([
     // (kOhms, double deg Celsius)
