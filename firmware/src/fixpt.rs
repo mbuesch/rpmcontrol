@@ -265,6 +265,12 @@ impl BigFixpt {
     }
 
     #[inline(never)]
+    pub const fn mul(self, other: Self) -> Self {
+        let prod = (self.to_q() * other.to_q()) >> Self::SHIFT;
+        Self::from_q_sat(prod)
+    }
+
+    #[inline(never)]
     pub const fn div(self, other: Self) -> Self {
         let mut tmp = self.to_q();
         tmp <<= Self::SHIFT;
@@ -310,6 +316,20 @@ impl core::ops::Sub for BigFixpt {
 impl core::ops::SubAssign for BigFixpt {
     fn sub_assign(&mut self, other: Self) {
         self.0 = (*self - other).0;
+    }
+}
+
+impl core::ops::Mul for BigFixpt {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        BigFixpt::mul(self, other)
+    }
+}
+
+impl core::ops::MulAssign for BigFixpt {
+    fn mul_assign(&mut self, other: Self) {
+        self.0 = (*self * other).0;
     }
 }
 
