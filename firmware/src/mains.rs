@@ -1,4 +1,5 @@
 use crate::{
+    fixpt::{Fixpt, fixpt},
     hw::interrupt,
     mutex::{MainCtx, MutexCell},
     ports::PORTA,
@@ -6,11 +7,17 @@ use crate::{
 };
 
 /// Mains sine wave period (50 Hz).
-pub const MAINS_PERIOD: RelLargeTimestamp = RelLargeTimestamp::from_millis(20); // 50 Hz
+pub const MAINS_PERIOD_MS: Fixpt = fixpt!(20);
+/// Mains sine wave period (50 Hz).
+pub const MAINS_PERIOD: RelLargeTimestamp = RelLargeTimestamp::from_millis(20);
 
+/// Mains sine wave half-wave length.
+pub const MAINS_HALFWAVE_DUR_MS: Fixpt = MAINS_PERIOD_MS.div(fixpt!(2));
 /// Mains sine wave half-wave length.
 pub const MAINS_HALFWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(2);
 
+/// Mains sine wave quarter-wave length.
+pub const MAINS_QUARTERWAVE_DUR_MS: Fixpt = MAINS_HALFWAVE_DUR_MS.div(fixpt!(2));
 /// Mains sine wave quarter-wave length.
 pub const MAINS_QUARTERWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(4);
 
