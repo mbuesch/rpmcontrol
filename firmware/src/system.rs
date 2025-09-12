@@ -92,8 +92,7 @@ fn f_to_trig_offs(f: Fixpt) -> Fixpt {
     let fmax = Fixpt::from_int(MAX_16HZ);
     let f = f.max(fmin);
     let f = f.min(fmax);
-    let fact = fixpt!(10 / 25);
-    (fmax - f) * fact
+    ((fmax - f) * fixpt!(2)) / fixpt!(5) // *10/25
 }
 
 #[allow(non_snake_case)]
