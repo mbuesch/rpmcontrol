@@ -14,6 +14,7 @@ mod mains;
 mod mon;
 mod mutex;
 mod pid;
+mod pocheck;
 mod ports;
 mod shutoff;
 mod speedo;
