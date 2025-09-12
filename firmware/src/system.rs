@@ -7,7 +7,7 @@ use crate::{
     mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
     mon::{Mon, MonResult},
     mutex::{MainCtx, MutexCell},
-    pid::{Pid, PidParams},
+    pid::{Pid, PidIlim, PidParams},
     pocheck::{PoCheck, PoState},
     ports::PORTB,
     shutoff::{Shutoff, set_secondary_shutoff},
@@ -31,12 +31,19 @@ const RPMPI_PARAMS_SYNCING: PidParams = PidParams {
     kd: fixpt!(0),
 };
 
-const RPMPI_ILIM: Curve<Fixpt, (Fixpt, Fixpt), 4> = Curve::new([
+const RPMPI_ILIM_NEG: Curve<Fixpt, (Fixpt, Fixpt), 3> = Curve::new([
+    // (speedo, I-limit)
+    (rpm(0), fixpt!(0)),
+    (rpm(1000), fixpt!(0)),
+    (rpm(MAX_RPM), fixpt!(-2)),
+]);
+
+const RPMPI_ILIM_POS: Curve<Fixpt, (Fixpt, Fixpt), 4> = Curve::new([
     // (speedo, I-limit)
     (rpm(0), fixpt!(0)),
     (rpm(1000), fixpt!(0)),
     (rpm(1001), fixpt!(12)),
-    (rpm(24000), fixpt!(24)),
+    (rpm(MAX_RPM), fixpt!(24)),
 ]);
 
 const SYNC_SPEEDO_SUBSTITUTE: Curve<Fixpt, (Fixpt, Fixpt), 2> = Curve::new([
@@ -45,18 +52,26 @@ const SYNC_SPEEDO_SUBSTITUTE: Curve<Fixpt, (Fixpt, Fixpt), 2> = Curve::new([
     (rpm(1000), rpm(800)),
 ]);
 
-const RPM_SYNC_THRES: Fixpt = rpm(1000);
+/// Nominal maximum motor RPM.
+const MAX_RPM: i16 = 24000;
 
-const MAX_16HZ: i16 = rpm(24000).to_int(); // 24000/min, 400 Hz, 25 16-Hz
+/// Nominal maximum motor speed in 16-Hz units.
+const MAX_16HZ: i16 = rpm(MAX_RPM).to_int(); // 24000/min, 400 Hz, 25 16-Hz
 
 /// Maximum motor RPM that will trigger a hard triac inhibit.
-const MOT_SOFT_LIMIT: Fixpt = rpm(24500);
+const MOT_SOFT_LIMIT: Fixpt = rpm(MAX_RPM + 500);
 
 /// Maximum motor RPM that will trigger a monitoring fault.
-pub const MOT_HARD_LIMIT: Fixpt = rpm(25500);
+pub const MOT_HARD_LIMIT: Fixpt = rpm(MAX_RPM + 1500);
 
-const SETPOINT_FILTER_DIV: Fixpt = fixpt!(5 / 1);
+/// Motor speed below this threshold will trigger speedometer re-syncing.
+const RPM_SYNC_THRES: Fixpt = rpm(1000);
+
+/// Speedometer filter divider.
 const SPEED_FILTER_DIV: Fixpt = fixpt!(4 / 1);
+
+/// Setpoint filter divider.
+const SETPOINT_FILTER_DIV: Fixpt = fixpt!(5 / 1);
 
 /// Convert RPM to fixpt-16Hz
 pub const fn rpm(rpm: i16) -> Fixpt {
@@ -263,10 +278,17 @@ impl System {
                     reset_i = false;
                 }
             }
-            self.rpm_pid.set_ilim(m, RPMPI_ILIM.lin_inter(speedo_hz));
-            let y = self
-                .rpm_pid
-                .run(m, rpmpi_params, setpoint_filt, speedo_hz, reset_i);
+            let y = self.rpm_pid.run(
+                m,
+                rpmpi_params,
+                &PidIlim {
+                    pos: RPMPI_ILIM_POS.lin_inter(speedo_hz),
+                    neg: RPMPI_ILIM_NEG.lin_inter(speedo_hz),
+                },
+                setpoint_filt,
+                speedo_hz,
+                reset_i,
+            );
 
             Debug::Setpoint.log_fixpt(setpoint_filt);
             Debug::PidY.log_fixpt(y);

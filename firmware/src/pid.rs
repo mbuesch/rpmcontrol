@@ -1,5 +1,5 @@
 use crate::{
-    fixpt::Fixpt,
+    fixpt::{Fixpt, fixpt},
     mutex::{MainCtx, MutexCell},
 };
 
@@ -10,9 +10,14 @@ pub struct PidParams {
     pub kd: Fixpt,
 }
 
+#[derive(Clone)]
+pub struct PidIlim {
+    pub neg: Fixpt,
+    pub pos: Fixpt,
+}
+
 pub struct Pid {
     i: MutexCell<Fixpt>,
-    ilim: MutexCell<Fixpt>,
     prev_e: MutexCell<Fixpt>,
 }
 
@@ -20,19 +25,15 @@ impl Pid {
     pub const fn new() -> Self {
         Self {
             i: MutexCell::new(Fixpt::from_int(0)),
-            ilim: MutexCell::new(Fixpt::from_int(0)),
             prev_e: MutexCell::new(Fixpt::from_int(0)),
         }
-    }
-
-    pub fn set_ilim(&self, m: &MainCtx<'_>, ilim: Fixpt) {
-        self.ilim.set(m, ilim);
     }
 
     pub fn run(
         &self,
         m: &MainCtx<'_>,
         params: &PidParams,
+        ilim: &PidIlim,
         sp: Fixpt,
         r: Fixpt,
         reset: bool,
@@ -45,12 +46,11 @@ impl Pid {
 
         // I term
         let mut i = self.i.get(m) + (params.ki * e);
-        let ilim = self.ilim.get(m);
-        i = i.min(ilim);
-        i = i.max(-ilim);
         if reset {
-            i = Fixpt::from_int(0);
+            i = fixpt!(0);
         }
+        i = i.min(ilim.pos);
+        i = i.max(ilim.neg);
         self.i.set(m, i);
 
         // D term
