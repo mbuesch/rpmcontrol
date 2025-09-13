@@ -2910,7 +2910,7 @@
 	)
 	(text "snubber"
 		(exclude_from_sim no)
-		(at 231.394 49.022 0)
+		(at 245.364 49.022 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -2947,16 +2947,6 @@
 			)
 		)
 		(uuid "e2c48dc4-b2e3-4165-923f-e59f8e037278")
-	)
-	(text "TODO: Smaller fuse?"
-		(exclude_from_sim no)
-		(at 48.514 17.018 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "e6d91a5a-fb43-4132-80a4-17c21cf3ec83")
 	)
 	(text "Primary control"
 		(exclude_from_sim no)
@@ -3001,6 +2991,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "2c5caffe-90e4-40a7-882b-61f0db3f2bf6")
+	)
+	(junction
+		(at 240.03 68.58)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "36a30e6e-817f-48b2-a6e3-25f96eb73aa3")
 	)
 	(junction
 		(at 139.7 53.34)
@@ -3063,6 +3059,12 @@
 		(uuid "892b74cf-ff41-4dbe-bc1a-c82b0f7a1fcf")
 	)
 	(junction
+		(at 240.03 27.94)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "95ef4367-cb4e-4fe9-ac99-51823a1c3781")
+	)
+	(junction
 		(at 173.99 40.64)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3091,18 +3093,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "d09efc09-3a61-4e65-b9a6-24e172a81cdd")
-	)
-	(junction
-		(at 226.06 68.58)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "d4491ee0-0611-426c-8f42-d532cf6471b2")
-	)
-	(junction
-		(at 226.06 27.94)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "d6e69ada-2e77-4bbe-acd5-8d1b5ae5ceef")
 	)
 	(junction
 		(at 173.99 55.88)
@@ -3292,7 +3282,7 @@
 	)
 	(wire
 		(pts
-			(xy 193.04 68.58) (xy 226.06 68.58)
+			(xy 193.04 68.58) (xy 240.03 68.58)
 		)
 		(stroke
 			(width 0)
@@ -3302,7 +3292,7 @@
 	)
 	(wire
 		(pts
-			(xy 138.43 53.34) (xy 139.7 53.34)
+			(xy 132.08 53.34) (xy 139.7 53.34)
 		)
 		(stroke
 			(width 0)
@@ -3382,7 +3372,7 @@
 	)
 	(wire
 		(pts
-			(xy 226.06 27.94) (xy 226.06 39.37)
+			(xy 240.03 27.94) (xy 240.03 39.37)
 		)
 		(stroke
 			(width 0)
@@ -3429,6 +3419,16 @@
 			(type default)
 		)
 		(uuid "3ead42bc-6526-4492-b924-b8609ff8e7de")
+	)
+	(wire
+		(pts
+			(xy 240.03 68.58) (xy 262.89 68.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "41dd5562-1ee2-4cb6-b541-f82463df76c6")
 	)
 	(wire
 		(pts
@@ -3522,16 +3522,6 @@
 	)
 	(wire
 		(pts
-			(xy 226.06 68.58) (xy 262.89 68.58)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "515d1417-710b-47bc-802c-2737fad61e40")
-	)
-	(wire
-		(pts
 			(xy 60.96 39.37) (xy 60.96 48.26)
 		)
 		(stroke
@@ -3592,7 +3582,7 @@
 	)
 	(wire
 		(pts
-			(xy 215.9 43.18) (xy 215.9 44.45)
+			(xy 215.9 43.18) (xy 215.9 49.53)
 		)
 		(stroke
 			(width 0)
@@ -3662,7 +3652,7 @@
 	)
 	(wire
 		(pts
-			(xy 222.25 27.94) (xy 226.06 27.94)
+			(xy 222.25 27.94) (xy 240.03 27.94)
 		)
 		(stroke
 			(width 0)
@@ -3802,7 +3792,7 @@
 	)
 	(wire
 		(pts
-			(xy 226.06 58.42) (xy 226.06 68.58)
+			(xy 240.03 58.42) (xy 240.03 68.58)
 		)
 		(stroke
 			(width 0)
@@ -4122,6 +4112,16 @@
 	)
 	(wire
 		(pts
+			(xy 240.03 27.94) (xy 264.16 27.94)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ceaf29a1-f223-4203-b598-4ab753a690a6")
+	)
+	(wire
+		(pts
 			(xy 137.16 27.94) (xy 137.16 30.48)
 		)
 		(stroke
@@ -4212,7 +4212,7 @@
 	)
 	(wire
 		(pts
-			(xy 226.06 46.99) (xy 226.06 50.8)
+			(xy 240.03 46.99) (xy 240.03 50.8)
 		)
 		(stroke
 			(width 0)
@@ -4269,16 +4269,6 @@
 			(type default)
 		)
 		(uuid "f7cf4102-2e20-457c-94bd-415265108009")
-	)
-	(wire
-		(pts
-			(xy 226.06 27.94) (xy 264.16 27.94)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "f871877c-f829-47b2-8a43-dc59c02a7f0f")
 	)
 	(wire
 		(pts
@@ -4604,7 +4594,7 @@
 	)
 	(global_label "trig"
 		(shape input)
-		(at 215.9 44.45 270)
+		(at 215.9 49.53 270)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -4614,7 +4604,7 @@
 		)
 		(uuid "9e650790-ec48-48b4-a521-0884bc2e618d")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 215.9 50.7009 90)
+			(at 215.9 55.7809 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4692,7 +4682,7 @@
 	)
 	(global_label "n_shutoff"
 		(shape input)
-		(at 138.43 53.34 180)
+		(at 132.08 53.34 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -4702,7 +4692,7 @@
 		)
 		(uuid "dfac34c2-6056-4029-a1a6-c2e4acf7945e")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 126.676 53.34 0)
+			(at 120.326 53.34 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5075,7 +5065,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 226.06 43.18 0)
+		(at 240.03 43.18 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -5084,7 +5074,7 @@
 		(fields_autoplaced yes)
 		(uuid "0e7e1778-bf5a-4d27-b9ca-e0af95bc21f0")
 		(property "Reference" "R9"
-			(at 228.6 41.9099 0)
+			(at 242.57 41.9099 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5093,7 +5083,7 @@
 			)
 		)
 		(property "Value" "100 / 2 W"
-			(at 228.6 44.4499 0)
+			(at 242.57 44.4499 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5102,7 +5092,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 224.282 43.18 90)
+			(at 238.252 43.18 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5111,7 +5101,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 226.06 43.18 0)
+			(at 240.03 43.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5120,7 +5110,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 226.06 43.18 0)
+			(at 240.03 43.18 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5370,7 +5360,7 @@
 				)
 			)
 		)
-		(property "Value" "T 6 A / 250 V"
+		(property "Value" "T 2 A / 250 V"
 			(at 39.37 24.13 90)
 			(effects
 				(font
@@ -5509,7 +5499,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "TODO Y"
+		(property "Value" "2.2 nF / 300 V / Y2"
 			(at 57.15 36.8299 0)
 			(effects
 				(font
@@ -6200,7 +6190,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "TODO Y"
+		(property "Value" "2.2 nF / 300 V / Y2"
 			(at 57.15 62.2299 0)
 			(effects
 				(font
@@ -6253,7 +6243,7 @@
 	)
 	(symbol
 		(lib_id "Device:C")
-		(at 226.06 54.61 0)
+		(at 240.03 54.61 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -6262,7 +6252,7 @@
 		(fields_autoplaced yes)
 		(uuid "613a6150-b1b9-4297-80d0-0237c947e8a0")
 		(property "Reference" "C8"
-			(at 229.87 53.3399 0)
+			(at 243.84 53.3399 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6271,7 +6261,7 @@
 			)
 		)
 		(property "Value" "47 nF / 400 V / X2"
-			(at 229.87 55.8799 0)
+			(at 243.84 55.8799 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6280,7 +6270,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 227.0252 58.42 0)
+			(at 240.9952 58.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6289,7 +6279,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 226.06 54.61 0)
+			(at 240.03 54.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6298,7 +6288,7 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
-			(at 226.06 54.61 0)
+			(at 240.03 54.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6479,7 +6469,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "47 nF / 400 V / X2"
+		(property "Value" "220 nF / 300 V / X2"
 			(at 85.09 49.5299 0)
 			(effects
 				(font
