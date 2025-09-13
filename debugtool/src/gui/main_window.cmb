@@ -16,7 +16,9 @@
 	(1,9,"GtkCheckButton","cb_pid_y",5,None,None,None,3,None,None),
 	(1,10,"GtkCheckButton","cb_mon_debounce",5,None,None,None,4,None,None),
 	(1,11,"GtkCheckButton","cb_temp_mot",5,None,None,None,5,None,None),
-	(1,12,"GtkCheckButton","cb_temp_uc",5,None,None,None,6,None,None)
+	(1,12,"GtkCheckButton","cb_temp_uc",5,None,None,None,6,None,None),
+	(1,13,"GtkBox",None,4,None,None,None,1,None,None),
+	(1,14,"GtkCheckButton","cb_run",13,None,None,None,0,None,None)
   </object>
   <object_property>
 	(1,1,"GtkOrientable","orientation","vertical",None,None,None,None,None,None,None,None,None),
@@ -25,15 +27,15 @@
 	(1,2,"GtkWidget","hexpand","True",None,None,None,None,None,None,None,None,None),
 	(1,2,"GtkWidget","vexpand","True",None,None,None,None,None,None,None,None,None),
 	(1,5,"GtkOrientable","orientation","vertical",None,None,None,None,None,None,None,None,None),
-	(1,6,"GtkCheckButton","active","True",None,None,None,None,None,None,None,None,None),
+	(1,5,"GtkWidget","hexpand","True",None,None,None,None,None,None,None,None,None),
 	(1,6,"GtkCheckButton","label","speedo",None,None,None,None,None,None,None,None,None),
 	(1,7,"GtkCheckButton","label","speedo-stat",None,None,None,None,None,None,None,None,None),
-	(1,8,"GtkCheckButton","active","True",None,None,None,None,None,None,None,None,None),
 	(1,8,"GtkCheckButton","label","setpoint",None,None,None,None,None,None,None,None,None),
 	(1,9,"GtkCheckButton","label","pid-y",None,None,None,None,None,None,None,None,None),
 	(1,10,"GtkCheckButton","label","mon-debounce",None,None,None,None,None,None,None,None,None),
-	(1,11,"GtkCheckButton","active","True",None,None,None,None,None,None,None,None,None),
 	(1,11,"GtkCheckButton","label","temp motor",None,None,None,None,None,None,None,None,None),
-	(1,12,"GtkCheckButton","label","temp uc",None,None,None,None,None,None,None,None,None)
+	(1,12,"GtkCheckButton","label","temp uc",None,None,None,None,None,None,None,None,None),
+	(1,13,"GtkOrientable","orientation","vertical",None,None,None,None,None,None,None,None,None),
+	(1,14,"GtkCheckButton","label","run",None,None,None,None,None,None,None,None,None)
   </object_property>
 </cambalache-project>

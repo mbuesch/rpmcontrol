@@ -57,6 +57,7 @@ struct DiagramData {
     temp_mot: VecDeque<(f64, f64)>,
     temp_uc: VecDeque<(f64, f64)>,
     visibility: DiagramVisibility,
+    run: bool,
 }
 
 macro_rules! check_ts {
@@ -81,6 +82,7 @@ impl DiagramData {
             temp_mot: VecDeque::new(),
             temp_uc: VecDeque::new(),
             visibility: DiagramVisibility::new(),
+            run: true,
         }
     }
 
@@ -311,12 +313,13 @@ fn periodic_work(
     diagram_area: Rc<RefCell<DiagramArea>>,
     diagram_data: Rc<RefCell<DiagramData>>,
 ) {
-    {
-        let mut diagram_data = diagram_data.borrow_mut();
-        for dat in ser_rx.try_iter() {
+    let mut diagram_data = diagram_data.borrow_mut();
+    for dat in ser_rx.try_iter() {
+        if diagram_data.run {
             diagram_data.add(dat);
         }
     }
+    drop(diagram_data);
     diagram_area.borrow().redraw();
 }
 
@@ -346,7 +349,7 @@ impl MainWindow {
             move |backend| draw(backend, Rc::clone(&diagram_data))
         });
 
-        macro_rules! connect_cb {
+        macro_rules! connect_signal_cb {
             ($builder:expr, $name:expr, $field:ident) => {
                 let cb: gtk::CheckButton = $builder.object($name).expect("CheckButton not found");
                 let diagram_data = Rc::clone(&diagram_data);
@@ -359,13 +362,27 @@ impl MainWindow {
             };
         }
 
-        connect_cb!(builder, "cb_speedo", speedo);
-        connect_cb!(builder, "cb_speedo_stat", speedo_status);
-        connect_cb!(builder, "cb_setpoint", setpoint);
-        connect_cb!(builder, "cb_pid_y", pid_y);
-        connect_cb!(builder, "cb_mon_debounce", mon_debounce);
-        connect_cb!(builder, "cb_temp_mot", temp_mot);
-        connect_cb!(builder, "cb_temp_uc", temp_uc);
+        macro_rules! connect_run_cb {
+            ($builder:expr, $name:expr) => {
+                let cb: gtk::CheckButton = $builder.object($name).expect("CheckButton not found");
+                let diagram_data = Rc::clone(&diagram_data);
+                let diagram_area = Rc::clone(&diagram_area);
+                cb.set_active(true);
+                cb.connect_toggled(move |cb| {
+                    diagram_data.borrow_mut().run = cb.is_active();
+                    diagram_area.borrow().redraw();
+                });
+            };
+        }
+
+        connect_signal_cb!(builder, "cb_speedo", speedo);
+        connect_signal_cb!(builder, "cb_speedo_stat", speedo_status);
+        connect_signal_cb!(builder, "cb_setpoint", setpoint);
+        connect_signal_cb!(builder, "cb_pid_y", pid_y);
+        connect_signal_cb!(builder, "cb_mon_debounce", mon_debounce);
+        connect_signal_cb!(builder, "cb_temp_mot", temp_mot);
+        connect_signal_cb!(builder, "cb_temp_uc", temp_uc);
+        connect_run_cb!(builder, "cb_run");
 
         glib::source::timeout_add_local(Duration::from_millis(100), {
             let diagram_area = Rc::clone(&diagram_area);
