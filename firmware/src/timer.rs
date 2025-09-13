@@ -70,7 +70,6 @@ fn timer_sync_wait() {
 
 macro_rules! define_timer_interrupt {
     ($arm_fn:ident, $irq_fn:ident, $handler_fn:path, $ocr:ident, $ocie:ident, $ocf:ident) => {
-        #[allow(dead_code)]
         pub fn $arm_fn(trigger_time: Timestamp) {
             interrupt::free(|_| {
                 // Ensure it doesn't trigger right away by pushing OCR into the future.

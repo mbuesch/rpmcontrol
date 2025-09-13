@@ -37,9 +37,7 @@ static VALUES: Mutex<[Cell<u16>; NRVALUES]> = Mutex::new([
 ]);
 static INDEX: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
-pub fn rx_complete_callback(_c: &IrqCtx, _data: u8) {
-    //TODO
-}
+pub fn rx_complete_callback(_c: &IrqCtx, _data: u8) {}
 
 pub fn tx_complete_callback(c: &IrqCtx) {
     let cs = c.cs();

@@ -13,7 +13,6 @@ use crate::{
     shutoff::{Shutoff, set_secondary_shutoff},
     speedo::Speedo,
     temp::{Temp, TempAdc},
-    timer::{RelTimestamp, timer_get},
     triac::Triac,
 };
 use curveipo::Curve;
@@ -99,14 +98,6 @@ fn f_to_trig_offs(f: Fixpt) -> Fixpt {
 pub struct SysPeriph {
     pub AC: mcu::AC,
     pub ADC: mcu::ADC,
-}
-
-#[allow(dead_code)]
-pub fn debug(ticks: i8) {
-    PORTB.set(6, true);
-    let end = timer_get() + RelTimestamp::from_ticks(ticks);
-    while timer_get() < end {}
-    PORTB.set(6, false);
 }
 
 #[allow(dead_code)]
