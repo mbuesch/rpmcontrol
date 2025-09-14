@@ -162,7 +162,7 @@ impl System {
         let mut triac_shutoff = Shutoff::MachineRunning;
 
         // Evaluate the speedo signal.
-        self.speedo.update(m, sp);
+        self.speedo.update(m);
 
         // Run the power-on check state machine.
         if self.state.get(m) == SysState::PoCheck {

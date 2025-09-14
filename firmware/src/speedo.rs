@@ -4,7 +4,6 @@ use crate::{
     filter::Filter,
     fixpt::{Fixpt, fixpt},
     mutex::{MainCtx, MutexCell},
-    system::SysPeriph,
     timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
 
@@ -102,7 +101,7 @@ impl Speedo {
         self.speed_filtered.set(m, MotorSpeed::from_16hz(speed));
     }
 
-    pub fn update(&self, m: &MainCtx<'_>, _sp: &SysPeriph) {
+    pub fn update(&self, m: &MainCtx<'_>) {
         let now = timer_get_large();
         let prev_stamp = self.prev_stamp.get(m);
         if now < prev_stamp {
