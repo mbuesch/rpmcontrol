@@ -19,7 +19,7 @@ const FILTER_DIV: Fixpt = fixpt!(3 / 1);
 pub struct MotorSpeed(Fixpt);
 
 impl MotorSpeed {
-    const FACT_16HZ: u16 = 16;
+    const FACT_16HZ: i16 = 16;
 
     pub const fn zero() -> Self {
         Self(Fixpt::from_int(0))
@@ -35,12 +35,13 @@ impl MotorSpeed {
 
     pub fn from_period_dur(dur: RelLargeTimestamp) -> Self {
         let dur: i16 = dur.into();
+        let dur = dur.min(i16::MAX / (Self::FACT_16HZ * 2)); // avoid mul overflow.
 
         // fact 2 to avoid rounding error.
         let num = (1_000_000 / (TIMER_TICK_US as u32 * (SPEEDO_FACT / 2))) as u16;
-        let denom = dur as u16 * Self::FACT_16HZ * 2;
+        let denom = dur * Self::FACT_16HZ * 2;
 
-        Self::from_16hz(Fixpt::from_fraction(num as i16, denom as i16))
+        Self::from_16hz(Fixpt::from_fraction(num as i16, denom))
     }
 }
 
