@@ -1,5 +1,5 @@
 use crate::{
-    analog::AcCapture,
+    analog::ac_capture_get,
     debug::Debug,
     filter::Filter,
     fixpt::{Fixpt, fixpt},
@@ -101,23 +101,23 @@ impl Speedo {
         self.speed_filtered.set(m, MotorSpeed::from_16hz(speed));
     }
 
-    pub fn update(&self, m: &MainCtx<'_>, _sp: &SysPeriph, ac: AcCapture) {
+    pub fn update(&self, m: &MainCtx<'_>, _sp: &SysPeriph) {
         let now = timer_get_large();
         let prev_stamp = self.prev_stamp.get(m);
         if now < prev_stamp {
             // prev_stamp wrapped. Drop it.
             self.ok_count.set(m, 0);
         }
-        if ac.is_new() {
-            let ac_stamp = ac.stamp();
-            if ac_stamp >= prev_stamp {
-                let dur = ac_stamp - prev_stamp;
+
+        while let Some(ac) = ac_capture_get() {
+            if ac >= prev_stamp {
+                let dur = ac - prev_stamp;
                 self.new_duration(m, dur);
             } else {
                 // prev_stamp wrapped.
                 self.ok_count.set(m, 0);
             }
-            self.prev_stamp.set(m, ac_stamp);
+            self.prev_stamp.set(m, ac);
         }
 
         Debug::SpeedoStatus.log_u16(self.ok_count.get(m) as u16);

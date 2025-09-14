@@ -1,10 +1,12 @@
 use crate::{
     hw::interrupt,
-    mutex::{IrqCtx, MainCtx, MutexCell},
+    mutex::{IrqCtx, MainCtx, Mutex, MutexCell},
     ports::setup_didr,
+    ring::Ring,
     system::SysPeriph,
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large_cs},
 };
+use core::cell::Cell;
 
 #[derive(Clone, Copy)]
 #[repr(u8)]
@@ -196,69 +198,32 @@ impl Ac {
     }
 }
 
-#[derive(Clone)]
-pub struct AcCapture {
-    stamp: LargeTimestamp,
-    new: bool,
-}
-
-impl AcCapture {
-    const fn new() -> Self {
-        Self {
-            stamp: LargeTimestamp(0),
-            new: false,
-        }
-    }
-
-    pub fn is_new(&self) -> bool {
-        self.new
-    }
-
-    pub fn stamp(&self) -> LargeTimestamp {
-        self.stamp
-    }
-
-    pub fn clone_and_reset(&mut self) -> Self {
-        let ret = self.clone();
-        self.new = false;
-        ret
-    }
-}
-
-pub static mut AC_CAPTURE: AcCapture = AcCapture::new();
+static AC_CAPTURE_RING: Ring<LargeTimestamp, 4> = Ring::new([
+    Mutex::new(Cell::new(LargeTimestamp::new())),
+    Mutex::new(Cell::new(LargeTimestamp::new())),
+    Mutex::new(Cell::new(LargeTimestamp::new())),
+    Mutex::new(Cell::new(LargeTimestamp::new())),
+]);
+static AC_CAPTURE_PREV: Mutex<Cell<LargeTimestamp>> = Mutex::new(Cell::new(LargeTimestamp::new()));
 
 /// AC events closer than this to the previous valid event are ignored.
 const AC_CAPTURE_MINDIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(100);
 
 /// Analog Comparator interrupt.
 pub fn irq_handler_ana_comp(c: &IrqCtx) {
-    // SAFETY: This interrupt shall not call into anything and not modify anything,
-    //         except for timer and the stored time stamp.
-    //         The rest of the system safety depends on this due to the system
-    //         wide creation of the `system_cs` CriticalSection.
-    //         See main.rs.
+    let cs = c.cs();
 
-    let now = timer_get_large_cs(c.cs());
+    let now = timer_get_large_cs(cs);
+    let prev_stamp = AC_CAPTURE_PREV.borrow(cs).get();
 
-    // SAFETY: `AC_CAPTURE` is only accessed from here and
-    //         from [ac_capture_get] with interrupts disabled.
-    unsafe {
-        if now >= AC_CAPTURE.stamp + AC_CAPTURE_MINDIST {
-            AC_CAPTURE.stamp = now;
-            AC_CAPTURE.new = true;
-        }
+    if now >= prev_stamp + AC_CAPTURE_MINDIST {
+        AC_CAPTURE_RING.insert(cs, now);
+        AC_CAPTURE_PREV.borrow(cs).set(now);
     }
 }
 
-#[allow(static_mut_refs)]
-pub fn ac_capture_get() -> AcCapture {
-    interrupt::free(|_cs| {
-        // SAFETY: Interrupts are disabled.
-        //         Therefore, it is safe to access the analog comparator
-        //         interrupt data.
-        //         See corresponding safety comment in `ANA_COMP` ISR.
-        unsafe { AC_CAPTURE.clone_and_reset() }
-    })
+pub fn ac_capture_get() -> Option<LargeTimestamp> {
+    interrupt::free(|cs| AC_CAPTURE_RING.get(cs))
 }
 
 // vim: ts=4 sw=4 expandtab

@@ -1,5 +1,5 @@
 use crate::{
-    analog::{Ac, Adc, AdcChannel, ac_capture_get},
+    analog::{Ac, Adc, AdcChannel},
     debug::Debug,
     filter::Filter,
     fixpt::{Fixpt, fixpt},
@@ -161,11 +161,8 @@ impl System {
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         let mut triac_shutoff = Shutoff::MachineRunning;
 
-        // Read the speedo Analog Comparator.
-        let ac = ac_capture_get();
-
         // Evaluate the speedo signal.
-        self.speedo.update(m, sp, ac);
+        self.speedo.update(m, sp);
 
         // Run the power-on check state machine.
         if self.state.get(m) == SysState::PoCheck {
