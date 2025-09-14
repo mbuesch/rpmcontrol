@@ -2,7 +2,7 @@ use crate::{
     fixpt::Fixpt,
     hw::interrupt,
     mains::{MAINS_HALFWAVE_DUR, Phase, PhaseUpdate},
-    mutex::{IrqCtx, MainCtx, MutexCell},
+    mutex::{IrqCtx, MainCtx, Mutex, MutexCell},
     ports::PORTB,
     shutoff::Shutoff,
     timer::{
@@ -10,7 +10,10 @@ use crate::{
         timer_interrupt_a_arm,
     },
 };
-use core::sync::atomic::{Ordering::SeqCst, fence};
+use core::{
+    cell::Cell,
+    sync::atomic::{Ordering::SeqCst, fence},
+};
 
 /// Triac trigger pulse length set-duration or clear-duration.
 const HALF_PULSE_LEN: RelTimestamp = RelTimestamp::from_micros(64);
@@ -25,28 +28,28 @@ fn set_trigger(trigger: bool) {
     PORTB.set(3, trigger);
 }
 
-static mut TRIAC_TIMER: TriacTimerContext = TriacTimerContext {
-    state: TriacTimerState::TrigSet,
-    count: 0,
-};
+static TRIAC_TIMER_STATE: Mutex<Cell<TriacTimerState>> =
+    Mutex::new(Cell::new(TriacTimerState::TrigSet));
+static TRIAC_TIMER_COUNT: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum TriacTimerState {
-    TrigSet,
+    TrigSet = 0,
     TrigClr,
 }
 
-struct TriacTimerContext {
-    state: TriacTimerState,
-    count: u8,
+fn triac_timer_do_arm(ts: Timestamp) {
+    fence(SeqCst);
+    timer_interrupt_a_arm(ts);
 }
 
-pub fn triac_timer_interrupt(_c: &IrqCtx<'_>, now: Timestamp) {
-    // SAFETY: TRIAC_TIMER is always accessed with interrupts disabled.
-    // The IrqCtx ensures this.
-    let (mut state, mut count) = unsafe { (TRIAC_TIMER.state, TRIAC_TIMER.count) };
-    let arm;
+pub fn triac_timer_interrupt(c: &IrqCtx<'_>, now: Timestamp) {
+    let cs = c.cs();
 
+    let mut state = TRIAC_TIMER_STATE.borrow(cs).get();
+    let mut count = TRIAC_TIMER_COUNT.borrow(cs).get();
+
+    let arm;
     match state {
         TriacTimerState::TrigSet => {
             set_trigger(true);
@@ -61,28 +64,19 @@ pub fn triac_timer_interrupt(_c: &IrqCtx<'_>, now: Timestamp) {
         }
     }
 
-    // SAFETY: TRIAC_TIMER is always accessed with interrupts disabled.
-    // The IrqCtx ensures this.
-    unsafe {
-        TRIAC_TIMER.state = state;
-        TRIAC_TIMER.count = count;
-    }
+    TRIAC_TIMER_STATE.borrow(cs).set(state);
+    TRIAC_TIMER_COUNT.borrow(cs).set(count);
 
     if arm {
-        fence(SeqCst);
-        timer_interrupt_a_arm(now + HALF_PULSE_LEN);
+        triac_timer_do_arm(now + HALF_PULSE_LEN);
     }
 }
 
 fn triac_timer_arm(begin_time: Timestamp, count: u8) {
-    interrupt::free(|_| {
-        // SAFETY: TRIAC_TIMER is always accessed with interrupts disabled.
-        unsafe {
-            TRIAC_TIMER.state = TriacTimerState::TrigSet;
-            TRIAC_TIMER.count = count;
-        }
-        fence(SeqCst);
-        timer_interrupt_a_arm(begin_time);
+    interrupt::free(|cs| {
+        TRIAC_TIMER_STATE.borrow(cs).set(TriacTimerState::TrigSet);
+        TRIAC_TIMER_COUNT.borrow(cs).set(count);
+        triac_timer_do_arm(begin_time);
     });
 }
 
