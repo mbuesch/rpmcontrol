@@ -16,6 +16,7 @@ mod mutex;
 mod pid;
 mod pocheck;
 mod ports;
+mod ring;
 mod shutoff;
 mod speedo;
 mod system;
