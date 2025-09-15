@@ -35,6 +35,7 @@ impl MotorSpeed {
     pub fn from_period_dur(dur: RelLargeTimestamp) -> Self {
         let dur: i16 = dur.into();
         let dur = dur.min(i16::MAX / (Self::FACT_16HZ * 2)); // avoid mul overflow.
+        let dur = dur.max(1); // avoid div by zero.
 
         // fact 2 to avoid rounding error.
         let num = (1_000_000 / (TIMER_TICK_US as u32 * (SPEEDO_FACT / 2))) as u16;
