@@ -20,6 +20,7 @@ pub enum SerDat {
     MonDebounce(Instant, u16),
     TempMot(Instant, f64),
     TempUc(Instant, f64),
+    MaxRt(Instant, f64),
     Sync,
 }
 
@@ -49,6 +50,10 @@ fn fixpt_to_celsius(val: u16) -> f64 {
     double_celsius_to_celsius(fixpt_to_f64(val))
 }
 
+fn raw_to_reltime(val: u16) -> f64 {
+    ((val as i16 as f64) * 16.0) / 1_000_000.0
+}
+
 impl SerDat {
     pub fn parse(buf: &SerBuf) -> ah::Result<SerDat> {
         let now = Instant::now();
@@ -61,6 +66,7 @@ impl SerDat {
             4 => Ok(SerDat::MonDebounce(now, val)),
             5 => Ok(SerDat::TempMot(now, fixpt_to_celsius(val))),
             6 => Ok(SerDat::TempUc(now, fixpt_to_celsius(val))),
+            7 => Ok(SerDat::MaxRt(now, raw_to_reltime(val))),
             0xFF => Ok(SerDat::Sync),
             cmd => Err(err!("SerBuf::parse: Unknown command 0x{cmd:02X}")),
         }

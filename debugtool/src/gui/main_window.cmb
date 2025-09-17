@@ -18,7 +18,8 @@
 	(1,11,"GtkCheckButton","cb_temp_mot",5,None,None,None,5,None,None),
 	(1,12,"GtkCheckButton","cb_temp_uc",5,None,None,None,6,None,None),
 	(1,13,"GtkBox",None,4,None,None,None,1,None,None),
-	(1,14,"GtkCheckButton","cb_run",13,None,None,None,0,None,None)
+	(1,14,"GtkCheckButton","cb_run",13,None,None,None,0,None,None),
+	(1,15,"GtkCheckButton","cb_maxrt",5,None,None,None,7,None,None)
   </object>
   <object_property>
 	(1,1,"GtkOrientable","orientation","vertical",None,None,None,None,None,None,None,None,None),
@@ -36,6 +37,7 @@
 	(1,11,"GtkCheckButton","label","temp motor",None,None,None,None,None,None,None,None,None),
 	(1,12,"GtkCheckButton","label","temp uc",None,None,None,None,None,None,None,None,None),
 	(1,13,"GtkOrientable","orientation","vertical",None,None,None,None,None,None,None,None,None),
-	(1,14,"GtkCheckButton","label","run",None,None,None,None,None,None,None,None,None)
+	(1,14,"GtkCheckButton","label","run",None,None,None,None,None,None,None,None,None),
+	(1,15,"GtkCheckButton","label","max-rt",None,None,None,None,None,None,None,None,None)
   </object_property>
 </cambalache-project>

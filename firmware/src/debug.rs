@@ -6,6 +6,7 @@ use crate::{
     fixpt::Fixpt,
     hw::interrupt,
     mutex::{IrqCtx, MainInitCtx, Mutex},
+    timer::RelLargeTimestamp,
     usi_uart::uart_tx_cs,
 };
 use core::cell::Cell;
@@ -20,13 +21,15 @@ pub enum Debug {
     MonDebounce,
     TempMot,
     TempUc,
+    MaxRt,
 }
-const NRVALUES: usize = 7;
+const NRVALUES: usize = 8;
 
 const INDEXSHIFT: usize = 2;
 const INDEXMASK: u8 = (1 << INDEXSHIFT) - 1;
 
 static VALUES: Mutex<[Cell<u16>; NRVALUES]> = Mutex::new([
+    Cell::new(0),
     Cell::new(0),
     Cell::new(0),
     Cell::new(0),
@@ -87,12 +90,20 @@ impl Debug {
         });
     }
 
+    pub fn log_i16(&self, value: i16) {
+        self.log_u16(value as u16);
+    }
+
     pub fn log_u8(&self, value: u8) {
-        self.log_u16(value.into())
+        self.log_u16(value.into());
     }
 
     pub fn log_fixpt(&self, value: Fixpt) {
         self.log_u16(value.to_q() as _);
+    }
+
+    pub fn log_rel_large_timestamp(&self, value: RelLargeTimestamp) {
+        self.log_i16(value.into());
     }
 }
 

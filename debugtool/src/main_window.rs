@@ -21,6 +21,8 @@ const N_MAX: f64 = 25_000.0;
 const SPEEDO_STATUS_FACT: f64 = 100.0;
 const MON_DEBOUNCE_FACT: f64 = N_MAX / 150.0;
 const TEMP_FACT: f64 = N_MAX / 100.0;
+const MAXRT_FACT: f64 = N_MAX / 0.010;
+
 const STROKE_WIDTH: u32 = 3;
 
 struct DiagramVisibility {
@@ -31,6 +33,7 @@ struct DiagramVisibility {
     mon_debounce: bool,
     temp_mot: bool,
     temp_uc: bool,
+    maxrt: bool,
 }
 
 impl DiagramVisibility {
@@ -43,6 +46,7 @@ impl DiagramVisibility {
             mon_debounce: false,
             temp_mot: true,
             temp_uc: false,
+            maxrt: false,
         }
     }
 }
@@ -56,6 +60,7 @@ struct DiagramData {
     mon_debounce: VecDeque<(f64, f64)>,
     temp_mot: VecDeque<(f64, f64)>,
     temp_uc: VecDeque<(f64, f64)>,
+    maxrt: VecDeque<(f64, f64)>,
     visibility: DiagramVisibility,
     run: bool,
 }
@@ -81,6 +86,7 @@ impl DiagramData {
             mon_debounce: VecDeque::new(),
             temp_mot: VecDeque::new(),
             temp_uc: VecDeque::new(),
+            maxrt: VecDeque::new(),
             visibility: DiagramVisibility::new(),
             run: true,
         }
@@ -95,6 +101,7 @@ impl DiagramData {
         oldest = check_ts!(oldest, self.mon_debounce.front(), min);
         oldest = check_ts!(oldest, self.temp_mot.front(), min);
         oldest = check_ts!(oldest, self.temp_uc.front(), min);
+        oldest = check_ts!(oldest, self.maxrt.front(), min);
         if oldest < f64::MAX { oldest } else { 0.0 }
     }
 
@@ -107,6 +114,7 @@ impl DiagramData {
         newest = check_ts!(newest, self.mon_debounce.back(), max);
         newest = check_ts!(newest, self.temp_mot.back(), max);
         newest = check_ts!(newest, self.temp_uc.back(), max);
+        newest = check_ts!(newest, self.maxrt.back(), max);
         newest
     }
 
@@ -152,6 +160,10 @@ impl DiagramData {
             SerDat::TempUc(t, val) => {
                 self.temp_uc.push_back((self.timestamp(t), val * TEMP_FACT));
             }
+            SerDat::MaxRt(t, val) => {
+                println!("{val}");
+                self.maxrt.push_back((self.timestamp(t), val * MAXRT_FACT));
+            }
             SerDat::Sync => (),
         }
         Self::prune_items(&mut self.speedo, age_thres);
@@ -161,6 +173,7 @@ impl DiagramData {
         Self::prune_items(&mut self.mon_debounce, age_thres);
         Self::prune_items(&mut self.temp_mot, age_thres);
         Self::prune_items(&mut self.temp_uc, age_thres);
+        Self::prune_items(&mut self.maxrt, age_thres);
     }
 }
 
@@ -300,6 +313,22 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
             });
     }
 
+    if diagram_data.visibility.maxrt {
+        chart
+            .draw_series(LineSeries::new(
+                diagram_data.maxrt.iter().copied(),
+                full_palette::BLACK.stroke_width(STROKE_WIDTH),
+            ))
+            .unwrap()
+            .label("max-rt")
+            .legend(|(x, y)| {
+                PathElement::new(
+                    vec![(x, y), (x + 20, y)],
+                    full_palette::BLACK.stroke_width(STROKE_WIDTH),
+                )
+            });
+    }
+
     chart
         .configure_series_labels()
         .background_style(WHITE)
@@ -382,6 +411,7 @@ impl MainWindow {
         connect_signal_cb!(builder, "cb_mon_debounce", mon_debounce);
         connect_signal_cb!(builder, "cb_temp_mot", temp_mot);
         connect_signal_cb!(builder, "cb_temp_uc", temp_uc);
+        connect_signal_cb!(builder, "cb_maxrt", maxrt);
         connect_run_cb!(builder, "cb_run");
 
         glib::source::timeout_add_local(Duration::from_millis(100), {

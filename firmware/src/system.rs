@@ -13,6 +13,7 @@ use crate::{
     shutoff::{Shutoff, set_secondary_shutoff},
     speedo::Speedo,
     temp::{Temp, TempAdc},
+    timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
     triac::Triac,
 };
 use curveipo::Curve;
@@ -129,6 +130,8 @@ pub struct System {
     rpm_pid: Pid,
     mains_90deg_done: MutexCell<bool>,
     triac: Triac,
+    prev_time: MutexCell<LargeTimestamp>,
+    max_rt: MutexCell<RelLargeTimestamp>,
 }
 
 impl System {
@@ -147,6 +150,8 @@ impl System {
             rpm_pid: Pid::new(),
             mains_90deg_done: MutexCell::new(false),
             triac: Triac::new(),
+            prev_time: MutexCell::new(LargeTimestamp::new()),
+            max_rt: MutexCell::new(RelLargeTimestamp::new()),
         }
     }
 
@@ -158,8 +163,19 @@ impl System {
         self.triac.set_phi_offs_shutoff(m);
     }
 
+    fn meas_runtime(&self, m: &MainCtx<'_>) {
+        let now = timer_get_large();
+        let runtime = now - self.prev_time.get(m);
+        self.prev_time.set(m, now);
+        let max_rt = self.max_rt.get(m).max(runtime);
+        self.max_rt.set(m, max_rt);
+        Debug::MaxRt.log_rel_large_timestamp(max_rt);
+    }
+
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         let mut triac_shutoff = Shutoff::MachineRunning;
+
+        self.meas_runtime(m);
 
         // Evaluate the speedo signal.
         self.speedo.update(m);

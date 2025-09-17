@@ -56,6 +56,11 @@
                     <property name="label">temp uc</property>
                   </object>
                 </child>
+                <child>
+                  <object class="GtkCheckButton" id="cb_maxrt">
+                    <property name="label">max-rt</property>
+                  </object>
+                </child>
               </object>
             </child>
             <child>
