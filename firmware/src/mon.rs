@@ -20,7 +20,7 @@ const SP_HIST_DIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(333333);
 const SP_HIST_COUNT: usize = 9;
 
 /// Don't run monitoring, if the setpoint gradient in history is bigger than this.
-const SP_GRADIENT_THRES: Fixpt = rpm(1000);
+const SP_GRADIENT_THRES: Fixpt = rpm!(1000);
 
 /// Step size for one error event.
 const ERROR_DEBOUNCE_ERRSTEP: u8 = 3;
@@ -30,10 +30,10 @@ const ERROR_DEBOUNCE_LIMIT: u8 = 120;
 const ERROR_DEBOUNCE_STICKY: bool = true;
 
 /// Setpoint vs. speedometer deviation threshold that is considered to be an unexpected mismatch.
-const SPEEDO_TOLERANCE: Fixpt = rpm(1000);
+const SPEEDO_TOLERANCE: Fixpt = rpm!(1000);
 /// Monitoring activation threshold for speedometer input.
 /// Monitoring is not active below this threshold.
-const MON_ACTIVE_THRES: Fixpt = rpm(7500);
+const MON_ACTIVE_THRES: Fixpt = rpm!(7500);
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum MonResult {

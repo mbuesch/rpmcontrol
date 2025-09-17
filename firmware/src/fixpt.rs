@@ -3,7 +3,7 @@ pub struct Fixpt(i16);
 
 macro_rules! fixpt {
     ($numerator:literal / $denominator:literal) => {
-        Fixpt::from_fraction($numerator, $denominator)
+        const { Fixpt::from_fraction($numerator, $denominator) }
     };
     ($numerator:literal / $denominator:ident) => {
         Fixpt::from_fraction($numerator, $denominator)
@@ -15,7 +15,7 @@ macro_rules! fixpt {
         Fixpt::from_fraction($numerator, $denominator)
     };
     ($numerator:literal) => {
-        Fixpt::from_int($numerator)
+        const { Fixpt::from_int($numerator) }
     };
     ($numerator:ident) => {
         Fixpt::from_int($numerator)
@@ -47,12 +47,8 @@ impl Fixpt {
         Self(int << Self::SHIFT | frac as i16)
     }
 
-    #[inline(never)]
     pub const fn from_fraction(numerator: i16, denominator: i16) -> Self {
-        let mut q: i32 = 1 << Self::SHIFT;
-        q *= numerator as i32;
-        q /= denominator as i32;
-        Self::from_q_sat(q)
+        Self(numerator).div(Self(denominator))
     }
 
     #[inline(never)]
@@ -92,10 +88,18 @@ impl Fixpt {
 
     #[inline(never)]
     pub const fn div(self, other: Self) -> Self {
-        let mut tmp = self.0 as i32;
-        tmp <<= Self::SHIFT;
-        tmp /= other.0 as i32;
-        Self::from_q_sat(tmp)
+        if other.0 == 0 {
+            if self.0 >= 0 {
+                Self(i16::MAX)
+            } else {
+                Self(i16::MIN)
+            }
+        } else {
+            let mut tmp = self.0 as i32;
+            tmp <<= Self::SHIFT;
+            tmp /= other.0 as i32;
+            Self::from_q_sat(tmp)
+        }
     }
 
     #[inline(never)]
@@ -272,10 +276,19 @@ impl BigFixpt {
 
     #[inline(never)]
     pub const fn div(self, other: Self) -> Self {
-        let mut tmp = self.to_q();
-        tmp <<= Self::SHIFT;
-        tmp /= other.to_q();
-        Self::from_q_sat(tmp)
+        let div = other.to_q();
+        if div == 0 {
+            if self.0[2] & 0x80 == 0 {
+                Self([0xFF, 0xFF, 0x7F])
+            } else {
+                Self([0x00, 0x00, 0x80])
+            }
+        } else {
+            let mut tmp = self.to_q();
+            tmp <<= Self::SHIFT;
+            tmp /= div;
+            Self::from_q_sat(tmp)
+        }
     }
 }
 

@@ -9,7 +9,7 @@ use crate::{
 };
 
 const TRANSITION_DIST: RelLargeTimestamp = RelLargeTimestamp::from_millis(400);
-const RPM_ZERO_LIMIT: Fixpt = rpm(5);
+const RPM_ZERO_LIMIT: Fixpt = rpm!(5);
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum PoState {

@@ -41,7 +41,8 @@ impl MotorSpeed {
         let num = (1_000_000 / (TIMER_TICK_US as u32 * (SPEEDO_FACT / 2))) as u16;
         let denom = dur * Self::FACT_16HZ * 2;
 
-        Self::from_16hz(Fixpt::from_fraction(num as i16, denom))
+        let num = num as i16;
+        Self::from_16hz(fixpt!(num / denom))
     }
 }
 

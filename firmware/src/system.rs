@@ -31,57 +31,66 @@ const RPMPI_PARAMS_SYNCING: PidParams = PidParams {
     kd: fixpt!(0),
 };
 
-const RPMPI_ILIM_NEG: Curve<Fixpt, (Fixpt, Fixpt), 3> = Curve::new([
+const RPMPI_ILIM_NEG: Curve<Fixpt, (Fixpt, Fixpt), 4> = Curve::new([
     // (speedo, I-limit)
-    (rpm(0), fixpt!(0)),
-    (rpm(1000), fixpt!(0)),
-    (rpm(MAX_RPM), fixpt!(-2)),
+    (rpm!(0), fixpt!(0)),
+    (rpm!(1000), fixpt!(0)),
+    (rpm!(1001), fixpt!(-2)),
+    (rpm!(MAX_RPM), fixpt!(-6)),
 ]);
 
 const RPMPI_ILIM_POS: Curve<Fixpt, (Fixpt, Fixpt), 4> = Curve::new([
     // (speedo, I-limit)
-    (rpm(0), fixpt!(0)),
-    (rpm(1000), fixpt!(0)),
-    (rpm(1001), fixpt!(12)),
-    (rpm(MAX_RPM), fixpt!(24)),
+    (rpm!(0), fixpt!(0)),
+    (rpm!(1000), fixpt!(0)),
+    (rpm!(1001), fixpt!(12)),
+    (rpm!(MAX_RPM), fixpt!(24)),
 ]);
 
 const SYNC_SPEEDO_SUBSTITUTE: Curve<Fixpt, (Fixpt, Fixpt), 2> = Curve::new([
     // (setpoint, speedo-substitute)
-    (rpm(0), rpm(0)),
-    (rpm(1000), rpm(800)),
+    (rpm!(0), rpm!(0)),
+    (rpm!(1000), rpm!(800)),
 ]);
 
 /// Nominal maximum motor RPM.
 const MAX_RPM: i16 = 24000;
 
 /// Nominal maximum motor speed in 16-Hz units.
-const MAX_16HZ: i16 = rpm(MAX_RPM).to_int(); // 24000/min, 400 Hz, 25 16-Hz
+const MAX_16HZ: i16 = rpm!(MAX_RPM).to_int(); // 24000/min, 400 Hz, 25 16-Hz
 
 /// Maximum motor RPM that will trigger a hard triac inhibit.
-const MOT_SOFT_LIMIT: Fixpt = rpm(MAX_RPM + 500);
+const MOT_SOFT_LIMIT: Fixpt = rpm!(MAX_RPM + 500);
 
 /// Maximum motor RPM that will trigger a monitoring fault.
-pub const MOT_HARD_LIMIT: Fixpt = rpm(MAX_RPM + 1500);
+pub const MOT_HARD_LIMIT: Fixpt = rpm!(MAX_RPM + 1500);
 
 /// Motor speed below this threshold will trigger speedometer re-syncing.
-const RPM_SYNC_THRES: Fixpt = rpm(1000);
+const RPM_SYNC_THRES: Fixpt = rpm!(1000);
 
 /// Speedometer filter divider.
-const SPEED_FILTER_DIV: Fixpt = fixpt!(4 / 1);
+const SPEED_FILTER_DIV: Fixpt = fixpt!(2 / 1);
 
 /// Setpoint filter divider.
 const SETPOINT_FILTER_DIV: Fixpt = fixpt!(5 / 1);
 
 /// Convert RPM to fixpt-16Hz
-pub const fn rpm(rpm: i16) -> Fixpt {
-    // rpm / 60 / 16
-    Fixpt::from_fraction(rpm, 240).div(fixpt!(4))
+macro_rules! rpm {
+    ($rpm: expr) => {
+        // rpm / 60 / 16
+        const {
+            use $crate::fixpt::fixpt;
+            let rpm = $rpm;
+            fixpt!(rpm / 240).div(fixpt!(4))
+        }
+    };
 }
+pub(crate) use rpm;
 
 /// Convert 0..0x3FF to 0..400 Hz to 0..25 16Hz
 fn setpoint_to_f(adc: u16) -> Fixpt {
-    Fixpt::from_fraction(adc as i16, 8) / fixpt!(128 / 25)
+    let adc = adc as i16;
+    fixpt!(adc / 8) / fixpt!(128 / 25)
 }
 
 /// Clamp negative frequency to 0.
@@ -226,7 +235,7 @@ impl System {
         let setpoint = if let Some(setpoint) = self.adc.get_result(m, AdcChannel::Setpoint) {
             setpoint_to_f(setpoint)
         } else {
-            rpm(0)
+            rpm!(0)
         };
 
         // Update the mains synchronization.

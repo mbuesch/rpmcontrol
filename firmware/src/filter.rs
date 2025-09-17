@@ -15,7 +15,7 @@ impl Filter {
     }
 
     pub fn reset(&self, m: &MainCtx<'_>) {
-        self.buf.set(m, fixpt!(0).upgrade());
+        self.buf.set(m, const { fixpt!(0).upgrade() });
     }
 
     #[inline(never)]
