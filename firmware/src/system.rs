@@ -2,7 +2,7 @@ use crate::{
     analog::{Ac, Adc, AdcChannel},
     debug::Debug,
     filter::Filter,
-    fixpt::{Fixpt, fixpt},
+    fixpt::{Fixpt, big_fixpt, fixpt},
     hw::mcu,
     mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
     mon::{Mon, MonResult},
@@ -79,9 +79,9 @@ macro_rules! rpm {
     ($rpm: expr) => {
         // rpm / 60 / 16
         const {
-            use $crate::fixpt::fixpt;
+            use $crate::fixpt::big_fixpt;
             let rpm = $rpm;
-            fixpt!(rpm / 240).div(fixpt!(4))
+            big_fixpt!(rpm / 60).div(big_fixpt!(16)).downgrade()
         }
     };
 }
@@ -89,8 +89,8 @@ pub(crate) use rpm;
 
 /// Convert 0..0x3FF to 0..400 Hz to 0..25 16Hz
 fn setpoint_to_f(adc: u16) -> Fixpt {
-    let adc = adc as i16;
-    fixpt!(adc / 8) / fixpt!(128 / 25)
+    let adc = adc as i16 * 25;
+    big_fixpt!(adc / 1024).downgrade()
 }
 
 /// Clamp negative frequency to 0.
