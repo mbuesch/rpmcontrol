@@ -3,22 +3,22 @@ pub struct Fixpt(i16);
 
 macro_rules! fixpt {
     ($numerator:literal / $denominator:literal) => {
-        const { Fixpt::from_fraction($numerator, $denominator) }
+        const { $crate::fixpt::Fixpt::from_fraction($numerator, $denominator) }
     };
     ($numerator:literal / $denominator:ident) => {
-        Fixpt::from_fraction($numerator, $denominator)
+        $crate::fixpt::Fixpt::from_fraction($numerator, $denominator)
     };
     ($numerator:ident / $denominator:literal) => {
-        Fixpt::from_fraction($numerator, $denominator)
+        $crate::fixpt::Fixpt::from_fraction($numerator, $denominator)
     };
     ($numerator:ident / $denominator:ident) => {
-        Fixpt::from_fraction($numerator, $denominator)
+        $crate::fixpt::Fixpt::from_fraction($numerator, $denominator)
     };
     ($numerator:literal) => {
-        const { Fixpt::from_int($numerator) }
+        const { $crate::fixpt::Fixpt::from_int($numerator) }
     };
     ($numerator:ident) => {
-        Fixpt::from_int($numerator)
+        $crate::fixpt::Fixpt::from_int($numerator)
     };
 }
 pub(crate) use fixpt;
@@ -35,16 +35,8 @@ impl Fixpt {
         }
     }
 
-    pub const fn zero() -> Self {
-        Self(0)
-    }
-
     pub const fn from_int(int: i16) -> Self {
         Self(int << Self::SHIFT)
-    }
-
-    pub const fn from_parts(int: i16, frac: u16) -> Self {
-        Self(int << Self::SHIFT | frac as i16)
     }
 
     pub const fn from_fraction(numerator: i16, denominator: i16) -> Self {
@@ -226,6 +218,33 @@ impl curveipo::CurveIpo for Fixpt {
     }
 }
 
+macro_rules! big_fixpt {
+    ($numerator:literal / $denominator:literal) => {
+        const { $crate::fixpt::BigFixpt::from_fraction($numerator, $denominator) }
+    };
+    ($numerator:literal / $denominator:ident) => {
+        $crate::fixpt::BigFixpt::from_fraction($numerator, $denominator)
+    };
+    ($numerator:ident / $denominator:literal) => {
+        $crate::fixpt::BigFixpt::from_fraction($numerator, $denominator)
+    };
+    ($numerator:ident / $denominator:ident) => {
+        $crate::fixpt::BigFixpt::from_fraction($numerator, $denominator)
+    };
+    ($numerator:literal) => {
+        const { $crate::fixpt::BigFixpt::from_int($numerator) }
+    };
+    ($numerator:ident) => {
+        $crate::fixpt::BigFixpt::from_int($numerator)
+    };
+}
+pub(crate) use big_fixpt;
+
+const fn i16_to_i24fixpt(v: i16) -> [u8; 3] {
+    let v = v.to_le_bytes();
+    [v[0], v[0], v[1]]
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BigFixpt([u8; 3]);
 
@@ -237,24 +256,32 @@ impl BigFixpt {
         Fixpt::from_q_sat(self.to_q())
     }
 
+    pub const fn from_int(int: i16) -> Self {
+        Self(i16_to_i24fixpt(int))
+    }
+
+    pub const fn from_fraction(numerator: i16, denominator: i16) -> Self {
+        Self(i16_to_i24fixpt(numerator)).div(Self(i16_to_i24fixpt(denominator)))
+    }
+
+    #[inline(never)]
+    const fn from_q_sat(q: i32) -> Self {
+        if q < -0x80_0000 {
+            Self(i16_to_i24fixpt(i16::MIN))
+        } else if q > 0x7F_FFFF {
+            Self(i16_to_i24fixpt(i16::MAX))
+        } else {
+            let q = q.to_le_bytes();
+            Self([q[0], q[1], q[2]])
+        }
+    }
+
     #[inline(never)]
     const fn to_q(self) -> i32 {
         if self.0[2] & 0x80 == 0 {
             i32::from_le_bytes([self.0[0], self.0[1], self.0[2], 0x00])
         } else {
             i32::from_le_bytes([self.0[0], self.0[1], self.0[2], 0xFF])
-        }
-    }
-
-    #[inline(never)]
-    const fn from_q_sat(q: i32) -> Self {
-        if q < -0x80_0000 {
-            Self([0x00, 0x00, 0x80])
-        } else if q > 0x7F_FFFF {
-            Self([0xFF, 0xFF, 0x7F])
-        } else {
-            let q = q.to_le_bytes();
-            Self([q[0], q[1], q[2]])
         }
     }
 
@@ -279,9 +306,9 @@ impl BigFixpt {
         let div = other.to_q();
         if div == 0 {
             if self.0[2] & 0x80 == 0 {
-                Self([0xFF, 0xFF, 0x7F])
+                Self(i16_to_i24fixpt(i16::MAX))
             } else {
-                Self([0x00, 0x00, 0x80])
+                Self(i16_to_i24fixpt(i16::MIN))
             }
         } else {
             let mut tmp = self.to_q();
