@@ -253,12 +253,12 @@ macro_rules! impl_reltimestamp {
                 $rel(ticks)
             }
 
-            #[inline]
+            #[inline(always)]
             pub const fn from_micros(us: i32) -> $rel {
                 $rel((us / TIMER_TICK_US as i32) as $reltype)
             }
 
-            #[inline]
+            #[inline(always)]
             pub const fn from_millis(ms: i32) -> $rel {
                 $rel(((ms * 1000) / TIMER_TICK_US as i32) as $reltype)
             }
