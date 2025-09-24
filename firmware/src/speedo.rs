@@ -6,6 +6,7 @@ use crate::{
     mutex::{MainCtx, MutexCell},
     timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
+use avr_int24::Int24;
 
 /// 4 speedometer edges per motor revolution
 const SPEEDO_FACT: u32 = 4;
@@ -42,7 +43,7 @@ impl MotorSpeed {
         let denom = dur * Self::FACT_16HZ * 2;
 
         let num = num as i16;
-        Self::from_16hz(fixpt!(num / denom))
+        Self::from_16hz(Fixpt::from_fraction(num, denom))
     }
 }
 
@@ -79,11 +80,11 @@ impl Speedo {
     }
 
     fn get_dur(&self, m: &MainCtx<'_>) -> RelLargeTimestamp {
-        let a = self.dur[0].get(m) as i32;
-        let b = self.dur[1].get(m) as i32;
-        let c = self.dur[2].get(m) as i32;
-        let d = self.dur[3].get(m) as i32;
-        let dur: i16 = ((a + b + c + d) / 4) as _;
+        let a = Int24::from_i16(self.dur[0].get(m));
+        let b = Int24::from_i16(self.dur[1].get(m));
+        let c = Int24::from_i16(self.dur[2].get(m));
+        let d = Int24::from_i16(self.dur[3].get(m));
+        let dur = ((a + b + c + d) >> 2).to_i16();
         dur.into()
     }
 

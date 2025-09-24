@@ -1,24 +1,27 @@
+use avr_int24::Int24;
+
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(transparent)]
 pub struct Fixpt(i16);
 
 macro_rules! fixpt {
     ($numerator:literal / $denominator:literal) => {
-        const { $crate::fixpt::Fixpt::from_fraction($numerator, $denominator) }
+        const { $crate::fixpt::Fixpt::const_from_fraction($numerator, $denominator) }
     };
     ($numerator:literal / $denominator:ident) => {
-        $crate::fixpt::Fixpt::from_fraction($numerator, $denominator)
+        const { $crate::fixpt::Fixpt::const_from_fraction($numerator, $denominator) }
     };
     ($numerator:ident / $denominator:literal) => {
-        $crate::fixpt::Fixpt::from_fraction($numerator, $denominator)
+        const { $crate::fixpt::Fixpt::const_from_fraction($numerator, $denominator) }
     };
     ($numerator:ident / $denominator:ident) => {
-        $crate::fixpt::Fixpt::from_fraction($numerator, $denominator)
+        const { $crate::fixpt::Fixpt::const_from_fraction($numerator, $denominator) }
     };
     ($numerator:literal) => {
         const { $crate::fixpt::Fixpt::from_int($numerator) }
     };
     ($numerator:ident) => {
-        $crate::fixpt::Fixpt::from_int($numerator)
+        const { $crate::fixpt::Fixpt::from_int($numerator) }
     };
 }
 pub(crate) use fixpt;
@@ -27,31 +30,19 @@ impl Fixpt {
     pub const SHIFT: usize = 8;
 
     pub const fn upgrade(&self) -> BigFixpt {
-        let v = self.0.to_le_bytes();
-        if v[1] & 0x80 == 0 {
-            BigFixpt([v[0], v[1], 0x00])
-        } else {
-            BigFixpt([v[0], v[1], 0xFF])
-        }
+        BigFixpt(Int24::from_i16(self.to_q()))
     }
 
     pub const fn from_int(int: i16) -> Self {
         Self(int << Self::SHIFT)
     }
 
-    pub const fn from_fraction(numerator: i16, denominator: i16) -> Self {
-        Self(numerator).div(Self(denominator))
+    pub const fn const_from_fraction(numerator: i16, denominator: i16) -> Self {
+        Self(numerator).const_div(Self(denominator))
     }
 
-    #[inline(never)]
-    const fn from_q_sat(v: i32) -> Self {
-        if v < i16::MIN as i32 {
-            Self(i16::MIN)
-        } else if v > i16::MAX as i32 {
-            Self(i16::MAX)
-        } else {
-            Self(v as i16)
-        }
+    pub fn from_fraction(numerator: i16, denominator: i16) -> Self {
+        Self(numerator) / Self(denominator)
     }
 
     pub const fn to_int(self) -> i16 {
@@ -73,25 +64,35 @@ impl Fixpt {
     }
 
     #[inline(never)]
-    pub const fn mul(self, other: Self) -> Self {
-        let prod = (self.0 as i32 * other.0 as i32) >> Self::SHIFT;
-        Self::from_q_sat(prod)
+    pub fn mul(self, other: Self) -> Self {
+        const {
+            assert!(Self::SHIFT == 8);
+        }
+        let a = Int24::from_i16(self.0);
+        let b = Int24::from_i16(other.0);
+        let c = (a * b).shr8();
+        Self(c.to_i16())
     }
 
     #[inline(never)]
-    pub const fn div(self, other: Self) -> Self {
-        if other.0 == 0 {
-            if self.0 >= 0 {
-                Self(i16::MAX)
-            } else {
-                Self(i16::MIN)
-            }
-        } else {
-            let mut tmp = self.0 as i32;
-            tmp <<= Self::SHIFT;
-            tmp /= other.0 as i32;
-            Self::from_q_sat(tmp)
+    pub fn div(self, other: Self) -> Self {
+        const {
+            assert!(Self::SHIFT == 8);
         }
+        let a = Int24::from_i16(self.0);
+        let b = Int24::from_i16(other.0);
+        let c = a.shl8() / b;
+        Self(c.to_i16())
+    }
+
+    pub const fn const_div(self, other: Self) -> Self {
+        const {
+            assert!(Self::SHIFT == 8);
+        }
+        let a = Int24::from_i16(self.0);
+        let b = Int24::from_i16(other.0);
+        let c = a.shl8().const_div(b);
+        Self(c.to_i16())
     }
 
     #[inline(never)]
@@ -220,102 +221,72 @@ impl curveipo::CurveIpo for Fixpt {
 
 macro_rules! big_fixpt {
     ($numerator:literal / $denominator:literal) => {
-        const { $crate::fixpt::BigFixpt::from_fraction($numerator, $denominator) }
+        const { $crate::fixpt::BigFixpt::const_from_fraction($numerator, $denominator) }
     };
     ($numerator:literal / $denominator:ident) => {
-        $crate::fixpt::BigFixpt::from_fraction($numerator, $denominator)
+        const { $crate::fixpt::BigFixpt::const_from_fraction($numerator, $denominator) }
     };
     ($numerator:ident / $denominator:literal) => {
-        $crate::fixpt::BigFixpt::from_fraction($numerator, $denominator)
+        const { $crate::fixpt::BigFixpt::const_from_fraction($numerator, $denominator) }
     };
     ($numerator:ident / $denominator:ident) => {
-        $crate::fixpt::BigFixpt::from_fraction($numerator, $denominator)
+        const { $crate::fixpt::BigFixpt::const_from_fraction($numerator, $denominator) }
     };
     ($numerator:literal) => {
         const { $crate::fixpt::BigFixpt::from_int($numerator) }
     };
     ($numerator:ident) => {
-        $crate::fixpt::BigFixpt::from_int($numerator)
+        const { $crate::fixpt::BigFixpt::from_int($numerator) }
     };
 }
 pub(crate) use big_fixpt;
 
-const fn i16_to_i24fixpt(v: i16) -> [u8; 3] {
-    let v = v.to_le_bytes();
-    [v[0], v[0], v[1]]
-}
-
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct BigFixpt([u8; 3]);
+#[repr(transparent)]
+pub struct BigFixpt(Int24);
 
 impl BigFixpt {
     pub const SHIFT: usize = Fixpt::SHIFT;
 
-    #[inline(never)]
     pub const fn downgrade(&self) -> Fixpt {
-        Fixpt::from_q_sat(self.to_q())
+        Fixpt(self.0.to_i16())
     }
 
     pub const fn from_int(int: i16) -> Self {
-        Self(i16_to_i24fixpt(int))
-    }
-
-    pub const fn from_fraction(numerator: i16, denominator: i16) -> Self {
-        Self(i16_to_i24fixpt(numerator)).div(Self(i16_to_i24fixpt(denominator)))
-    }
-
-    #[inline(never)]
-    const fn from_q_sat(q: i32) -> Self {
-        if q < -0x80_0000 {
-            Self(i16_to_i24fixpt(i16::MIN))
-        } else if q > 0x7F_FFFF {
-            Self(i16_to_i24fixpt(i16::MAX))
-        } else {
-            let q = q.to_le_bytes();
-            Self([q[0], q[1], q[2]])
+        const {
+            assert!(Self::SHIFT == 8);
         }
+        Self(Int24::from_i16(int).shl8())
+    }
+
+    pub const fn const_from_fraction(numerator: i16, denominator: i16) -> Self {
+        Self(Int24::from_i16(numerator)).const_div(Self(Int24::from_i16(denominator)))
+    }
+
+    pub fn from_fraction(numerator: i16, denominator: i16) -> Self {
+        Self(Int24::from_i16(numerator)) / Self(Int24::from_i16(denominator))
+    }
+
+    pub fn add(self, other: Self) -> Self {
+        Self(self.0 + other.0)
+    }
+
+    pub fn sub(self, other: Self) -> Self {
+        Self(self.0 - other.0)
     }
 
     #[inline(never)]
-    const fn to_q(self) -> i32 {
-        if self.0[2] & 0x80 == 0 {
-            i32::from_le_bytes([self.0[0], self.0[1], self.0[2], 0x00])
-        } else {
-            i32::from_le_bytes([self.0[0], self.0[1], self.0[2], 0xFF])
-        }
+    pub fn mul(self, other: Self) -> Self {
+        Self(Int24::from_i32((self.0.to_i32() * other.0.to_i32()) >> Self::SHIFT))
     }
 
     #[inline(never)]
-    pub const fn add(self, other: Self) -> Self {
-        Self::from_q_sat(self.to_q() + other.to_q())
+    pub fn div(self, other: Self) -> Self {
+        self.const_div(other)
     }
 
-    #[inline(never)]
-    pub const fn sub(self, other: Self) -> Self {
-        Self::from_q_sat(self.to_q() - other.to_q())
-    }
-
-    #[inline(never)]
-    pub const fn mul(self, other: Self) -> Self {
-        let prod = (self.to_q() * other.to_q()) >> Self::SHIFT;
-        Self::from_q_sat(prod)
-    }
-
-    #[inline(never)]
-    pub const fn div(self, other: Self) -> Self {
-        let div = other.to_q();
-        if div == 0 {
-            if self.0[2] & 0x80 == 0 {
-                Self(i16_to_i24fixpt(i16::MAX))
-            } else {
-                Self(i16_to_i24fixpt(i16::MIN))
-            }
-        } else {
-            let mut tmp = self.to_q();
-            tmp <<= Self::SHIFT;
-            tmp /= div;
-            Self::from_q_sat(tmp)
-        }
+    pub const fn const_div(self, other: Self) -> Self {
+        Self(Int24::from_i32((self.0.to_i32() << Self::SHIFT) / other.0.to_i32()))
     }
 }
 
