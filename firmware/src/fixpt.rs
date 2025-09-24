@@ -277,7 +277,9 @@ impl BigFixpt {
 
     #[inline(never)]
     pub fn mul(self, other: Self) -> Self {
-        Self(Int24::from_i32((self.0.to_i32() * other.0.to_i32()) >> Self::SHIFT))
+        Self(Int24::from_i32(
+            (self.0.to_i32() * other.0.to_i32()) >> Self::SHIFT,
+        ))
     }
 
     #[inline(never)]
@@ -286,7 +288,9 @@ impl BigFixpt {
     }
 
     pub const fn const_div(self, other: Self) -> Self {
-        Self(Int24::from_i32((self.0.to_i32() << Self::SHIFT) / other.0.to_i32()))
+        Self(Int24::from_i32(
+            (self.0.to_i32() << Self::SHIFT) / other.0.to_i32(),
+        ))
     }
 }
 
