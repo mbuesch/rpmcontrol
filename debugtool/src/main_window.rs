@@ -161,7 +161,6 @@ impl DiagramData {
                 self.temp_uc.push_back((self.timestamp(t), val * TEMP_FACT));
             }
             SerDat::MaxRt(t, val) => {
-                println!("{val}");
                 self.maxrt.push_back((self.timestamp(t), val * MAXRT_FACT));
             }
             SerDat::Sync => (),
