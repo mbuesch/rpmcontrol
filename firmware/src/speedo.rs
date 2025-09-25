@@ -1,8 +1,7 @@
 use crate::{
     analog::ac_capture_get,
     debug::Debug,
-    filter::Filter,
-    fixpt::{Fixpt, fixpt},
+    fixpt::Fixpt,
     mutex::{MainCtx, MutexCell},
     timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
@@ -13,17 +12,11 @@ const SPEEDO_FACT: u32 = 4;
 
 const OK_THRES: u8 = 4;
 
-const FILTER_DIV: Fixpt = fixpt!(3 / 1);
-
 #[derive(Copy, Clone)]
 pub struct MotorSpeed(Fixpt);
 
 impl MotorSpeed {
     const FACT_16HZ: i16 = 16;
-
-    pub const fn zero() -> Self {
-        Self(Fixpt::from_int(0))
-    }
 
     pub const fn as_16hz(&self) -> Fixpt {
         self.0
@@ -39,10 +32,9 @@ impl MotorSpeed {
         let dur = dur.max(1); // avoid div by zero.
 
         // fact 2 to avoid rounding error.
-        let num = (1_000_000 / (TIMER_TICK_US as u32 * (SPEEDO_FACT / 2))) as u16;
+        let num = (1_000_000 / (TIMER_TICK_US as u32 * (SPEEDO_FACT / 2))) as i16;
         let denom = dur * Self::FACT_16HZ * 2;
 
-        let num = num as i16;
         Self::from_16hz(Fixpt::from_fraction(num, denom))
     }
 }
@@ -51,8 +43,6 @@ pub struct Speedo {
     ok_count: MutexCell<u8>,
     prev_stamp: MutexCell<LargeTimestamp>,
     dur: [MutexCell<i16>; 4],
-    filter: Filter,
-    speed_filtered: MutexCell<MotorSpeed>,
 }
 
 impl Speedo {
@@ -66,14 +56,12 @@ impl Speedo {
                 MutexCell::new(0),
                 MutexCell::new(0),
             ],
-            filter: Filter::new(),
-            speed_filtered: MutexCell::new(MotorSpeed::zero()),
         }
     }
 
     pub fn get_speed(&self, m: &MainCtx<'_>) -> Option<MotorSpeed> {
         if self.ok_count.get(m) >= OK_THRES {
-            Some(self.speed_filtered.get(m))
+            Some(MotorSpeed::from_period_dur(self.get_dur(m)))
         } else {
             None
         }
@@ -95,13 +83,6 @@ impl Speedo {
         self.dur[2].set(m, self.dur[3].get(m));
         self.dur[3].set(m, dur);
         self.ok_count.set(m, self.ok_count.get(m).saturating_add(1));
-        self.update_filtered(m);
-    }
-
-    fn update_filtered(&self, m: &MainCtx<'_>) {
-        let speed = MotorSpeed::from_period_dur(self.get_dur(m));
-        let speed = self.filter.run(m, speed.as_16hz(), FILTER_DIV);
-        self.speed_filtered.set(m, MotorSpeed::from_16hz(speed));
     }
 
     pub fn update(&self, m: &MainCtx<'_>) {
