@@ -58,14 +58,26 @@ impl Int24 {
         Self::from_raw(add24(self.0, other.0))
     }
 
+    pub const fn const_add(self, other: Self) -> Self {
+        Self::from_i32(self.to_i32() + other.to_i32())
+    }
+
     #[inline(never)]
     pub fn sub(self, other: Self) -> Self {
         Self::from_raw(sub24(self.0, other.0))
     }
 
+    pub const fn const_sub(self, other: Self) -> Self {
+        Self::from_i32(self.to_i32() - other.to_i32())
+    }
+
     #[inline(never)]
     pub fn mul(self, other: Self) -> Self {
         Self::from_raw(mul24(self.0, other.0))
+    }
+
+    pub const fn const_mul(self, other: Self) -> Self {
+        Self::from_i32(self.to_i32() * other.to_i32())
     }
 
     #[inline(never)]
@@ -82,9 +94,21 @@ impl Int24 {
         Self(neg24(self.0))
     }
 
+    pub const fn const_neg(self) -> Self {
+        Self::from_i32(-self.to_i32())
+    }
+
     #[inline(never)]
     pub fn abs(self) -> Self {
         if is_neg24(self.0) { self.neg() } else { self }
+    }
+
+    pub const fn const_abs(self) -> Self {
+        if self.to_i32() < 0 {
+            self.const_neg()
+        } else {
+            self
+        }
     }
 
     pub const fn shl8(self) -> Self {
@@ -96,6 +120,10 @@ impl Int24 {
         Self(shl24(self.0, count))
     }
 
+    pub const fn const_shl(self, count: u8) -> Self {
+        Self::from_i32(self.to_i32() << count)
+    }
+
     pub const fn shr8(self) -> Self {
         Self(shr24_by8(self.0))
     }
@@ -105,11 +133,25 @@ impl Int24 {
         Self(shr24(self.0, count))
     }
 
+    pub const fn const_shr(self, count: u8) -> Self {
+        Self::from_i32(self.to_i32() >> count)
+    }
+
     #[inline(never)]
     pub fn cmp(self, other: Self) -> core::cmp::Ordering {
         if eq24(self.0, other.0) {
             core::cmp::Ordering::Equal
         } else if ge24(self.0, other.0) {
+            core::cmp::Ordering::Greater
+        } else {
+            core::cmp::Ordering::Less
+        }
+    }
+
+    pub const fn const_cmp(self, other: Self) -> core::cmp::Ordering {
+        if self.to_i32() == other.to_i32() {
+            core::cmp::Ordering::Equal
+        } else if self.to_i32() >= other.to_i32() {
             core::cmp::Ordering::Greater
         } else {
             core::cmp::Ordering::Less
@@ -311,16 +353,19 @@ mod test {
         let b = Int24::from_i32(1010);
         let c = Int24::from_i32(2010);
         assert_eq!(a + b, c);
+        assert_eq!(a.const_add(b), c);
 
         let a = Int24::from_i32(1000);
         let b = Int24::from_i32(-1010);
         let c = Int24::from_i32(-10);
         assert_eq!(a + b, c);
+        assert_eq!(a.const_add(b), c);
 
         let a = Int24::from_i32(-1000);
         let b = Int24::from_i32(1010);
         let c = Int24::from_i32(10);
         assert_eq!(a + b, c);
+        assert_eq!(a.const_add(b), c);
 
         //TODO sat
     }
@@ -331,16 +376,19 @@ mod test {
         let b = Int24::from_i32(1010);
         let c = Int24::from_i32(-10);
         assert_eq!(a - b, c);
+        assert_eq!(a.const_sub(b), c);
 
         let a = Int24::from_i32(1000);
         let b = Int24::from_i32(-1010);
         let c = Int24::from_i32(2010);
         assert_eq!(a - b, c);
+        assert_eq!(a.const_sub(b), c);
 
         let a = Int24::from_i32(-1000);
         let b = Int24::from_i32(1010);
         let c = Int24::from_i32(-2010);
         assert_eq!(a - b, c);
+        assert_eq!(a.const_sub(b), c);
 
         //TODO sat
     }
@@ -351,16 +399,19 @@ mod test {
         let b = Int24::from_i32(1010);
         let c = Int24::from_i32(1010000);
         assert_eq!(a * b, c);
+        assert_eq!(a.const_mul(b), c);
 
         let a = Int24::from_i32(1000);
         let b = Int24::from_i32(-1010);
         let c = Int24::from_i32(-1010000);
         assert_eq!(a * b, c);
+        assert_eq!(a.const_mul(b), c);
 
         let a = Int24::from_i32(-1000);
         let b = Int24::from_i32(1010);
         let c = Int24::from_i32(-1010000);
         assert_eq!(a * b, c);
+        assert_eq!(a.const_mul(b), c);
 
         //TODO sat
     }
@@ -371,16 +422,19 @@ mod test {
         let b = Int24::from_i32(1010);
         let c = Int24::from_i32(99);
         assert_eq!(a / b, c);
+        assert_eq!(a.const_div(b), c);
 
         let a = Int24::from_i32(100000);
         let b = Int24::from_i32(-1010);
         let c = Int24::from_i32(-99);
         assert_eq!(a / b, c);
+        assert_eq!(a.const_div(b), c);
 
         let a = Int24::from_i32(-100000);
         let b = Int24::from_i32(1010);
         let c = Int24::from_i32(-99);
         assert_eq!(a / b, c);
+        assert_eq!(a.const_div(b), c);
 
         //TODO sat
     }
@@ -390,22 +444,27 @@ mod test {
         let a = Int24::from_i32(100000);
         let b = Int24::from_i32(-100000);
         assert_eq!(-a, b);
+        assert_eq!(a.const_neg(), b);
 
         let a = Int24::from_i32(-100000);
         let b = Int24::from_i32(100000);
         assert_eq!(-a, b);
+        assert_eq!(a.const_neg(), b);
 
         let a = Int24::from_i32(0x7F_FFFF);
         let b = Int24::from_i32(-0x7F_FFFF);
         assert_eq!(-a, b);
+        assert_eq!(a.const_neg(), b);
 
         let a = Int24::from_i32(-0x7F_FFFF);
         let b = Int24::from_i32(0x7F_FFFF);
         assert_eq!(-a, b);
+        assert_eq!(a.const_neg(), b);
 
         let a = Int24::from_i32(-0x80_0000);
         let b = Int24::from_i32(0x7F_FFFF); // saturated
         assert_eq!(-a, b);
+        assert_eq!(a.const_neg(), b);
     }
 
     #[test]
@@ -413,22 +472,27 @@ mod test {
         let a = Int24::from_i32(100000);
         let b = Int24::from_i32(100000);
         assert_eq!(a.abs(), b);
+        assert_eq!(a.const_abs(), b);
 
         let a = Int24::from_i32(-100000);
         let b = Int24::from_i32(100000);
         assert_eq!(a.abs(), b);
+        assert_eq!(a.const_abs(), b);
 
         let a = Int24::from_i32(0x7F_FFFF);
         let b = Int24::from_i32(0x7F_FFFF);
         assert_eq!(a.abs(), b);
+        assert_eq!(a.const_abs(), b);
 
         let a = Int24::from_i32(-0x7F_FFFF);
         let b = Int24::from_i32(0x7F_FFFF);
         assert_eq!(a.abs(), b);
+        assert_eq!(a.const_abs(), b);
 
         let a = Int24::from_i32(-0x80_0000);
         let b = Int24::from_i32(0x7F_FFFF); // saturated
         assert_eq!(a.abs(), b);
+        assert_eq!(a.const_abs(), b);
     }
 
     #[test]
@@ -436,6 +500,7 @@ mod test {
         let a = Int24::from_i32(100000);
         let b = Int24::from_i32(400000);
         assert_eq!(a << 2, b);
+        assert_eq!(a.const_shl(2), b);
 
         let a = Int24::from_i32(1000);
         let b = Int24::from_i32(256000);
@@ -447,6 +512,7 @@ mod test {
         let a = Int24::from_i32(400000);
         let b = Int24::from_i32(100000);
         assert_eq!(a >> 2, b);
+        assert_eq!(a.const_shr(2), b);
 
         let a = Int24::from_i32(256000);
         let b = Int24::from_i32(1000);
@@ -458,26 +524,32 @@ mod test {
         let a = Int24::from_i32(100000);
         let b = Int24::from_i32(100000);
         assert_eq!(a, b);
+        assert_eq!(a.const_cmp(b), core::cmp::Ordering::Equal);
 
         let a = Int24::from_i32(100000);
         let b = Int24::from_i32(100001);
         assert_ne!(a, b);
+        assert_eq!(a.const_cmp(b), core::cmp::Ordering::Less);
 
         let a = Int24::from_i32(100000);
         let b = Int24::from_i32(100000);
         assert!(a <= b);
+        assert_eq!(a.const_cmp(b), core::cmp::Ordering::Equal);
 
         let a = Int24::from_i32(100000);
         let b = Int24::from_i32(100001);
         assert!(a < b);
+        assert_eq!(a.const_cmp(b), core::cmp::Ordering::Less);
 
         let a = Int24::from_i32(100000);
         let b = Int24::from_i32(100000);
         assert!(a >= b);
+        assert_eq!(a.const_cmp(b), core::cmp::Ordering::Equal);
 
         let a = Int24::from_i32(100001);
         let b = Int24::from_i32(100000);
         assert!(a > b);
+        assert_eq!(a.const_cmp(b), core::cmp::Ordering::Greater);
     }
 }
 
