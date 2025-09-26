@@ -5,31 +5,39 @@ use crate::{
 
 pub struct Filter {
     buf: MutexCell<BigFixpt>,
+    out: MutexCell<Fixpt>,
 }
 
 impl Filter {
     pub const fn new() -> Self {
         Self {
             buf: MutexCell::new(fixpt!(0).upgrade()),
+            out: MutexCell::new(fixpt!(0)),
         }
     }
 
     pub fn reset(&self, m: &MainCtx<'_>) {
         self.buf.set(m, const { fixpt!(0).upgrade() });
+        self.out.set(m, fixpt!(0));
     }
 
     #[inline(never)]
     pub fn run(&self, m: &MainCtx<'_>, input: Fixpt, div: Fixpt) -> Fixpt {
         let div: BigFixpt = div.into();
+
         let mut buf = self.buf.get(m);
         buf -= buf / div;
         buf += input.into();
         self.buf.set(m, buf);
-        (buf / div).into()
+
+        let out = (buf / div).into();
+        self.out.set(m, out);
+
+        out
     }
 
-    pub fn get(&self, m: &MainCtx<'_>, div: Fixpt) -> Fixpt {
-        (self.buf.get(m) / div.into()).into()
+    pub fn get(&self, m: &MainCtx<'_>) -> Fixpt {
+        self.out.get(m)
     }
 }
 

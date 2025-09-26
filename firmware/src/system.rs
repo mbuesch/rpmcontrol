@@ -218,7 +218,7 @@ impl System {
                         self.temp.init(m);
                     }
                 } else if state == SysState::Running {
-                    speedo_hz = self.speed_filter.get(m, SPEED_FILTER_DIV);
+                    speedo_hz = self.speed_filter.get(m);
                 } else {
                     speedo_hz = fixpt!(0);
                 }
