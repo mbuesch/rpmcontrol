@@ -188,10 +188,11 @@ impl System {
 
         // Evaluate the speedo signal.
         self.speedo.update(m);
+        let speed = self.speedo.get_speed(m);
 
         // Run the power-on check state machine.
         if self.state.get(m) == SysState::PoCheck {
-            match self.pocheck.run(m, self.speedo.get_speed(m)) {
+            match self.pocheck.run(m, speed) {
                 PoState::CheckIdle
                 | PoState::CheckSecondaryShutoff
                 | PoState::CheckPrimaryShutoff
@@ -211,7 +212,7 @@ impl System {
                 self.speed_filter.reset(m);
             }
             state @ SysState::Syncing | state @ SysState::Running => {
-                if let Some(speed) = self.speedo.get_speed(m) {
+                if let Some(speed) = speed {
                     speedo_hz = self.speed_filter.run(m, speed.as_16hz(), SPEED_FILTER_DIV);
                     if state != SysState::Running {
                         self.state.set(m, SysState::Running);
