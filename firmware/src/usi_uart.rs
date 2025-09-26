@@ -49,6 +49,7 @@ impl Dp {
     }
 }
 
+#[allow(unused)]
 pub fn irq_handler_pcint(c: &IrqCtx) {
     let cs = c.cs();
     let mode = MODE.borrow(cs);
