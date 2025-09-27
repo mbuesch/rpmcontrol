@@ -891,6 +891,168 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Diode:1N62xxCA"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "D"
+				(at 0 2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "1N62xxCA"
+				(at 0 -2.54 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Diode_THT:D_DO-201AE_P15.24mm_Horizontal"
+				(at 0 -5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "https://www.vishay.com/docs/88301/15ke.pdf"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "1500W bidirectional TRANSZORB® Transient Voltage Suppressor, DO-201AE"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "diode TVS voltage suppressor"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "D?DO?201AE*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "1N62xxCA_0_1"
+				(polyline
+					(pts
+						(xy -2.54 -1.27) (xy 0 0) (xy -2.54 1.27) (xy -2.54 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0.508 1.27) (xy 0 1.27) (xy 0 -1.27) (xy -0.508 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy -1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 2.54 1.27) (xy 2.54 -1.27) (xy 0 0) (xy 2.54 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "1N62xxCA_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "A1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "power:+15V"
 			(power)
 			(pin_numbers
@@ -1243,6 +1405,16 @@
 			(embedded_fonts no)
 		)
 	)
+	(text "TVS"
+		(exclude_from_sim no)
+		(at 210.058 66.548 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "4c87dc7e-8239-4fa1-b6ab-7ca602ed0be7")
+	)
 	(text "+19 V rail"
 		(exclude_from_sim no)
 		(at 144.526 40.64 0)
@@ -1340,10 +1512,22 @@
 		(uuid "93f3c616-6c90-4281-95a4-5a47a2762046")
 	)
 	(junction
+		(at 205.74 50.8)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "b0433864-2baa-42b0-8cef-20518c5a44f9")
+	)
+	(junction
 		(at 180.34 115.57)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "ba896093-bd3b-4bc7-b849-6c6bf880924c")
+	)
+	(junction
+		(at 205.74 73.66)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c4b86e1e-d81a-4478-817d-18accfbad0f8")
 	)
 	(junction
 		(at 147.32 73.66)
@@ -1378,6 +1562,16 @@
 			(type default)
 		)
 		(uuid "0331cb90-0e09-4bf1-a5b1-c59473039d25")
+	)
+	(wire
+		(pts
+			(xy 205.74 66.04) (xy 205.74 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "050f80f5-84ce-4931-bce4-a7f00c4818e0")
 	)
 	(wire
 		(pts
@@ -1651,6 +1845,16 @@
 	)
 	(wire
 		(pts
+			(xy 205.74 50.8) (xy 205.74 58.42)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "89f1b3f4-fe9e-4cfe-9381-a58179a02dff")
+	)
+	(wire
+		(pts
 			(xy 147.32 71.12) (xy 147.32 73.66)
 		)
 		(stroke
@@ -1671,7 +1875,17 @@
 	)
 	(wire
 		(pts
-			(xy 173.99 73.66) (xy 184.15 73.66)
+			(xy 205.74 50.8) (xy 224.79 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "96a66168-e46b-4fd4-aeca-e7da8f5717a6")
+	)
+	(wire
+		(pts
+			(xy 173.99 73.66) (xy 205.74 73.66)
 		)
 		(stroke
 			(width 0)
@@ -1711,7 +1925,7 @@
 	)
 	(wire
 		(pts
-			(xy 173.99 50.8) (xy 186.69 50.8)
+			(xy 173.99 50.8) (xy 205.74 50.8)
 		)
 		(stroke
 			(width 0)
@@ -1748,6 +1962,16 @@
 			(type default)
 		)
 		(uuid "b9d797e4-575f-4756-950a-11d66202d5ed")
+	)
+	(wire
+		(pts
+			(xy 205.74 73.66) (xy 224.79 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ba0f68c6-8782-4f8b-8506-fc33b7214b3a")
 	)
 	(wire
 		(pts
@@ -2298,7 +2522,7 @@
 	)
 	(symbol
 		(lib_id "power:+15V")
-		(at 186.69 50.8 270)
+		(at 224.79 50.8 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -2307,7 +2531,7 @@
 		(fields_autoplaced yes)
 		(uuid "2d63ad9d-d463-4f49-a371-80e83afb1c4b")
 		(property "Reference" "#PWR016"
-			(at 182.88 50.8 0)
+			(at 220.98 50.8 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2316,7 +2540,7 @@
 			)
 		)
 		(property "Value" "+19V"
-			(at 190.5 50.7999 90)
+			(at 228.6 50.7999 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2325,7 +2549,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 186.69 50.8 0)
+			(at 224.79 50.8 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2334,7 +2558,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 186.69 50.8 0)
+			(at 224.79 50.8 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2343,7 +2567,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+15V\""
-			(at 186.69 50.8 0)
+			(at 224.79 50.8 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2425,6 +2649,76 @@
 			(project "phaseanglecontrol"
 				(path "/167e0419-9f88-4ea4-ae96-d03af9cd26b8/bb8c6d96-af7e-4cb3-a868-b4a7ef100530"
 					(reference "#PWR014")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Diode:1N62xxCA")
+		(at 205.74 62.23 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "3c31c4cc-4ead-4c33-b0fb-aeb9a4f14c6a")
+		(property "Reference" "D14"
+			(at 208.28 60.9599 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "P6KE 15CA"
+			(at 208.28 63.4999 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "Diode_THT:D_DO-201AE_P15.24mm_Horizontal"
+			(at 210.82 62.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://www.vishay.com/docs/88301/15ke.pdf"
+			(at 205.74 62.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "1500W bidirectional TRANSZORB® Transient Voltage Suppressor, DO-201AE"
+			(at 205.74 62.23 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "975f22a1-b197-4afb-b6f6-11d6b4a52b0c")
+		)
+		(pin "2"
+			(uuid "e6804564-653f-477a-9a41-fdb243324e17")
+		)
+		(instances
+			(project "phaseanglecontrol"
+				(path "/167e0419-9f88-4ea4-ae96-d03af9cd26b8/bb8c6d96-af7e-4cb3-a868-b4a7ef100530"
+					(reference "D14")
 					(unit 1)
 				)
 			)
@@ -2984,7 +3278,7 @@
 	)
 	(symbol
 		(lib_id "power:+5V")
-		(at 184.15 73.66 270)
+		(at 224.79 73.66 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -2993,7 +3287,7 @@
 		(fields_autoplaced yes)
 		(uuid "99a626ff-61f9-4409-bb32-a11b7a733337")
 		(property "Reference" "#PWR013"
-			(at 180.34 73.66 0)
+			(at 220.98 73.66 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3002,7 +3296,7 @@
 			)
 		)
 		(property "Value" "+5V"
-			(at 187.96 73.6599 90)
+			(at 228.6 73.6599 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3011,7 +3305,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 184.15 73.66 0)
+			(at 224.79 73.66 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3020,7 +3314,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 184.15 73.66 0)
+			(at 224.79 73.66 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3029,7 +3323,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+5V\""
-			(at 184.15 73.66 0)
+			(at 224.79 73.66 0)
 			(effects
 				(font
 					(size 1.27 1.27)
