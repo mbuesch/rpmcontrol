@@ -227,7 +227,9 @@ impl AvrAtomic {
     pub fn set(&self, value: u8) {
         fence();
         // SAFETY: u8 store is atomic on AVR.
-        unsafe { *self.0.get() = value; }
+        unsafe {
+            *self.0.get() = value;
+        }
         fence();
     }
 
