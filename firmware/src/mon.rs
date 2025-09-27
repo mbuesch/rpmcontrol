@@ -7,6 +7,7 @@ use crate::{
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
+use core::sync::atomic::{AtomicBool, Ordering::Relaxed};
 
 /// Distance between monitoring checks.
 const CHECK_DIST: RelLargeTimestamp = RelLargeTimestamp::from_millis(20);
@@ -34,6 +35,8 @@ const SPEEDO_TOLERANCE: Fixpt = rpm!(1000);
 /// Monitoring activation threshold for speedometer input.
 /// Monitoring is not active below this threshold.
 const MON_ACTIVE_THRES: Fixpt = rpm!(7500);
+
+static ANALOG_FAILURE: AtomicBool = AtomicBool::new(false);
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum MonResult {
@@ -103,7 +106,13 @@ impl Mon {
             }
         }
 
-        if now > self.prev_check.get(m) + CHECK_TIMEOUT {
+        // Distance between monitoring checks is too big.
+        let mon_check_dist_failure = now > self.prev_check.get(m) + CHECK_TIMEOUT;
+        // Analog value processing failed.
+        let analog_failure = ANALOG_FAILURE.load(Relaxed);
+
+        // Immediate error without debouncing on mon-dist or analog failure.
+        if mon_check_dist_failure || analog_failure {
             self.error_deb.error_no_debounce(m);
         }
 
@@ -115,6 +124,10 @@ impl Mon {
             MonResult::Shutoff
         }
     }
+}
+
+pub fn mon_report_analog_failure() {
+    ANALOG_FAILURE.store(true, Relaxed);
 }
 
 // vim: ts=4 sw=4 expandtab

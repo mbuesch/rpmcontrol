@@ -1,5 +1,6 @@
 use crate::{
     hw::interrupt,
+    mon::mon_report_analog_failure,
     mutex::{IrqCtx, MainCtx, Mutex, MutexCell},
     ports::setup_didr,
     ring::Ring,
@@ -217,7 +218,10 @@ pub fn irq_handler_ana_comp(c: &IrqCtx) {
     let prev_stamp = AC_CAPTURE_PREV.borrow(cs).get();
 
     if now >= prev_stamp + AC_CAPTURE_MINDIST {
-        AC_CAPTURE_RING.insert(cs, now);
+        if !AC_CAPTURE_RING.insert(cs, now) {
+            // Ring buffer overflow.
+            mon_report_analog_failure();
+        }
         AC_CAPTURE_PREV.borrow(cs).set(now);
     }
 }
