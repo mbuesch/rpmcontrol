@@ -199,4 +199,47 @@ impl<T: Copy> MutexCell<T> {
     }
 }
 
+#[repr(transparent)]
+pub struct AvrAtomic(UnsafeCell<u8>);
+
+// SAFETY: u8 can be sent between threads.
+unsafe impl Send for AvrAtomic {}
+
+// SAFETY: u8 is atomic on AVR.
+unsafe impl Sync for AvrAtomic {}
+
+impl AvrAtomic {
+    #[inline]
+    pub const fn new() -> Self {
+        Self(UnsafeCell::new(0))
+    }
+
+    #[inline]
+    pub fn get(&self) -> u8 {
+        fence();
+        // SAFETY: u8 load is atomic on AVR.
+        let value = unsafe { *self.0.get() };
+        fence();
+        value
+    }
+
+    #[inline]
+    pub fn set(&self, value: u8) {
+        fence();
+        // SAFETY: u8 store is atomic on AVR.
+        unsafe { *self.0.get() = value; }
+        fence();
+    }
+
+    #[inline]
+    pub fn get_bool(&self) -> bool {
+        self.get() != 0
+    }
+
+    #[inline]
+    pub fn set_bool(&self, value: bool) {
+        self.set(value as _);
+    }
+}
+
 // vim: ts=4 sw=4 expandtab
