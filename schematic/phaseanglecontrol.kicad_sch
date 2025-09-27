@@ -2948,6 +2948,16 @@
 		)
 		(uuid "e2c48dc4-b2e3-4165-923f-e59f8e037278")
 	)
+	(text "TVS"
+		(exclude_from_sim no)
+		(at 161.798 38.354 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "eb67e4e4-a814-4e17-9cfa-21ea53a4f2a3")
+	)
 	(text "Primary control"
 		(exclude_from_sim no)
 		(at 220.218 71.374 0)
@@ -4947,7 +4957,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "50 k"
+		(property "Value" "47 k"
 			(at 165.1 53.3399 0)
 			(effects
 				(font
@@ -5429,7 +5439,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "50 k"
+		(property "Value" "47 k"
 			(at 139.7 35.5599 0)
 			(effects
 				(font
@@ -5986,7 +5996,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "50 k"
+		(property "Value" "47 k"
 			(at 142.24 59.6899 0)
 			(effects
 				(font
