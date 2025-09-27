@@ -96,7 +96,8 @@ fn wdt_poke(_wp: &mcu::WDT) {
 fn main() -> ! {
     wdt_init();
 
-    let dp = unwrap_option(Peripherals::take());
+    // SAFETY: We only call Peripherals::steal() once.
+    let dp = unsafe { Peripherals::steal() };
 
     let sp = SysPeriph {
         AC: dp.AC,
