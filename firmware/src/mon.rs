@@ -3,11 +3,10 @@ use crate::{
     debug::Debug,
     fixpt::{Fixpt, fixpt},
     history::History,
-    mutex::{MainCtx, MutexCell},
+    mutex::{MainCtx, MutexCell, AvrAtomic},
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
-use core::sync::atomic::{AtomicBool, Ordering::Relaxed};
 
 /// Distance between monitoring checks.
 const CHECK_DIST: RelLargeTimestamp = RelLargeTimestamp::from_millis(20);
@@ -36,7 +35,7 @@ const SPEEDO_TOLERANCE: Fixpt = rpm!(1000);
 /// Monitoring is not active below this threshold.
 const MON_ACTIVE_THRES: Fixpt = rpm!(7500);
 
-static ANALOG_FAILURE: AtomicBool = AtomicBool::new(false);
+static ANALOG_FAILURE: AvrAtomic = AvrAtomic::new();
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum MonResult {
@@ -109,7 +108,7 @@ impl Mon {
         // Distance between monitoring checks is too big.
         let mon_check_dist_failure = now > self.prev_check.get(m) + CHECK_TIMEOUT;
         // Analog value processing failed.
-        let analog_failure = ANALOG_FAILURE.load(Relaxed);
+        let analog_failure = ANALOG_FAILURE.get_bool();
 
         // Immediate error without debouncing on mon-dist or analog failure.
         if mon_check_dist_failure || analog_failure {
@@ -127,7 +126,7 @@ impl Mon {
 }
 
 pub fn mon_report_analog_failure() {
-    ANALOG_FAILURE.store(true, Relaxed);
+    ANALOG_FAILURE.set_bool(true);
 }
 
 // vim: ts=4 sw=4 expandtab
