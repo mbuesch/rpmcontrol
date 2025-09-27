@@ -130,7 +130,7 @@ impl PoCheck {
     pub fn get_triac_shutoff(&self, m: &MainCtx<'_>) -> Shutoff {
         match self.state.get(m) {
             PoState::CheckIdle => Shutoff::MachineShutoff,
-            PoState::CheckSecondaryShutoff => Shutoff::MachineShutoff, //TODO Shutoff::MachineRunning,
+            PoState::CheckSecondaryShutoff => Shutoff::MachineRunning,
             PoState::CheckPrimaryShutoff => Shutoff::MachineShutoff,
             PoState::Error => Shutoff::MachineShutoff,
             PoState::DoneOk => Shutoff::MachineRunning,
