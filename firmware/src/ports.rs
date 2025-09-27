@@ -167,8 +167,8 @@ impl PortB {
         unsafe {
             self.PORTB.portb().write(|w| {
                 w.bits(
-                    pin_low(0) | // ISP MOSI + UART DI
-                    pin_pullup(1) | // ISP MISO + UART DO
+                    pin_pullup(0) | // ISP MOSI + UART DI
+                    pin_high(1) | // ISP MISO + UART DO
                     pin_low(2) | // ISP SCK
                     pin_high(3) | // trig, active low
                     pin_floating(4) | // XTAL1
@@ -180,7 +180,7 @@ impl PortB {
             self.PORTB.ddrb().write(|w| {
                 w.bits(
                     pin_input(0) | // ISP MOSI + UART DI
-                    pin_input(1) | // ISP MISO + UART DO
+                    pin_output(1) | // ISP MISO + UART DO
                     pin_output(2) | // ISP SCK
                     pin_output(3) | // trig, active low
                     pin_input(4) | // XTAL1
