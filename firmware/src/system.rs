@@ -314,7 +314,7 @@ impl System {
         let temp_shutoff = self.temp.get_shutoff(m);
 
         // Safety monitoring check.
-        let mon_res = self.mon.check(m, setpoint, speedo_hz);
+        let mon_res = self.mon.check(m, setpoint, speedo_hz, mains_90deg_trigger);
 
         // Get power-on check shutoff paths.
         let pocheck_secondary_shutoff = self.pocheck.get_secondary_shutoff(m);

@@ -3,7 +3,7 @@ use crate::{
     debug::Debug,
     fixpt::{Fixpt, fixpt},
     history::History,
-    mutex::{MainCtx, MutexCell, AvrAtomic},
+    mutex::{AvrAtomic, MainCtx, MutexCell},
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
@@ -12,6 +12,9 @@ use crate::{
 const CHECK_DIST: RelLargeTimestamp = RelLargeTimestamp::from_millis(20);
 /// Immediate fault, if one actual monitoring distance is bigger than this.
 const CHECK_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
+
+/// Immediate fault, if mains zero crossing distance is bigger than this.
+const MAINS_ZERO_CROSSING_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
 
 /// Setpoint history.
 /// Length = SP_HIST_DIST * SP_HIST_COUNT = 3 seconds
@@ -45,6 +48,7 @@ pub enum MonResult {
 
 pub struct Mon {
     prev_check: MutexCell<LargeTimestamp>,
+    prev_mains_90deg: MutexCell<LargeTimestamp>,
     error_deb: Debounce<ERROR_DEBOUNCE_ERRSTEP, ERROR_DEBOUNCE_LIMIT, ERROR_DEBOUNCE_STICKY>,
     sp_hist: History<Fixpt, SP_HIST_COUNT>,
     prev_sp: MutexCell<LargeTimestamp>,
@@ -54,6 +58,7 @@ impl Mon {
     pub const fn new() -> Self {
         Self {
             prev_check: MutexCell::new(LargeTimestamp::new()),
+            prev_mains_90deg: MutexCell::new(LargeTimestamp::new()),
             error_deb: Debounce::new(),
             sp_hist: History::new([
                 MutexCell::new(fixpt!(0)),
@@ -70,8 +75,18 @@ impl Mon {
         }
     }
 
-    pub fn check(&self, m: &MainCtx<'_>, setpoint: Fixpt, speedo_hz: Fixpt) -> MonResult {
+    pub fn check(
+        &self,
+        m: &MainCtx<'_>,
+        setpoint: Fixpt,
+        speedo_hz: Fixpt,
+        mains_90deg: bool,
+    ) -> MonResult {
         let now = timer_get_large();
+
+        if mains_90deg {
+            self.prev_mains_90deg.set(m, now);
+        }
 
         let next_sp = self.prev_sp.get(m) + SP_HIST_DIST;
         if now >= next_sp {
@@ -109,9 +124,12 @@ impl Mon {
         let mon_check_dist_failure = now > self.prev_check.get(m) + CHECK_TIMEOUT;
         // Analog value processing failed.
         let analog_failure = ANALOG_FAILURE.get_bool();
+        // Distance between mains zero crossings is too big.
+        let mains_zero_crossing_dist_failure =
+            now > self.prev_mains_90deg.get(m) + MAINS_ZERO_CROSSING_TIMEOUT;
 
-        // Immediate error without debouncing on mon-dist or analog failure.
-        if mon_check_dist_failure || analog_failure {
+        // Immediate error without debouncing on mon-dist, analog or zero crossing failure.
+        if mon_check_dist_failure || analog_failure || mains_zero_crossing_dist_failure {
             self.error_deb.error_no_debounce(m);
         }
 
