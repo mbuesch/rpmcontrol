@@ -1035,12 +1035,12 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "MCU_Microchip_ATtiny:ATtiny26-16P"
+		(symbol "MCU_Microchip_ATtiny:ATtiny861A-P"
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
 			(property "Reference" "U"
-				(at -12.7 26.67 0)
+				(at -15.24 26.67 0)
 				(effects
 					(font
 						(size 1.27 1.27)
@@ -1048,8 +1048,8 @@
 					(justify left bottom)
 				)
 			)
-			(property "Value" "ATtiny26-16P"
-				(at 2.54 -26.67 0)
+			(property "Value" "ATtiny861A-P"
+				(at 5.08 -26.67 0)
 				(effects
 					(font
 						(size 1.27 1.27)
@@ -1067,7 +1067,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "http://ww1.microchip.com/downloads/en/DeviceDoc/doc1477.pdf"
+			(property "Datasheet" "http://ww1.microchip.com/downloads/en/DeviceDoc/doc8197.pdf"
 				(at 0 0 0)
 				(effects
 					(font
@@ -1076,7 +1076,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "16MHz, 2kB Flash, 128B SRAM, 128B EEPROM, DIP-20"
+			(property "Description" "20MHz, 8kB Flash, 512B SRAM, 512B EEPROM, DIP-20"
 				(at 0 0 0)
 				(effects
 					(font
@@ -1103,10 +1103,10 @@
 					(hide yes)
 				)
 			)
-			(symbol "ATtiny26-16P_0_1"
+			(symbol "ATtiny861A-P_0_1"
 				(rectangle
-					(start -12.7 -25.4)
-					(end 12.7 25.4)
+					(start -15.24 -25.4)
+					(end 15.24 25.4)
 					(stroke
 						(width 0.254)
 						(type default)
@@ -1116,7 +1116,7 @@
 					)
 				)
 			)
-			(symbol "ATtiny26-16P_1_1"
+			(symbol "ATtiny861A-P_1_1"
 				(pin power_in line
 					(at 0 27.94 270)
 					(length 2.54)
@@ -1128,25 +1128,6 @@
 						)
 					)
 					(number "5"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 0 -27.94 90)
-					(length 2.54)
-					(hide yes)
-					(name "GND"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "16"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -1190,8 +1171,26 @@
 						)
 					)
 				)
+				(pin power_in line
+					(at 2.54 -27.94 90)
+					(length 2.54)
+					(name "AGND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "16"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
 				(pin bidirectional line
-					(at 15.24 20.32 180)
+					(at 17.78 20.32 180)
 					(length 2.54)
 					(name "PA0"
 						(effects
@@ -1209,7 +1208,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 17.78 180)
+					(at 17.78 17.78 180)
 					(length 2.54)
 					(name "PA1"
 						(effects
@@ -1227,7 +1226,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 15.24 180)
+					(at 17.78 15.24 180)
 					(length 2.54)
 					(name "PA2"
 						(effects
@@ -1245,7 +1244,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 12.7 180)
+					(at 17.78 12.7 180)
 					(length 2.54)
 					(name "AREF/PA3"
 						(effects
@@ -1263,7 +1262,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 10.16 180)
+					(at 17.78 10.16 180)
 					(length 2.54)
 					(name "PA4"
 						(effects
@@ -1281,7 +1280,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 7.62 180)
+					(at 17.78 7.62 180)
 					(length 2.54)
 					(name "PA5"
 						(effects
@@ -1299,7 +1298,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 5.08 180)
+					(at 17.78 5.08 180)
 					(length 2.54)
 					(name "PA6"
 						(effects
@@ -1317,7 +1316,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 2.54 180)
+					(at 17.78 2.54 180)
 					(length 2.54)
 					(name "PA7"
 						(effects
@@ -1335,7 +1334,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 -2.54 180)
+					(at 17.78 -2.54 180)
 					(length 2.54)
 					(name "PB0"
 						(effects
@@ -1353,7 +1352,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 -5.08 180)
+					(at 17.78 -5.08 180)
 					(length 2.54)
 					(name "PB1"
 						(effects
@@ -1371,7 +1370,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 -7.62 180)
+					(at 17.78 -7.62 180)
 					(length 2.54)
 					(name "PB2"
 						(effects
@@ -1389,7 +1388,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 -10.16 180)
+					(at 17.78 -10.16 180)
 					(length 2.54)
 					(name "PB3"
 						(effects
@@ -1407,7 +1406,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 -12.7 180)
+					(at 17.78 -12.7 180)
 					(length 2.54)
 					(name "XTAL1/PB4"
 						(effects
@@ -1425,7 +1424,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 -15.24 180)
+					(at 17.78 -15.24 180)
 					(length 2.54)
 					(name "XTAL2/PB5"
 						(effects
@@ -1443,7 +1442,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 -17.78 180)
+					(at 17.78 -17.78 180)
 					(length 2.54)
 					(name "PB6"
 						(effects
@@ -1461,7 +1460,7 @@
 					)
 				)
 				(pin bidirectional line
-					(at 15.24 -20.32 180)
+					(at 17.78 -20.32 180)
 					(length 2.54)
 					(name "~{RESET}/PB7"
 						(effects
@@ -2979,6 +2978,12 @@
 		(uuid "fdf6a135-850d-4640-8e92-ecba61397898")
 	)
 	(junction
+		(at 100.33 165.1)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "06b9d3ad-4b1e-410c-96c6-54913a7dd802")
+	)
+	(junction
 		(at 91.44 148.59)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2995,12 +3000,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "1ee8a61e-d841-4aca-b5f1-5b64032b7e36")
-	)
-	(junction
-		(at 43.18 165.1)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "2c5caffe-90e4-40a7-882b-61f0db3f2bf6")
 	)
 	(junction
 		(at 240.03 68.58)
@@ -3093,16 +3092,16 @@
 		(uuid "b6eee3b4-14aa-4bfe-8093-5b8e159992de")
 	)
 	(junction
+		(at 41.91 167.64)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c589482c-286e-44b1-8d20-55562192e047")
+	)
+	(junction
 		(at 193.04 68.58)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "c72acdb2-4fd5-4cd5-8a32-10850f3bf622")
-	)
-	(junction
-		(at 43.18 162.56)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "d09efc09-3a61-4e65-b9a6-24e172a81cdd")
 	)
 	(junction
 		(at 173.99 55.88)
@@ -3147,6 +3146,12 @@
 		(uuid "f3c4baf4-1d5b-45fb-b3dd-a978c26f253f")
 	)
 	(junction
+		(at 41.91 165.1)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "f5ba3009-3994-4f3d-a7e8-17a07f7ea0b0")
+	)
+	(junction
 		(at 60.96 68.58)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -3169,6 +3174,16 @@
 			(type default)
 		)
 		(uuid "020880b0-35ec-4444-89d8-f0909da555a5")
+	)
+	(wire
+		(pts
+			(xy 43.18 167.64) (xy 41.91 167.64)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "040e2178-1f77-4eb7-a90d-c399bcf4b6a0")
 	)
 	(wire
 		(pts
@@ -3312,16 +3327,6 @@
 	)
 	(wire
 		(pts
-			(xy 99.06 165.1) (xy 100.33 165.1)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "25389701-1508-4841-ad0b-979ab342287c")
-	)
-	(wire
-		(pts
 			(xy 157.48 27.94) (xy 157.48 30.48)
 		)
 		(stroke
@@ -3412,13 +3417,13 @@
 	)
 	(wire
 		(pts
-			(xy 43.18 165.1) (xy 43.18 167.64)
+			(xy 41.91 162.56) (xy 41.91 165.1)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "39384ab8-493e-4684-a4ae-f8e50880ea25")
+		(uuid "3c219d0c-5882-4ae4-b1ab-32bb6dfa761f")
 	)
 	(wire
 		(pts
@@ -3652,6 +3657,16 @@
 	)
 	(wire
 		(pts
+			(xy 41.91 167.64) (xy 41.91 165.1)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "632f9455-9d4b-4bf9-a54b-0a5970c784b7")
+	)
+	(wire
+		(pts
 			(xy 162.56 55.88) (xy 173.99 55.88)
 		)
 		(stroke
@@ -3669,16 +3684,6 @@
 			(type default)
 		)
 		(uuid "66ae7aae-7b3e-4a95-a3e1-cf09f14beebb")
-	)
-	(wire
-		(pts
-			(xy 43.18 167.64) (xy 41.91 167.64)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "686ae27d-5d8a-428c-bec5-7a6dfcb3eb9b")
 	)
 	(wire
 		(pts
@@ -3712,7 +3717,17 @@
 	)
 	(wire
 		(pts
-			(xy 33.02 167.64) (xy 34.29 167.64)
+			(xy 99.06 165.1) (xy 100.33 165.1)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "75ccceae-e89b-40a7-9cac-b5803a11df9c")
+	)
+	(wire
+		(pts
+			(xy 31.75 167.64) (xy 33.02 167.64)
 		)
 		(stroke
 			(width 0)
@@ -3832,16 +3847,6 @@
 	)
 	(wire
 		(pts
-			(xy 43.18 162.56) (xy 43.18 165.1)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "88672e89-6c75-49a7-8726-dabdcfe0f77e")
-	)
-	(wire
-		(pts
 			(xy 205.74 39.37) (xy 205.74 43.18)
 		)
 		(stroke
@@ -3849,6 +3854,16 @@
 			(type default)
 		)
 		(uuid "88bfa178-80f8-481b-a429-006c6c7e06a5")
+	)
+	(wire
+		(pts
+			(xy 40.64 167.64) (xy 41.91 167.64)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "89735010-a78a-4d46-8bcd-ab45b32df489")
 	)
 	(wire
 		(pts
@@ -4032,6 +4047,16 @@
 	)
 	(wire
 		(pts
+			(xy 31.75 162.56) (xy 41.91 162.56)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b9c28d13-9001-4249-85d4-75c072642537")
+	)
+	(wire
+		(pts
 			(xy 78.74 116.84) (xy 80.01 116.84)
 		)
 		(stroke
@@ -4069,6 +4094,16 @@
 			(type default)
 		)
 		(uuid "c8423e66-0435-465b-8a08-ce161dc2e818")
+	)
+	(wire
+		(pts
+			(xy 41.91 165.1) (xy 43.18 165.1)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c87777e4-0a13-4ef1-9c07-90bed501a782")
 	)
 	(wire
 		(pts
@@ -4152,6 +4187,16 @@
 	)
 	(wire
 		(pts
+			(xy 100.33 167.64) (xy 99.06 167.64)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d42319f2-58f4-4ebb-9500-a7a59464077b")
+	)
+	(wire
+		(pts
 			(xy 69.85 116.84) (xy 69.85 105.41)
 		)
 		(stroke
@@ -4202,16 +4247,6 @@
 	)
 	(wire
 		(pts
-			(xy 33.02 162.56) (xy 43.18 162.56)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "dea997c9-3ff6-48c5-8abf-c3a715f7834e")
-	)
-	(wire
-		(pts
 			(xy 60.96 64.77) (xy 60.96 68.58)
 		)
 		(stroke
@@ -4252,6 +4287,16 @@
 	)
 	(wire
 		(pts
+			(xy 100.33 165.1) (xy 100.33 167.64)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f1ca23c3-3799-429d-a3dd-1c5af4f6dfe3")
+	)
+	(wire
+		(pts
 			(xy 246.38 152.4) (xy 248.92 152.4)
 		)
 		(stroke
@@ -4259,6 +4304,16 @@
 			(type default)
 		)
 		(uuid "f1dee014-1e55-4c70-97e7-ccee974dfccf")
+	)
+	(wire
+		(pts
+			(xy 100.33 165.1) (xy 101.6 165.1)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f3c95e16-7d85-44f4-8901-929a79371907")
 	)
 	(wire
 		(pts
@@ -5230,129 +5285,6 @@
 		)
 	)
 	(symbol
-		(lib_id "MCU_Microchip_ATtiny:ATtiny26-16P")
-		(at 71.12 165.1 90)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "2333ce60-1a88-4525-ad83-97f08b14b71b")
-		(property "Reference" "U1"
-			(at 71.12 180.34 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "ATtiny26-16P"
-			(at 71.12 182.88 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Package_DIP:DIP-20_W7.62mm"
-			(at 71.12 165.1 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-					(italic yes)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "http://ww1.microchip.com/downloads/en/DeviceDoc/doc1477.pdf"
-			(at 71.12 165.1 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "16MHz, 2kB Flash, 128B SRAM, 128B EEPROM, DIP-20"
-			(at 71.12 165.1 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "20"
-			(uuid "4577ab5e-fc14-47eb-a35e-bf347d9638ef")
-		)
-		(pin "16"
-			(uuid "2abe1129-e172-415b-9717-2ecfc2212bcf")
-		)
-		(pin "2"
-			(uuid "8cc81df5-4618-4ced-8136-a81be86f4d4c")
-		)
-		(pin "19"
-			(uuid "6fa0b499-de52-47e8-a4cc-0aca16ba8061")
-		)
-		(pin "7"
-			(uuid "3a6cf85b-1497-4646-ba05-964425a07dbe")
-		)
-		(pin "10"
-			(uuid "16e7b3ac-f881-4e88-bca0-68847715d83c")
-		)
-		(pin "1"
-			(uuid "1e5f2358-f6ad-4387-bda5-4f6bda4c01a5")
-		)
-		(pin "12"
-			(uuid "b291c43c-5d20-4d62-915f-a2dfdfde0dda")
-		)
-		(pin "8"
-			(uuid "9f23cbf4-f8ea-49c7-b02d-ae31ddc0ffc9")
-		)
-		(pin "9"
-			(uuid "1ada6a6e-699c-49fb-b346-050764431d6b")
-		)
-		(pin "14"
-			(uuid "74a20d96-879d-48d8-81b7-861fb74c2351")
-		)
-		(pin "11"
-			(uuid "83189e6b-1cd9-464f-a96a-883681bf7e48")
-		)
-		(pin "18"
-			(uuid "89d95526-2530-4e10-b422-d685ac91cf41")
-		)
-		(pin "13"
-			(uuid "0fffe2eb-1a19-427a-ade3-69906a44b102")
-		)
-		(pin "15"
-			(uuid "a20e4bc2-86a6-44c1-aab7-c58f65161f3e")
-		)
-		(pin "4"
-			(uuid "5ddaa23d-476c-4fa0-b159-4f1fce0cd4c0")
-		)
-		(pin "6"
-			(uuid "1e4348dd-eda1-4585-9a53-30c414c4a235")
-		)
-		(pin "5"
-			(uuid "5ba0807d-7bdf-4991-9ba2-1fc242891ba1")
-		)
-		(pin "3"
-			(uuid "e8ef8a21-8dbc-40bd-b085-579dd71cdb53")
-		)
-		(pin "17"
-			(uuid "361532fb-7dcd-4343-a19a-621ea70a368c")
-		)
-		(instances
-			(project ""
-				(path "/167e0419-9f88-4ea4-ae96-d03af9cd26b8"
-					(reference "U1")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
 		(lib_id "Device:Fuse")
 		(at 39.37 27.94 90)
 		(unit 1)
@@ -5772,7 +5704,7 @@
 	)
 	(symbol
 		(lib_id "Device:C")
-		(at 38.1 167.64 270)
+		(at 36.83 167.64 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -5780,7 +5712,7 @@
 		(dnp no)
 		(uuid "449c2986-5a47-40d7-9684-7e65b4d79e99")
 		(property "Reference" "C1"
-			(at 39.3701 171.45 0)
+			(at 38.1001 171.45 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5789,7 +5721,7 @@
 			)
 		)
 		(property "Value" "100 nF"
-			(at 36.8301 171.45 0)
+			(at 35.5601 171.45 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5798,7 +5730,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 34.29 168.6052 0)
+			(at 33.02 168.6052 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5807,7 +5739,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 38.1 167.64 0)
+			(at 36.83 167.64 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5816,7 +5748,7 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
-			(at 38.1 167.64 0)
+			(at 36.83 167.64 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6049,7 +5981,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 33.02 167.64 270)
+		(at 31.75 167.64 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -6058,7 +5990,7 @@
 		(fields_autoplaced yes)
 		(uuid "529d58c8-8393-4645-acec-b47bbeafecfc")
 		(property "Reference" "#PWR02"
-			(at 26.67 167.64 0)
+			(at 25.4 167.64 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6067,7 +5999,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 29.21 167.6399 90)
+			(at 27.94 167.6399 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6076,7 +6008,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 33.02 167.64 0)
+			(at 31.75 167.64 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6085,7 +6017,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 33.02 167.64 0)
+			(at 31.75 167.64 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6094,7 +6026,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 33.02 167.64 0)
+			(at 31.75 167.64 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6116,7 +6048,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 100.33 165.1 90)
+		(at 101.6 165.1 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -6125,7 +6057,7 @@
 		(fields_autoplaced yes)
 		(uuid "56dd1706-afd1-4eca-b15a-d12ab2b57b0b")
 		(property "Reference" "#PWR05"
-			(at 106.68 165.1 0)
+			(at 107.95 165.1 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6134,7 +6066,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 104.14 165.0999 90)
+			(at 105.41 165.0999 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6143,7 +6075,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 100.33 165.1 0)
+			(at 101.6 165.1 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6152,7 +6084,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 100.33 165.1 0)
+			(at 101.6 165.1 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6161,7 +6093,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 100.33 165.1 0)
+			(at 101.6 165.1 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7373,6 +7305,129 @@
 		)
 	)
 	(symbol
+		(lib_id "MCU_Microchip_ATtiny:ATtiny861A-P")
+		(at 71.12 167.64 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "aebbb861-6426-4d33-8c76-7f4e71fbd119")
+		(property "Reference" "U2"
+			(at 71.12 185.42 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "ATtiny861A-P"
+			(at 71.12 187.96 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Package_DIP:DIP-20_W7.62mm"
+			(at 71.12 167.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+					(italic yes)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "http://ww1.microchip.com/downloads/en/DeviceDoc/doc8197.pdf"
+			(at 71.12 167.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "20MHz, 8kB Flash, 512B SRAM, 512B EEPROM, DIP-20"
+			(at 71.12 167.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "10"
+			(uuid "094a6273-efcd-4880-8140-6e4dd4216457")
+		)
+		(pin "9"
+			(uuid "ded75ba4-6632-48fc-a4a1-1351cf8d202d")
+		)
+		(pin "16"
+			(uuid "f46edbcf-c1f3-4e43-9dea-8c15a9532e72")
+		)
+		(pin "20"
+			(uuid "95d3235f-a5c2-488a-b496-7b444a9ba8aa")
+		)
+		(pin "19"
+			(uuid "b77caac5-532d-464c-bc9d-faa4525c3500")
+		)
+		(pin "18"
+			(uuid "5bc85107-019c-4bfb-8ee4-f0c54fc459d6")
+		)
+		(pin "1"
+			(uuid "014dd5ac-e23c-4e50-8bb2-27571aadeca4")
+		)
+		(pin "14"
+			(uuid "a6753fda-f11b-425a-9081-fd01e159ad29")
+		)
+		(pin "2"
+			(uuid "d5bdf4a8-bff6-4c7c-8307-9b2b65563c43")
+		)
+		(pin "15"
+			(uuid "9ee73195-26a0-4835-b696-e81e1165e1d6")
+		)
+		(pin "6"
+			(uuid "c11f0dff-a60d-41e5-961b-77c1fda8f066")
+		)
+		(pin "3"
+			(uuid "27d78568-f393-4faa-9f80-baccbb0ea7c2")
+		)
+		(pin "12"
+			(uuid "84d71775-696b-455f-ba5f-ce1875d16f8a")
+		)
+		(pin "11"
+			(uuid "9e72a872-439b-4458-9536-2b1978b9810a")
+		)
+		(pin "8"
+			(uuid "cf0e238f-7198-423d-aa15-a509f6a779b3")
+		)
+		(pin "4"
+			(uuid "0a98c613-feb8-41ce-b815-70c152df98af")
+		)
+		(pin "5"
+			(uuid "779546d9-b355-41a1-8bd4-b1c49652c16a")
+		)
+		(pin "17"
+			(uuid "da32df7d-c643-4e21-a660-a7d91852f69a")
+		)
+		(pin "7"
+			(uuid "acfde638-fe0b-49f7-8a20-7a95819794f4")
+		)
+		(pin "13"
+			(uuid "19630bc7-a3cf-4507-b9d3-bfb81544deda")
+		)
+		(instances
+			(project ""
+				(path "/167e0419-9f88-4ea4-ae96-d03af9cd26b8"
+					(reference "U2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 160.02 96.52 270)
 		(unit 1)
@@ -7441,7 +7496,7 @@
 	)
 	(symbol
 		(lib_id "power:+5V")
-		(at 33.02 162.56 90)
+		(at 31.75 162.56 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -7450,7 +7505,7 @@
 		(fields_autoplaced yes)
 		(uuid "b96b076f-97d2-48b2-92c1-b31480a6be4e")
 		(property "Reference" "#PWR01"
-			(at 36.83 162.56 0)
+			(at 35.56 162.56 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7459,7 +7514,7 @@
 			)
 		)
 		(property "Value" "+5V"
-			(at 29.21 162.5599 90)
+			(at 27.94 162.5599 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7468,7 +7523,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 33.02 162.56 0)
+			(at 31.75 162.56 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7477,7 +7532,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 33.02 162.56 0)
+			(at 31.75 162.56 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7486,7 +7541,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+5V\""
-			(at 33.02 162.56 0)
+			(at 31.75 162.56 0)
 			(effects
 				(font
 					(size 1.27 1.27)
