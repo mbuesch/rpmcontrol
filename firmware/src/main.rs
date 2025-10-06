@@ -81,7 +81,6 @@ pub fn reset_system() -> ! {
 /// This naked function is run before main() from the .init3 section.
 pub unsafe extern "C" fn wdt_init() {
     // Enable WDT with timeout 32.5 ms
-    // This is a naked function, so we must return manually.
     core::arch::naked_asm!(
         "ldi r16, 0x10", // WDCE=1
         "out {WDTCR}, r16",
