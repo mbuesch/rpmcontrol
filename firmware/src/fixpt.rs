@@ -288,9 +288,14 @@ impl BigFixpt {
     }
 
     pub const fn const_div(self, other: Self) -> Self {
-        Self(Int24::from_i32(
-            (self.0.to_i32() << Self::SHIFT) / other.0.to_i32(),
-        ))
+        let a = self.0.to_i32();
+        let b = other.0.to_i32();
+        let c = if b == 0 {
+            if a < 0 { i32::MIN } else { i32::MAX }
+        } else {
+            (a << Self::SHIFT).saturating_div(b)
+        };
+        Self(Int24::from_i32(c))
     }
 }
 
