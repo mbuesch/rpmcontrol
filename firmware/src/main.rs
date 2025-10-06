@@ -71,21 +71,24 @@ pub fn reset_system() -> ! {
     }
 }
 
-fn wdt_init() {
-    // SAFETY: The asm code only accesses the WDT registers
-    //         which are not accessed from anywhere else in the program.
-    unsafe {
-        // Enable WDT with timeout 32.5 ms
-        core::arch::asm!(
-            "ldi {tmp}, 0x10", // WDCE=1
-            "out {WDTCR}, {tmp}",
-            "ldi {tmp}, 0x19", // WDCE=1, WDE=1, WDP2=0, WDP1=0, WDP0=1
-            "out {WDTCR}, {tmp}",
-            tmp = out(reg_upper) _,
-            WDTCR = const 0x21,
-            options(nostack, preserves_flags)
-        );
-    }
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+#[unsafe(link_section = ".init3")]
+/// Watchdog timer initialization.
+///
+/// # Safety
+///
+/// This naked function is run before main() from the .init3 section.
+pub unsafe extern "C" fn wdt_init() {
+    // Enable WDT with timeout 32.5 ms
+    // This is a naked function, so we must return manually.
+    core::arch::naked_asm!(
+        "ldi r16, 0x10", // WDCE=1
+        "out {WDTCR}, r16",
+        "ldi r16, 0x19", // WDCE=1, WDE=1, WDP2=0, WDP1=0, WDP0=1
+        "out {WDTCR}, r16",
+        WDTCR = const 0x21,
+    );
 }
 
 fn wdt_poke(_wp: &mcu::WDT) {
@@ -94,8 +97,6 @@ fn wdt_poke(_wp: &mcu::WDT) {
 
 #[avr_device::entry]
 fn main() -> ! {
-    wdt_init();
-
     // SAFETY: We only call Peripherals::steal() once.
     let dp = unsafe { Peripherals::steal() };
 
