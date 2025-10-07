@@ -3,9 +3,9 @@
 
 pub use crate::raw::Int24Raw;
 use crate::raw::{
-    RAW_MAX, RAW_MIN, RAW_ZERO, add24,
+    add24,
     conv::{i16_to_i24raw, i24raw_to_i16_sat, i24raw_to_i32, i32_to_i24raw_sat},
-    div24, eq24, ge24, is_neg24, mul24, neg24, shl24, shl24_by8, shr24, shr24_by8, sub24,
+    div24, eq24, ge24, is_neg24, mul24, neg24, raw_zero, shl24, shl24_by8, shr24, shr24_by8, sub24,
 };
 
 #[cfg(not(target_arch = "avr"))]
@@ -25,12 +25,12 @@ mod raw;
 pub struct Int24(Int24Raw);
 
 impl Int24 {
-    pub const ZERO: Self = Self(RAW_ZERO);
-    pub const MIN: Self = Self(RAW_MIN);
-    pub const MAX: Self = Self(RAW_MAX);
+    pub const fn zero() -> Self {
+        Self(raw_zero())
+    }
 
     pub const fn new() -> Self {
-        Self::ZERO
+        Self::zero()
     }
 
     pub const fn from_raw(v: Int24Raw) -> Self {

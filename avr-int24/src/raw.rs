@@ -4,9 +4,21 @@ use crate::{
 };
 
 pub type Int24Raw = (u8, u8, u8);
-pub const RAW_ZERO: Int24Raw = (0x00, 0x00, 0x00);
-pub const RAW_MIN: Int24Raw = (0x00, 0x00, 0x80);
-pub const RAW_MAX: Int24Raw = (0xFF, 0xFF, 0x7F);
+
+#[inline(always)]
+pub const fn raw_zero() -> Int24Raw {
+    (0x00, 0x00, 0x00)
+}
+
+#[inline(always)]
+pub const fn raw_min() -> Int24Raw {
+    (0x00, 0x00, 0x80)
+}
+
+#[inline(always)]
+pub const fn raw_max() -> Int24Raw {
+    (0xFF, 0xFF, 0x7F)
+}
 
 #[inline(always)]
 pub fn mul24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
@@ -17,9 +29,9 @@ pub fn mul24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
 
 #[inline(always)]
 pub fn div24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
-    if b == RAW_ZERO {
+    if b == raw_zero() {
         // Division by zero.
-        if is_neg24(a) { RAW_MIN } else { RAW_MAX }
+        if is_neg24(a) { raw_min() } else { raw_max() }
     } else {
         let res = asm_div24(a, b);
         //TODO sat
@@ -46,7 +58,11 @@ pub const fn is_neg24(a: Int24Raw) -> bool {
 
 #[inline(always)]
 pub fn neg24(a: Int24Raw) -> Int24Raw {
-    if a == RAW_MIN { RAW_MAX } else { asm_neg24(a) }
+    if a == raw_min() {
+        raw_max()
+    } else {
+        asm_neg24(a)
+    }
 }
 
 #[inline(always)]
@@ -84,7 +100,7 @@ pub fn ge24(a: Int24Raw, b: Int24Raw) -> bool {
 }
 
 pub mod conv {
-    use super::{Int24Raw, RAW_MAX, RAW_MIN, is_neg24};
+    use super::{Int24Raw, is_neg24, raw_max, raw_min};
 
     #[inline(never)]
     pub const fn i24raw_to_i32(v: Int24Raw) -> i32 {
@@ -108,13 +124,13 @@ pub mod conv {
 
     #[inline(never)]
     pub const fn i32_to_i24raw_sat(v: i32) -> Int24Raw {
-        if v < -0x80_0000 {
-            RAW_MIN // saturate
-        } else if v > 0x7F_FFFF {
-            RAW_MAX // saturate
-        } else {
-            let v = v.to_le_bytes();
+        let v = v.to_le_bytes();
+        if (v[3] == 0 && v[2] & 0x80 == 0) || (v[3] == 0xFF && v[2] & 0x80 != 0) {
             (v[0], v[1], v[2])
+        } else if v[3] & 0x80 == 0 {
+            raw_max()
+        } else {
+            raw_min()
         }
     }
 
