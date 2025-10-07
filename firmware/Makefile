@@ -29,7 +29,10 @@ ELF:=$(RELEASEDIR)/$(NAME).elf
 DASM:=$(RELEASEDIR)/$(NAME).dasm
 
 all: $(BIN) $(DASM)
-	$(SIZE) --format=SysV $(ELF)
+	@-echo
+	@-echo "Sizes:"
+	@-echo "flash-build:               `du -b $(BIN) | cut -f1`"
+	@-$(SIZE) --format=SysV $(ELF) | grep -Ee '^(\.data|\.bss)'
 
 $(BIN): $(HEX)
 	$(OBJCOPY) -I ihex -O binary $(HEX) $(BIN)
