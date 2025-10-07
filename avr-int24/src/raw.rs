@@ -3,10 +3,10 @@ use crate::{
     raw::conv::{i24raw_to_i32, i32_to_i24raw_sat},
 };
 
-pub type Int24Raw = [u8; 3];
-pub const RAW_ZERO: Int24Raw = [0x00, 0x00, 0x00];
-pub const RAW_MIN: Int24Raw = [0x00, 0x00, 0x80];
-pub const RAW_MAX: Int24Raw = [0xFF, 0xFF, 0x7F];
+pub type Int24Raw = (u8, u8, u8);
+pub const RAW_ZERO: Int24Raw = (0x00, 0x00, 0x00);
+pub const RAW_MIN: Int24Raw = (0x00, 0x00, 0x80);
+pub const RAW_MAX: Int24Raw = (0xFF, 0xFF, 0x7F);
 
 #[inline(always)]
 pub fn mul24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
@@ -41,7 +41,7 @@ pub fn sub24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
 
 #[inline(always)]
 pub const fn is_neg24(a: Int24Raw) -> bool {
-    a[2] & 0x80 != 0
+    a.2 & 0x80 != 0
 }
 
 #[inline(always)]
@@ -51,7 +51,7 @@ pub fn neg24(a: Int24Raw) -> Int24Raw {
 
 #[inline(always)]
 pub const fn shl24_by8(a: Int24Raw) -> Int24Raw {
-    [0x00, a[0], a[1]]
+    (0x00, a.0, a.1)
 }
 
 #[inline(always)]
@@ -62,9 +62,9 @@ pub fn shl24(a: Int24Raw, count: u8) -> Int24Raw {
 #[inline(always)]
 pub const fn shr24_by8(a: Int24Raw) -> Int24Raw {
     if is_neg24(a) {
-        [a[1], a[2], 0xFF]
+        (a.1, a.2, 0xFF)
     } else {
-        [a[1], a[2], 0x00]
+        (a.1, a.2, 0x00)
     }
 }
 
@@ -89,16 +89,16 @@ pub mod conv {
     #[inline(never)]
     pub const fn i24raw_to_i32(v: Int24Raw) -> i32 {
         if is_neg24(v) {
-            i32::from_le_bytes([v[0], v[1], v[2], 0xFF])
+            i32::from_le_bytes([v.0, v.1, v.2, 0xFF])
         } else {
-            i32::from_le_bytes([v[0], v[1], v[2], 0x00])
+            i32::from_le_bytes([v.0, v.1, v.2, 0x00])
         }
     }
 
     #[inline(never)]
     pub const fn i24raw_to_i16_sat(v: Int24Raw) -> i16 {
-        if (v[2] == 0 && v[1] & 0x80 == 0) || (v[2] == 0xFF && v[1] & 0x80 != 0) {
-            i16::from_le_bytes([v[0], v[1]])
+        if (v.2 == 0 && v.1 & 0x80 == 0) || (v.2 == 0xFF && v.1 & 0x80 != 0) {
+            i16::from_le_bytes([v.0, v.1])
         } else if is_neg24(v) {
             i16::MIN // saturate
         } else {
@@ -114,7 +114,7 @@ pub mod conv {
             RAW_MAX // saturate
         } else {
             let v = v.to_le_bytes();
-            [v[0], v[1], v[2]]
+            (v[0], v[1], v[2])
         }
     }
 
@@ -122,9 +122,9 @@ pub mod conv {
     pub const fn i16_to_i24raw(v: i16) -> Int24Raw {
         let v = v.to_le_bytes();
         if v[1] & 0x80 == 0 {
-            [v[0], v[1], 0x00]
+            (v[0], v[1], 0x00)
         } else {
-            [v[0], v[1], 0xFF]
+            (v[0], v[1], 0xFF)
         }
     }
 }

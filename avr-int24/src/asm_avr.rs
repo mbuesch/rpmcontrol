@@ -9,13 +9,13 @@ pub fn asm_mul24(mut a: Int24Raw, b: Int24Raw) -> Int24Raw {
             "rcall __mulpsi3",
             "mov r0, {r0_save}",
 
-            inout("r22") a[0],
-            inout("r23") a[1],
-            inout("r24") a[2],
+            inout("r22") a.0,
+            inout("r23") a.1,
+            inout("r24") a.2,
 
-            in("r18") b[0],
-            in("r19") b[1],
-            in("r20") b[2],
+            in("r18") b.0,
+            in("r19") b.1,
+            in("r20") b.2,
 
             out("r21") _, // clobbered by __mulpsi3
             r0_save = out(reg) _, // clobbered by __mulpsi3
@@ -34,13 +34,13 @@ pub fn asm_div24(mut a: Int24Raw, b: Int24Raw) -> Int24Raw {
             "rcall __divmodpsi4",
             "mov r0, {r0_save}",
 
-            inout("r22") a[0],
-            inout("r23") a[1],
-            inout("r24") a[2],
+            inout("r22") a.0,
+            inout("r23") a.1,
+            inout("r24") a.2,
 
-            in("r18") b[0],
-            in("r19") b[1],
-            in("r20") b[2],
+            in("r18") b.0,
+            in("r19") b.1,
+            in("r20") b.2,
 
             out("r21") _, // clobbered by __divmodpsi4
             out("r25") _, // clobbered by __divmodpsi4
@@ -63,9 +63,9 @@ pub fn asm_neg24(mut a: Int24Raw) -> Int24Raw {
             "sbci {a1}, 0xFF",
             "sbci {a2}, 0xFF",
 
-            a0 = inout(reg) a[0],
-            a1 = inout(reg_upper) a[1],
-            a2 = inout(reg_upper) a[2],
+            a0 = inout(reg) a.0,
+            a1 = inout(reg_upper) a.1,
+            a2 = inout(reg_upper) a.2,
 
             options(pure, nomem, nostack),
         );
@@ -87,9 +87,9 @@ pub fn asm_shl24(mut a: Int24Raw, mut count: u8) -> Int24Raw {
             "brne 1b",
             "2:",
 
-            a0 = inout(reg) a[0],
-            a1 = inout(reg) a[1],
-            a2 = inout(reg) a[2],
+            a0 = inout(reg) a.0,
+            a1 = inout(reg) a.1,
+            a2 = inout(reg) a.2,
             count = inout(reg) count,
 
             options(pure, nomem, nostack),
@@ -112,9 +112,9 @@ pub fn asm_shr24(mut a: Int24Raw, mut count: u8) -> Int24Raw {
             "brne 1b",
             "2:",
 
-            a0 = inout(reg) a[0],
-            a1 = inout(reg) a[1],
-            a2 = inout(reg) a[2],
+            a0 = inout(reg) a.0,
+            a1 = inout(reg) a.1,
+            a2 = inout(reg) a.2,
             count = inout(reg) count,
 
             options(pure, nomem, nostack),
@@ -135,18 +135,18 @@ pub fn asm_ge24(mut a: Int24Raw, b: Int24Raw) -> bool {
             "clr {a0}",
             "1:",
 
-            a0 = inout(reg) a[0],
-            a1 = in(reg) a[1],
-            a2 = in(reg) a[2],
+            a0 = inout(reg) a.0,
+            a1 = in(reg) a.1,
+            a2 = in(reg) a.2,
 
-            b0 = in(reg) b[0],
-            b1 = in(reg) b[1],
-            b2 = in(reg) b[2],
+            b0 = in(reg) b.0,
+            b1 = in(reg) b.1,
+            b2 = in(reg) b.2,
 
             options(pure, nomem, nostack),
         );
     }
-    a[0] != 0
+    a.0 != 0
 }
 
 // vim: ts=4 sw=4 expandtab

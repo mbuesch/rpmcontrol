@@ -1,16 +1,16 @@
 use crate::raw::Int24Raw;
 
 fn to_i32(a: Int24Raw) -> i32 {
-    if a[2] & 0x80 == 0 {
-        i32::from_le_bytes([a[0], a[1], a[2], 0x00])
+    if a.2 & 0x80 == 0 {
+        i32::from_le_bytes([a.0, a.1, a.2, 0x00])
     } else {
-        i32::from_le_bytes([a[0], a[1], a[2], 0xFF])
+        i32::from_le_bytes([a.0, a.1, a.2, 0xFF])
     }
 }
 
 fn from_i32(a: i32) -> Int24Raw {
     let a = a.to_le_bytes();
-    [a[0], a[1], a[2]]
+    (a[0], a[1], a[2])
 }
 
 pub fn asm_mul24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
