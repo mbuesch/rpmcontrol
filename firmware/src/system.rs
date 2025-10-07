@@ -2,7 +2,7 @@ use crate::{
     analog::{Ac, Adc, AdcChannel},
     debug::Debug,
     filter::Filter,
-    fixpt::{Fixpt, big_fixpt, fixpt},
+    fixpt::{Fixpt, fixpt},
     hw::mcu,
     mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
     mon::{Mon, MonResult},
