@@ -44,7 +44,7 @@ $(ELF):
 .PHONY: $(ELF) # Always run cargo
 
 $(DASM): $(HEX)
-	$(OBJDUMP) --disassemble $(ELF) > $(DASM)
+	$(OBJDUMP) -j .text --disassemble --disassemble-zeroes $(ELF) > $(DASM)
 
 dasm: $(DASM)
 	less $(DASM)
