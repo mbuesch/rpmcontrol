@@ -3,6 +3,7 @@ use crate::{
     debug::Debug,
     fixpt::{Fixpt, fixpt},
     history::History,
+    mon_stack::estimate_unused_stack_space,
     mutex::{AvrAtomic, MainCtx, MutexCell},
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
@@ -15,6 +16,10 @@ const CHECK_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
 
 /// Immediate fault, if mains zero crossing distance is bigger than this.
 const MAINS_ZERO_CROSSING_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
+
+/// Minimum amount of CPU stack space that must be free all the time.
+/// Immediate fault, if less stack space is free.
+const MIN_STACK_SPACE: u16 = 64;
 
 /// Setpoint history.
 /// Length = SP_HIST_DIST * SP_HIST_COUNT = 3 seconds
@@ -120,19 +125,30 @@ impl Mon {
             }
         }
 
+        // Check if stack usage was too large.
+        let unused_stack_bytes = estimate_unused_stack_space();
+        let stack_failure = unused_stack_bytes < MIN_STACK_SPACE;
+
         // Distance between monitoring checks is too big.
         let mon_check_dist_failure = now > self.prev_check.get(m) + CHECK_TIMEOUT;
+
         // Analog value processing failed.
         let analog_failure = ANALOG_FAILURE.get_bool();
+
         // Distance between mains zero crossings is too big.
         let mains_zero_crossing_dist_failure =
             now > self.prev_mains_90deg.get(m) + MAINS_ZERO_CROSSING_TIMEOUT;
 
         // Immediate error without debouncing on mon-dist, analog or zero crossing failure.
-        if mon_check_dist_failure || analog_failure || mains_zero_crossing_dist_failure {
+        if stack_failure
+            || mon_check_dist_failure
+            || analog_failure
+            || mains_zero_crossing_dist_failure
+        {
             self.error_deb.error_no_debounce(m);
         }
 
+        Debug::MinStack.log_u16(unused_stack_bytes);
         Debug::MonDebounce.log_u8(self.error_deb.count(m));
 
         if self.error_deb.is_ok(m) {

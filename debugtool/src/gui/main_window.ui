@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<!-- Created with Cambalache 0.94.1 -->
+<!-- Created with Cambalache 0.96.1 -->
 <interface>
   <!-- interface-name main_window.ui -->
-  <requires lib="gtk" version="4.8"/>
+  <requires lib="gtk" version="4.18"/>
   <object class="GtkApplicationWindow" id="main_window">
     <child>
       <object class="GtkBox">
@@ -59,6 +59,11 @@
                 <child>
                   <object class="GtkCheckButton" id="cb_maxrt">
                     <property name="label">max-rt</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkCheckButton" id="cb_minstack">
+                    <property name="label">min-stack</property>
                   </object>
                 </child>
               </object>

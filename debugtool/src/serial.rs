@@ -21,6 +21,7 @@ pub enum SerDat {
     TempMot(Instant, f64),
     TempUc(Instant, f64),
     MaxRt(Instant, f64),
+    MinStack(Instant, u16),
     Sync,
 }
 
@@ -67,6 +68,7 @@ impl SerDat {
             5 => Ok(SerDat::TempMot(now, fixpt_to_celsius(val))),
             6 => Ok(SerDat::TempUc(now, fixpt_to_celsius(val))),
             7 => Ok(SerDat::MaxRt(now, raw_to_reltime(val))),
+            8 => Ok(SerDat::MinStack(now, val)),
             0xFF => Ok(SerDat::Sync),
             cmd => Err(err!("SerBuf::parse: Unknown command 0x{cmd:02X}")),
         }

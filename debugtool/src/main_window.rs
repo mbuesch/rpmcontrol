@@ -22,6 +22,7 @@ const SPEEDO_STATUS_FACT: f64 = 100.0;
 const MON_DEBOUNCE_FACT: f64 = N_MAX / 150.0;
 const TEMP_FACT: f64 = N_MAX / 100.0;
 const MAXRT_FACT: f64 = N_MAX / 0.010;
+const MINSTACK_FACT: f64 = N_MAX / 512.0;
 
 const STROKE_WIDTH: u32 = 3;
 
@@ -34,6 +35,7 @@ struct DiagramVisibility {
     temp_mot: bool,
     temp_uc: bool,
     maxrt: bool,
+    minstack: bool,
 }
 
 impl DiagramVisibility {
@@ -47,6 +49,7 @@ impl DiagramVisibility {
             temp_mot: true,
             temp_uc: false,
             maxrt: false,
+            minstack: false,
         }
     }
 }
@@ -61,6 +64,7 @@ struct DiagramData {
     temp_mot: VecDeque<(f64, f64)>,
     temp_uc: VecDeque<(f64, f64)>,
     maxrt: VecDeque<(f64, f64)>,
+    minstack: VecDeque<(f64, f64)>,
     visibility: DiagramVisibility,
     run: bool,
 }
@@ -87,6 +91,7 @@ impl DiagramData {
             temp_mot: VecDeque::new(),
             temp_uc: VecDeque::new(),
             maxrt: VecDeque::new(),
+            minstack: VecDeque::new(),
             visibility: DiagramVisibility::new(),
             run: true,
         }
@@ -102,6 +107,7 @@ impl DiagramData {
         oldest = check_ts!(oldest, self.temp_mot.front(), min);
         oldest = check_ts!(oldest, self.temp_uc.front(), min);
         oldest = check_ts!(oldest, self.maxrt.front(), min);
+        oldest = check_ts!(oldest, self.minstack.front(), min);
         if oldest < f64::MAX { oldest } else { 0.0 }
     }
 
@@ -115,6 +121,7 @@ impl DiagramData {
         newest = check_ts!(newest, self.temp_mot.back(), max);
         newest = check_ts!(newest, self.temp_uc.back(), max);
         newest = check_ts!(newest, self.maxrt.back(), max);
+        newest = check_ts!(newest, self.minstack.back(), max);
         newest
     }
 
@@ -163,6 +170,10 @@ impl DiagramData {
             SerDat::MaxRt(t, val) => {
                 self.maxrt.push_back((self.timestamp(t), val * MAXRT_FACT));
             }
+            SerDat::MinStack(t, val) => {
+                self.minstack
+                    .push_back((self.timestamp(t), val as f64 * MINSTACK_FACT));
+            }
             SerDat::Sync => (),
         }
         Self::prune_items(&mut self.speedo, age_thres);
@@ -173,6 +184,7 @@ impl DiagramData {
         Self::prune_items(&mut self.temp_mot, age_thres);
         Self::prune_items(&mut self.temp_uc, age_thres);
         Self::prune_items(&mut self.maxrt, age_thres);
+        Self::prune_items(&mut self.minstack, age_thres);
     }
 }
 
@@ -328,6 +340,22 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
             });
     }
 
+    if diagram_data.visibility.minstack {
+        chart
+            .draw_series(LineSeries::new(
+                diagram_data.minstack.iter().copied(),
+                full_palette::BLACK.stroke_width(STROKE_WIDTH),
+            ))
+            .unwrap()
+            .label("min-stack")
+            .legend(|(x, y)| {
+                PathElement::new(
+                    vec![(x, y), (x + 20, y)],
+                    full_palette::BLACK.stroke_width(STROKE_WIDTH),
+                )
+            });
+    }
+
     chart
         .configure_series_labels()
         .background_style(WHITE)
@@ -411,6 +439,7 @@ impl MainWindow {
         connect_signal_cb!(builder, "cb_temp_mot", temp_mot);
         connect_signal_cb!(builder, "cb_temp_uc", temp_uc);
         connect_signal_cb!(builder, "cb_maxrt", maxrt);
+        connect_signal_cb!(builder, "cb_minstack", minstack);
         connect_run_cb!(builder, "cb_run");
 
         glib::source::timeout_add_local(Duration::from_millis(100), {

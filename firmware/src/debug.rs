@@ -22,13 +22,15 @@ pub enum Debug {
     TempMot,
     TempUc,
     MaxRt,
+    MinStack,
 }
-const NRVALUES: usize = 8;
+const NRVALUES: usize = 9;
 
 const INDEXSHIFT: usize = 2;
 const INDEXMASK: u8 = (1 << INDEXSHIFT) - 1;
 
 static VALUES: Mutex<[Cell<u16>; NRVALUES]> = Mutex::new([
+    Cell::new(0),
     Cell::new(0),
     Cell::new(0),
     Cell::new(0),

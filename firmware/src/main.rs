@@ -12,6 +12,7 @@ mod history;
 mod hw;
 mod mains;
 mod mon;
+mod mon_stack;
 mod mutex;
 mod pid;
 mod pocheck;
