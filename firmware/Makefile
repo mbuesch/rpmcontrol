@@ -2,6 +2,7 @@ OBJCOPY:=avr-objcopy
 OBJDUMP:=avr-objdump
 GDB:=avr-gdb
 SIZE:=avr-size
+AVR_POSTPROCESS:=avr-postprocess
 
 DWDEBUG:=dwdebug
 DWDEBUG_PORT:=ttyUSB0
@@ -18,27 +19,41 @@ LFUSE:=0xEF
 HFUSE:=0x8D
 EFUSE:=0xFF
 
+AVR_POSTPROCESS_OPT:=\
+	-P main-prologue \
+	-P bad-interrupt-exit
+
 AVR_CPU_FREQUENCY_HZ:=16000000
 
 NAME:=rpmcontrol
 TARGET:=avr-attiny861a
 RELEASEDIR:=target/$(TARGET)/release
 BIN:=$(RELEASEDIR)/$(NAME).bin
+BINPOST:=$(RELEASEDIR)/$(NAME).post.bin
 HEX:=$(RELEASEDIR)/$(NAME).hex
+HEXPOST:=$(RELEASEDIR)/$(NAME).post.hex
 ELF:=$(RELEASEDIR)/$(NAME).elf
 DASM:=$(RELEASEDIR)/$(NAME).dasm
+DASMPOST:=$(RELEASEDIR)/$(NAME).post.dasm
 
-all: $(BIN) $(DASM)
+all: $(BIN) $(BINPOST) $(DASM)
 	@-echo
 	@-echo "Sizes:"
 	@-echo "flash-build:               `du -b $(BIN) | cut -f1`"
+	@-echo "flash-post:                `du -b $(BINPOST) | cut -f1`"
 	@-$(SIZE) --format=SysV $(ELF) | grep -Ee '^(\.data|\.bss)'
+
+$(BINPOST): $(HEXPOST)
+	$(OBJCOPY) -I ihex -O binary $(HEXPOST) $(BINPOST)
 
 $(BIN): $(HEX)
 	$(OBJCOPY) -I ihex -O binary $(HEX) $(BIN)
 
 $(HEX): $(ELF)
 	$(OBJCOPY) -R.eeprom -O ihex $(ELF) $(HEX)
+
+$(HEXPOST) & $(DASMPOST): $(ELF)
+	$(AVR_POSTPROCESS) $(AVR_POSTPROCESS_OPT) -A $(DASMPOST) $(ELF) $(HEXPOST) >/dev/null
 
 $(ELF):
 	AVR_CPU_FREQUENCY_HZ=$(AVR_CPU_FREQUENCY_HZ) \
@@ -51,6 +66,9 @@ $(DASM): $(HEX)
 
 dasm: $(DASM)
 	less $(DASM)
+
+dasm-post: $(DASMPOST)
+	less $(DASMPOST)
 
 clean:
 	cargo clean
@@ -65,16 +83,16 @@ isp-fuses:
 		-B $(AVRDUDE_SPEED_SLOW) -p $(AVRDUDE_MCU) \
 		-U lfuse:w:$(LFUSE):m -U hfuse:w:$(HFUSE):m -U efuse:w:$(EFUSE):m
 
-isp-flash: $(HEX)
+isp-flash: $(HEXPOST)
 	$(AVRDUDE) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROG) \
 		-B $(AVRDUDE_SPEED) -p $(AVRDUDE_MCU) \
-		-U flash:w:$(HEX)
+		-U flash:w:$(HEXPOST)
 
 dw:
 	$(DWDEBUG) 'device $(DWDEBUG_PORT), te'
 
-dw-flash: $(BIN)
-	$(DWDEBUG) 'device $(DWDEBUG_PORT), l $(BIN), te, qr'
+dw-flash: $(BINPOST)
+	$(DWDEBUG) 'device $(DWDEBUG_PORT), l $(BINPOST), te, qr'
 
 dw-gdbserver:
 	$(DWDEBUG) 'device $(DWDEBUG_PORT), reset, te, gdbserver, qr'
