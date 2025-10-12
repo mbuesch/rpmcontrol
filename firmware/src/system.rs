@@ -18,6 +18,8 @@ use crate::{
 };
 use curveipo::Curve;
 
+const STARTUP_DELAY: RelLargeTimestamp = RelLargeTimestamp::from_millis(300);
+
 const RPMPI_PARAMS: PidParams = PidParams {
     kp: fixpt!(5 / 1),
     ki: fixpt!(1 / 4),
@@ -117,8 +119,10 @@ pub fn debug_toggle() {
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum SysState {
+    /// Early startup delay.
+    Startup = 0,
     /// Power-on system check.
-    PoCheck = 0,
+    PoCheck,
     /// Speedometer syncing.
     Syncing,
     /// Up and running.
@@ -126,6 +130,7 @@ enum SysState {
 }
 
 pub struct System {
+    startup_delay_timeout: MutexCell<LargeTimestamp>,
     state: MutexCell<SysState>,
     mon: Mon,
     mon_pocheck: PoCheck,
@@ -146,7 +151,8 @@ pub struct System {
 impl System {
     pub const fn new() -> Self {
         Self {
-            state: MutexCell::new(SysState::PoCheck),
+            startup_delay_timeout: MutexCell::new(LargeTimestamp::new()),
+            state: MutexCell::new(SysState::Startup),
             mon: Mon::new(),
             mon_pocheck: PoCheck::new(),
             ac: Ac::new(),
@@ -171,6 +177,9 @@ impl System {
         self.mon_pocheck.init(m);
         self.adc.init(m, sp);
         self.ac.init(sp);
+
+        self.startup_delay_timeout
+            .set(m, timer_get_large() + STARTUP_DELAY);
     }
 
     fn meas_runtime(&self, m: &MainCtx<'_>) {
@@ -180,6 +189,14 @@ impl System {
         let max_rt = self.max_rt.get(m).max(runtime);
         self.max_rt.set(m, max_rt);
         Debug::MaxRt.log_rel_large_timestamp(max_rt);
+    }
+
+    /// Run the initial startup delay.
+    pub fn run_startup(&self, m: &MainCtx<'_>) {
+        // On startup delay timeout, continue to power-on-check.
+        if timer_get_large() > self.startup_delay_timeout.get(m) {
+            self.state.set(m, SysState::PoCheck);
+        }
     }
 
     /// Run the power-on-check.
@@ -293,7 +310,7 @@ impl System {
             let rpmpid_params;
             let rpmpid_reset_i;
             match self.state.get(m) {
-                SysState::PoCheck | SysState::Syncing => {
+                SysState::Startup | SysState::PoCheck | SysState::Syncing => {
                     rpmpid_speed = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint_filt);
                     rpmpid_params = &RPMPI_PARAMS_SYNCING;
                     rpmpid_reset_i = true;
@@ -346,29 +363,36 @@ impl System {
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         self.meas_runtime(m);
 
-        // Update the mains synchronization.
-        let phase_update = self.mains.run(m);
+        let state = self.state.get(m);
+        if state == SysState::Startup {
+            // Startup delay.
+            self.run_startup(m);
+        } else {
+            // Update the mains synchronization.
+            let phase_update = self.mains.run(m);
 
-        // Run the ADC measurements.
-        self.adc.run(m, sp);
+            // Run the ADC measurements.
+            self.adc.run(m, sp);
 
-        // Evaluate the speedo signal.
-        self.speedo.update(m);
-        let speed = self.speedo.get_speed(m);
+            // Evaluate the speedo signal.
+            self.speedo.update(m);
+            let speed = self.speedo.get_speed(m);
 
-        let triac_shutoff = match self.state.get(m) {
-            SysState::PoCheck => self.run_pocheck(m, speed),
-            SysState::Syncing | SysState::Running => self.run_normal(m, phase_update, speed),
-        };
+            let triac_shutoff = match state {
+                SysState::Startup => Shutoff::MachineShutoff,
+                SysState::PoCheck => self.run_pocheck(m, speed),
+                SysState::Syncing | SysState::Running => self.run_normal(m, phase_update, speed),
+            };
 
-        // Update the triac trigger state.
-        self.triac.run(
-            m,
-            phase_update,
-            self.mains.get_phase(m),
-            self.mains.get_phaseref(m),
-            triac_shutoff,
-        );
+            // Update the triac trigger state.
+            self.triac.run(
+                m,
+                phase_update,
+                self.mains.get_phase(m),
+                self.mains.get_phaseref(m),
+                triac_shutoff,
+            );
+        }
     }
 }
 
