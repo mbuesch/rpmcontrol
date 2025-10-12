@@ -214,10 +214,7 @@ impl System {
             state @ SysState::Syncing | state @ SysState::Running => {
                 if let Some(speed) = speed {
                     speedo_hz = self.speed_filter.run(m, speed.as_16hz(), SPEED_FILTER_DIV);
-                    if state != SysState::Running {
-                        self.state.set(m, SysState::Running);
-                        self.temp.init(m);
-                    }
+                    self.state.set(m, SysState::Running);
                 } else if state == SysState::Running {
                     speedo_hz = self.speed_filter.get(m);
                 } else {

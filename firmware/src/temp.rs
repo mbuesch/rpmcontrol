@@ -83,10 +83,6 @@ impl Temp {
         }
     }
 
-    pub fn init(&self, m: &MainCtx<'_>) {
-        self.shutoff.set(m, Shutoff::MachineRunning);
-    }
-
     pub fn run(&self, m: &MainCtx<'_>, temp_adc: TempAdc) {
         let mut below_lo = false;
         let mut above_hi = false;
