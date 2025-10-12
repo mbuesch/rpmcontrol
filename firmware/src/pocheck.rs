@@ -8,21 +8,41 @@ use crate::{
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
 
-const TRANSITION_DIST: RelLargeTimestamp = RelLargeTimestamp::from_millis(400);
+/// Duration of the `PoStatePart::Pre` part.
+const DUR_PRE: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
+
+/// Duration of the `PoStatePart::Check` part.
+const DUR_CHECK: RelLargeTimestamp = RelLargeTimestamp::from_millis(300);
+
+/// RPM below or equal to this limit are considered to be zero RPM.
 const RPM_ZERO_LIMIT: Fixpt = rpm!(5);
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum PoState {
+    /// Initial check: Primary and secondary shutoff.
     CheckIdle = 0,
+
+    /// Secondary shutoff only. Primary running.
     CheckSecondaryShutoff,
+
+    /// Primary shutoff only. Secondary running.
     CheckPrimaryShutoff,
+
+    /// Error detected. This state is sticky and final.
     Error,
+
+    /// All checks done. Everything is Ok. This state is sticky and final.
     DoneOk,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 enum PoStatePart {
+    /// First part of the `PoState`.
+    /// No actual checks during this part.
     Pre = 0,
+
+    /// Second part of the `PoState`.
+    /// The check is performed during this part.
     Check,
 }
 
@@ -54,8 +74,7 @@ impl PoCheck {
     }
 
     pub fn init(&self, m: &MainCtx<'_>) {
-        self.next_transition
-            .set(m, timer_get_large() + TRANSITION_DIST);
+        self.next_transition.set(m, timer_get_large() + DUR_PRE);
     }
 
     pub fn run(&self, m: &MainCtx<'_>, speedo_hz: Option<MotorSpeed>) -> PoState {
@@ -65,24 +84,20 @@ impl PoCheck {
             PoState::CheckIdle | PoState::CheckSecondaryShutoff | PoState::CheckPrimaryShutoff => {
                 // Transition to the next state part?
                 let now = timer_get_large();
-                let transition = if now >= self.next_transition.get(m) {
-                    self.next_transition.set(m, now + TRANSITION_DIST);
-                    true
-                } else {
-                    false
-                };
+                let transition = now >= self.next_transition.get(m);
 
                 match self.part.get(m) {
                     PoStatePart::Pre => {
                         if transition {
                             self.part.set(m, PoStatePart::Check);
+                            self.next_transition.set(m, now + DUR_CHECK);
                         }
                     }
                     PoStatePart::Check => {
                         if transition {
                             self.part.set(m, PoStatePart::Pre);
                             state = state.next();
-                            crate::system::debug_toggle();
+                            self.next_transition.set(m, now + DUR_PRE);
                         }
 
                         // Run the actual machine state check.
