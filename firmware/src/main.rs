@@ -6,6 +6,7 @@
 mod analog;
 mod debounce;
 mod debug;
+mod exint;
 mod filter;
 mod fixpt;
 mod history;
@@ -82,6 +83,7 @@ fn main() -> ! {
 
     let porta_dp = ports::PortA { PORTA: dp.PORTA };
     let portb_dp = ports::PortB { PORTB: dp.PORTB };
+    let exint_dp = exint::ExInt { EXINT: dp.EXINT };
     let timer_dp = timer::Dp { TC1: dp.TC1 };
     let usi_dp = usi_uart::Dp {
         USI: dp.USI,
@@ -91,11 +93,13 @@ fn main() -> ! {
     let init_static_vars = |ctx| {
         let porta = ports::PORTA.init(ctx, porta_dp);
         let portb = ports::PORTB.init(ctx, portb_dp);
+        let exint = exint::EXINT.init(ctx, exint_dp);
         timer::DP.init(ctx, timer_dp);
         let usi_uart = usi_uart::DP.init(ctx, usi_dp);
 
         porta.setup(ctx);
         portb.setup(ctx);
+        exint.setup(ctx);
         usi_uart.setup(ctx);
         debug_init(ctx);
     };

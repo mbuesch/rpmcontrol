@@ -1,10 +1,11 @@
 use crate::{
     fixpt::{Fixpt, fixpt},
     hw::interrupt,
-    mutex::{MainCtx, MutexCell},
+    mutex::{IrqCtx, MainCtx, Mutex, MutexCell},
     ports::PORTA,
-    timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
+    timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large, timer_get_large_cs},
 };
+use core::cell::Cell;
 
 /// Mains sine wave period (50 Hz).
 pub const MAINS_PERIOD_MS: Fixpt = fixpt!(20);
@@ -20,6 +21,10 @@ pub const MAINS_HALFWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(2);
 pub const MAINS_QUARTERWAVE_DUR_MS: Fixpt = MAINS_HALFWAVE_DUR_MS.const_div(fixpt!(2));
 /// Mains sine wave quarter-wave length.
 pub const MAINS_QUARTERWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(4);
+
+fn read_vsense() -> bool {
+    PORTA.get(1)
+}
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Phase {
@@ -38,7 +43,6 @@ pub struct Mains {
     prev_vsense: MutexCell<bool>,
     phase: MutexCell<Phase>,
     phaseref: MutexCell<LargeTimestamp>,
-    next_run: MutexCell<LargeTimestamp>,
 }
 
 impl Mains {
@@ -47,48 +51,36 @@ impl Mains {
             prev_vsense: MutexCell::new(false),
             phase: MutexCell::new(Phase::Notsync),
             phaseref: MutexCell::new(LargeTimestamp::new()),
-            next_run: MutexCell::new(LargeTimestamp::new()),
         }
-    }
-
-    fn read_vsense(&self, _m: &MainCtx<'_>) -> bool {
-        PORTA.get(1)
     }
 
     /// Run mains vsense pin reading and evaluation.
     pub fn run(&self, m: &MainCtx<'_>) -> PhaseUpdate {
-        // Read vsense pin and timer with IRQs disabled
-        // to not be interrupted and therefore to not skew the timestamp
-        // in unpredictable ways.
-        let (vsense, now) = interrupt::free(|_| {
-            let vsense = self.read_vsense(m);
-            let now = timer_get_large();
-            (vsense, now)
-        });
-
         let mut ret = PhaseUpdate::NotChanged;
-        if now >= self.next_run.get(m) {
-            match self.phase.get(m) {
-                Phase::Notsync | Phase::NegHalfwave => {
-                    if !self.prev_vsense.get(m) && vsense {
-                        self.phaseref.set(m, now);
-                        self.phase.set(m, Phase::PosHalfwave);
-                        ret = PhaseUpdate::Changed;
-                    }
-                }
-                Phase::PosHalfwave => {
-                    let nextref = self.phaseref.get(m) + MAINS_HALFWAVE_DUR;
-                    if now >= nextref {
-                        self.phaseref.set(m, nextref);
-                        self.phase.set(m, Phase::NegHalfwave);
-                        // Mute vsense reading for another quarter wave.
-                        self.next_run.set(m, nextref + MAINS_QUARTERWAVE_DUR);
-                        ret = PhaseUpdate::Changed;
-                    }
+
+        let (vsense, vsense_stamp) =
+            interrupt::free(|cs| (VSENSE.borrow(cs).get(), VSENSE_STAMP.borrow(cs).get()));
+
+        match self.phase.get(m) {
+            Phase::Notsync | Phase::NegHalfwave => {
+                if !self.prev_vsense.get(m) && vsense {
+                    self.phaseref.set(m, vsense_stamp);
+                    self.phase.set(m, Phase::PosHalfwave);
+                    ret = PhaseUpdate::Changed;
                 }
             }
-            self.prev_vsense.set(m, vsense);
+            Phase::PosHalfwave => {
+                let nextref = self.phaseref.get(m) + MAINS_HALFWAVE_DUR;
+                let now = timer_get_large();
+                if now >= nextref {
+                    self.phaseref.set(m, nextref);
+                    self.phase.set(m, Phase::NegHalfwave);
+                    ret = PhaseUpdate::Changed;
+                }
+            }
         }
+        self.prev_vsense.set(m, vsense);
+
         ret
     }
 
@@ -106,6 +98,24 @@ impl Mains {
         } else {
             Some(timer_get_large() - self.phaseref.get(m))
         }
+    }
+}
+
+static VSENSE: Mutex<Cell<bool>> = Mutex::new(Cell::new(false));
+static VSENSE_STAMP: Mutex<Cell<LargeTimestamp>> = Mutex::new(Cell::new(LargeTimestamp::new()));
+
+pub fn irq_handler_pcint(c: &IrqCtx) {
+    let cs = c.cs();
+
+    let now = timer_get_large_cs(cs);
+    let vsense = read_vsense();
+
+    let prev_vsense = VSENSE.borrow(cs).get();
+    let prev_stamp = VSENSE_STAMP.borrow(cs).get();
+
+    if vsense != prev_vsense && now >= prev_stamp + MAINS_QUARTERWAVE_DUR {
+        VSENSE.borrow(cs).set(vsense);
+        VSENSE_STAMP.borrow(cs).set(now);
     }
 }
 
