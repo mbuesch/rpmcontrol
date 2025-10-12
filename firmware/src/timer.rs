@@ -43,6 +43,7 @@ pub fn timer_get() -> Timestamp {
     DP.TC1.tcnt1().read().bits().into()
 }
 
+#[inline(never)]
 pub fn timer_get_large_cs(cs: CriticalSection<'_>) -> LargeTimestamp {
     let mut upper = TIMER_UPPER.borrow(cs).get();
     let mut lower = DP.TC1.tcnt1().read().bits();
@@ -58,6 +59,7 @@ pub fn timer_get_large_cs(cs: CriticalSection<'_>) -> LargeTimestamp {
     ((upper as u16) << 8 | lower as u16).into()
 }
 
+#[inline(never)]
 pub fn timer_get_large() -> LargeTimestamp {
     interrupt::free(timer_get_large_cs)
 }
