@@ -5,9 +5,9 @@ use crate::{
     history::History,
     mon_stack::estimate_unused_stack_space,
     mutex::{AvrAtomic, MainCtx, MutexCell},
+    shutoff::Shutoff,
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
-    shutoff::Shutoff,
 };
 
 /// Distance between monitoring checks.
