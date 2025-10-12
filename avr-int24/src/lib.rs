@@ -367,7 +367,17 @@ mod test {
         assert_eq!(a + b, c);
         assert_eq!(a.const_add(b), c);
 
-        //TODO sat
+        let a = Int24::from_i32(0x7F_FFFF - 1);
+        let b = Int24::from_i32(2);
+        let c = Int24::from_i32(0x7F_FFFF);
+        assert_eq!(a + b, c);
+        assert_eq!(a.const_add(b), c);
+
+        let a = Int24::from_i32(-0x80_0000 + 1);
+        let b = Int24::from_i32(-2);
+        let c = Int24::from_i32(-0x80_0000);
+        assert_eq!(a + b, c);
+        assert_eq!(a.const_add(b), c);
     }
 
     #[test]
@@ -390,7 +400,17 @@ mod test {
         assert_eq!(a - b, c);
         assert_eq!(a.const_sub(b), c);
 
-        //TODO sat
+        let a = Int24::from_i32(-0x80_0000 + 1);
+        let b = Int24::from_i32(2);
+        let c = Int24::from_i32(-0x80_0000);
+        assert_eq!(a - b, c);
+        assert_eq!(a.const_sub(b), c);
+
+        let a = Int24::from_i32(0x7F_FFFF - 1);
+        let b = Int24::from_i32(-2);
+        let c = Int24::from_i32(0x7F_FFFF);
+        assert_eq!(a - b, c);
+        assert_eq!(a.const_sub(b), c);
     }
 
     #[test]
