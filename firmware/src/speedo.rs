@@ -59,7 +59,7 @@ impl Speedo {
         }
     }
 
-    pub fn get_speed(&self, m: &MainCtx<'_>) -> Option<MotorSpeed> {
+    fn get_speed(&self, m: &MainCtx<'_>) -> Option<MotorSpeed> {
         if self.ok_count.get(m) >= OK_THRES {
             Some(MotorSpeed::from_period_dur(self.get_dur(m)))
         } else {
@@ -85,7 +85,7 @@ impl Speedo {
         self.ok_count.set(m, self.ok_count.get(m).saturating_add(1));
     }
 
-    pub fn update(&self, m: &MainCtx<'_>) {
+    pub fn run(&self, m: &MainCtx<'_>) -> Option<MotorSpeed> {
         let now = timer_get_large();
         let prev_stamp = self.prev_stamp.get(m);
         if now < prev_stamp {
@@ -105,6 +105,8 @@ impl Speedo {
         }
 
         Debug::SpeedoStatus.log_u16(self.ok_count.get(m) as u16);
+
+        self.get_speed(m)
     }
 }
 

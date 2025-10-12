@@ -184,17 +184,22 @@ impl System {
 
     fn meas_runtime(&self, m: &MainCtx<'_>) {
         let now = timer_get_large();
+
         let runtime = now - self.prev_time.get(m);
         self.prev_time.set(m, now);
+
         let max_rt = self.max_rt.get(m).max(runtime);
         self.max_rt.set(m, max_rt);
+
         Debug::MaxRt.log_rel_large_timestamp(max_rt);
     }
 
     /// Run the initial startup delay.
     pub fn run_startup(&self, m: &MainCtx<'_>) {
+        let now = timer_get_large();
+
         // On startup delay timeout, continue to power-on-check.
-        if timer_get_large() > self.startup_delay_timeout.get(m) {
+        if now > self.startup_delay_timeout.get(m) {
             self.state.set(m, SysState::PoCheck);
         }
     }
@@ -375,8 +380,7 @@ impl System {
             self.adc.run(m, sp);
 
             // Evaluate the speedo signal.
-            self.speedo.update(m);
-            let speed = self.speedo.get_speed(m);
+            let speed = self.speedo.run(m);
 
             let triac_shutoff = match state {
                 SysState::Startup => Shutoff::MachineShutoff,
