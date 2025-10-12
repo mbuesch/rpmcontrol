@@ -11,7 +11,7 @@ use crate::{
     pid::{Pid, PidIlim, PidParams},
     ports::PORTB,
     shutoff::{Shutoff, set_secondary_shutoff},
-    speedo::Speedo,
+    speedo::{MotorSpeed, Speedo},
     temp::{Temp, TempAdc},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
     triac::Triac,
@@ -182,70 +182,74 @@ impl System {
         Debug::MaxRt.log_rel_large_timestamp(max_rt);
     }
 
-    pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
-        let mut triac_shutoff = Shutoff::MachineRunning;
+    /// Run the power-on-check.
+    pub fn run_pocheck(&self, m: &MainCtx<'_>, speed: Option<MotorSpeed>) -> Shutoff {
+        // Run the power-on-check state machine.
+        match self.mon_pocheck.run(m, speed) {
+            PoState::CheckIdle | PoState::CheckSecondaryShutoff | PoState::CheckPrimaryShutoff => {
+                // Power-on-check is still running.
 
-        self.meas_runtime(m);
-
-        // Evaluate the speedo signal.
-        self.speedo.update(m);
-        let speed = self.speedo.get_speed(m);
-
-        // Run the power-on check state machine.
-        if self.state.get(m) == SysState::PoCheck {
-            match self.mon_pocheck.run(m, speed) {
-                PoState::CheckIdle
-                | PoState::CheckSecondaryShutoff
-                | PoState::CheckPrimaryShutoff => {
-                    // Power-on check is still running.
-                }
-                PoState::Error => {
-                    // Power-on check detected an error.
-                }
-                PoState::DoneOk => {
-                    // Power-on check finished successfully.
-                    // Go to next system state.
-                    self.state.set(m, SysState::Syncing);
-                    // Ensure triac is turned off.
+                // Get power-on-check triac offset override.
+                if let Some(phi_offs_ms) = self.mon_pocheck.get_triac_phi_offs_ms(m) {
+                    self.triac.set_phi_offs_ms(m, phi_offs_ms);
+                } else {
                     self.triac.set_phi_offs_shutoff(m);
                 }
             }
+            PoState::Error => {
+                // Power-on-check detected an error.
+
+                // Ensure triac is turned off.
+                self.triac.set_phi_offs_shutoff(m);
+            }
+            PoState::DoneOk => {
+                // Power-on-check finished successfully.
+
+                // Go to next system state.
+                self.state.set(m, SysState::Syncing);
+
+                // Ensure triac is turned off.
+                self.triac.set_phi_offs_shutoff(m);
+            }
         }
 
+        // Set the secondary shutoff according to what the power-on-check wants.
+        set_secondary_shutoff(self.mon_pocheck.get_secondary_shutoff(m));
+
+        // Set the primary shutoff according to what the power-on-check wants.
+        self.mon_pocheck.get_triac_shutoff(m)
+    }
+
+    /// The system is in normal state (Syncing or Running).
+    pub fn run_normal(
+        &self,
+        m: &MainCtx<'_>,
+        phase_update: PhaseUpdate,
+        speed: Option<MotorSpeed>,
+    ) -> Shutoff {
+        let mut triac_shutoff = Shutoff::MachineRunning;
+
         // Interpret and filter the motor speed.
-        let mut speed_filt;
-        match self.state.get(m) {
-            SysState::PoCheck => {
-                // No filtered speed during power-on check.
-                speed_filt = fixpt!(0);
-                self.speed_filter.reset(m);
-            }
-            state @ SysState::Syncing | state @ SysState::Running => {
-                if let Some(speed) = speed {
-                    // Filter the speed.
-                    speed_filt = self.speed_filter.run(m, speed.as_16hz(), SPEED_FILTER_DIV);
-                    // We are sync'd now. Leave sync state.
-                    self.state.set(m, SysState::Running);
-                } else if state == SysState::Running {
-                    // No new speed from speedometer and system state is running.
-                    // Use the current filtered speed.
-                    speed_filt = self.speed_filter.get(m);
-                } else {
-                    // No new speed from speedometer and not in running system state.
-                    // Assume zero.
-                    speed_filt = fixpt!(0);
-                    self.speed_filter.reset(m);
-                }
-            }
-        }
+        let speed_filt = if let Some(speed) = speed {
+            // We are sync'd now. Leave sync state.
+            self.state.set(m, SysState::Running);
+            // Filter the speed.
+            self.speed_filter.run(m, speed.as_16hz(), SPEED_FILTER_DIV)
+        } else if self.state.get(m) == SysState::Running {
+            // No new speed from speedometer and system state is running.
+            // Use the current filtered speed.
+            self.speed_filter.get(m)
+        } else {
+            // No new speed from speedometer and not in running system state.
+            // Assume zero.
+            self.speed_filter.reset(m);
+            fixpt!(0)
+        };
 
         // If the motor is too fast, turn the triac off.
         if speed_filt > MOT_SOFT_LIMIT {
             triac_shutoff = Shutoff::MachineShutoff;
         }
-
-        // Run the ADC measurements.
-        self.adc.run(m, sp);
 
         // Convert the setpoint to 16Hz
         let setpoint = if let Some(setpoint) = self.adc.get_result(m, AdcChannel::Setpoint) {
@@ -253,9 +257,6 @@ impl System {
         } else {
             rpm!(0)
         };
-
-        // Update the mains synchronization.
-        let phase_update = self.mains.run(m);
 
         // Check if we are at mains zero crossing + 90 degrees.
         let mut mains_90deg_trigger = false;
@@ -283,34 +284,36 @@ impl System {
 
             let setpoint_filt = self.setpoint_filter.run(m, setpoint, SETPOINT_FILTER_DIV);
 
-            if self.state.get(m) == SysState::Running && setpoint_filt <= RPM_SYNC_THRES {
+            if setpoint_filt <= RPM_SYNC_THRES {
                 self.state.set(m, SysState::Syncing);
             }
 
             // Run the RPM controller.
-            let rpmpi_params;
-            let reset_i;
+            let rpmpid_speed;
+            let rpmpid_params;
+            let rpmpid_reset_i;
             match self.state.get(m) {
                 SysState::PoCheck | SysState::Syncing => {
-                    speed_filt = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint_filt);
-                    rpmpi_params = &RPMPI_PARAMS_SYNCING;
-                    reset_i = true;
+                    rpmpid_speed = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint_filt);
+                    rpmpid_params = &RPMPI_PARAMS_SYNCING;
+                    rpmpid_reset_i = true;
                 }
                 SysState::Running => {
-                    rpmpi_params = &RPMPI_PARAMS;
-                    reset_i = false;
+                    rpmpid_speed = speed_filt;
+                    rpmpid_params = &RPMPI_PARAMS;
+                    rpmpid_reset_i = false;
                 }
             }
             let y = self.rpm_pid.run(
                 m,
-                rpmpi_params,
+                rpmpid_params,
                 &PidIlim {
                     pos: RPMPI_ILIM_POS.lin_inter(speed_filt),
                     neg: RPMPI_ILIM_NEG.lin_inter(speed_filt),
                 },
                 setpoint_filt,
-                speed_filt,
-                reset_i,
+                rpmpid_speed,
+                rpmpid_reset_i,
             );
 
             Debug::Setpoint.log_fixpt(setpoint_filt);
@@ -327,24 +330,8 @@ impl System {
         // Safety monitoring check.
         safety_shutoff |= self.mon.check(m, setpoint, speed_filt, mains_90deg_trigger);
 
-        // Get power-on check triac offset override.
-        if self.state.get(m) == SysState::PoCheck {
-            if let Some(phi_offs_ms) = self.mon_pocheck.get_triac_phi_offs_ms(m) {
-                self.triac.set_phi_offs_ms(m, phi_offs_ms);
-            } else {
-                self.triac.set_phi_offs_shutoff(m);
-            }
-        }
-
-        // Get power-on check primary and secondary shutoff path triggers.
-        triac_shutoff |= self.mon_pocheck.get_triac_shutoff(m);
-        let pocheck_secondary_shutoff = self.mon_pocheck.get_secondary_shutoff(m);
-
         // Secondary shutoff path.
-        if pocheck_secondary_shutoff == Shutoff::MachineShutoff {
-            // Power-on check of the secondary shutoff path.
-            set_secondary_shutoff(Shutoff::MachineShutoff);
-        } else if safety_shutoff == Shutoff::MachineShutoff {
+        if safety_shutoff == Shutoff::MachineShutoff {
             // Safety shutoff: Activate both shutoff paths.
             triac_shutoff = Shutoff::MachineShutoff;
             set_secondary_shutoff(Shutoff::MachineShutoff);
@@ -352,6 +339,27 @@ impl System {
             // Normal operation.
             set_secondary_shutoff(Shutoff::MachineRunning);
         }
+
+        triac_shutoff
+    }
+
+    pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+        self.meas_runtime(m);
+
+        // Update the mains synchronization.
+        let phase_update = self.mains.run(m);
+
+        // Run the ADC measurements.
+        self.adc.run(m, sp);
+
+        // Evaluate the speedo signal.
+        self.speedo.update(m);
+        let speed = self.speedo.get_speed(m);
+
+        let triac_shutoff = match self.state.get(m) {
+            SysState::PoCheck => self.run_pocheck(m, speed),
+            SysState::Syncing | SysState::Running => self.run_normal(m, phase_update, speed),
+        };
 
         // Update the triac trigger state.
         self.triac.run(
