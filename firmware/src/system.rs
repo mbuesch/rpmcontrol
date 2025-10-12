@@ -5,7 +5,7 @@ use crate::{
     fixpt::{Fixpt, fixpt},
     hw::mcu,
     mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
-    mon::{Mon, MonResult},
+    mon::Mon,
     mon_pocheck::{PoCheck, PoState},
     mutex::{MainCtx, MutexCell},
     pid::{Pid, PidIlim, PidParams},
@@ -311,16 +311,12 @@ impl System {
         }
 
         // Temperature shutoff.
-        let temp_shutoff = self.temp.get_shutoff(m);
+        let mut safety_shutoff = self.temp.get_shutoff(m);
 
         // Safety monitoring check.
-        let mon_res = self.mon.check(m, setpoint, speedo_hz, mains_90deg_trigger);
+        safety_shutoff |= self.mon.check(m, setpoint, speedo_hz, mains_90deg_trigger);
 
-        // Get power-on check shutoff paths.
-        let pocheck_secondary_shutoff = self.pocheck.get_secondary_shutoff(m);
-        if self.pocheck.get_triac_shutoff(m) == Shutoff::MachineShutoff {
-            triac_shutoff = Shutoff::MachineShutoff;
-        }
+        // Get power-on check triac offset override.
         if self.state.get(m) == SysState::PoCheck {
             if let Some(phi_offs_ms) = self.pocheck.get_triac_phi_offs_ms(m) {
                 self.triac.set_phi_offs_ms(m, phi_offs_ms);
@@ -329,13 +325,20 @@ impl System {
             }
         }
 
+        // Get power-on check primary and secondary shutoff path triggers.
+        triac_shutoff |= self.pocheck.get_triac_shutoff(m);
+        let pocheck_secondary_shutoff = self.pocheck.get_secondary_shutoff(m);
+
         // Secondary shutoff path.
         if pocheck_secondary_shutoff == Shutoff::MachineShutoff {
+            // Power-on check of the secondary shutoff path.
             set_secondary_shutoff(Shutoff::MachineShutoff);
-        } else if mon_res == MonResult::Shutoff || temp_shutoff == Shutoff::MachineShutoff {
+        } else if safety_shutoff == Shutoff::MachineShutoff {
+            // Safety shutoff: Activate both shutoff paths.
             triac_shutoff = Shutoff::MachineShutoff;
             set_secondary_shutoff(Shutoff::MachineShutoff);
         } else {
+            // Normal operation.
             set_secondary_shutoff(Shutoff::MachineRunning);
         }
 

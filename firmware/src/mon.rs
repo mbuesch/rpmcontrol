@@ -7,6 +7,7 @@ use crate::{
     mutex::{AvrAtomic, MainCtx, MutexCell},
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
+    shutoff::Shutoff,
 };
 
 /// Distance between monitoring checks.
@@ -45,12 +46,6 @@ const MON_ACTIVE_THRES: Fixpt = rpm!(7500);
 
 static ANALOG_FAILURE: AvrAtomic = AvrAtomic::new();
 
-#[derive(Copy, Clone, PartialEq, Eq)]
-pub enum MonResult {
-    Shutoff,
-    Ok,
-}
-
 pub struct Mon {
     prev_check: MutexCell<LargeTimestamp>,
     prev_mains_90deg: MutexCell<LargeTimestamp>,
@@ -86,7 +81,7 @@ impl Mon {
         setpoint: Fixpt,
         speedo_hz: Fixpt,
         mains_90deg: bool,
-    ) -> MonResult {
+    ) -> Shutoff {
         let now = timer_get_large();
 
         if mains_90deg {
@@ -152,9 +147,9 @@ impl Mon {
         Debug::MonDebounce.log_u8(self.error_deb.count(m));
 
         if self.error_deb.is_ok(m) {
-            MonResult::Ok
+            Shutoff::MachineRunning
         } else {
-            MonResult::Shutoff
+            Shutoff::MachineShutoff
         }
     }
 }
