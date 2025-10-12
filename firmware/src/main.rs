@@ -32,7 +32,6 @@ use crate::{
     hw::{Peripherals, interrupt, mcu},
     mutex::MainCtx,
     system::{SysPeriph, System},
-    timer::timer_init,
 };
 
 static SYSTEM: System = System::new();
@@ -94,9 +93,10 @@ fn main() -> ! {
         let porta = ports::PORTA.init(ctx, porta_dp);
         let portb = ports::PORTB.init(ctx, portb_dp);
         let exint = exint::EXINT.init(ctx, exint_dp);
-        timer::DP.init(ctx, timer_dp);
+        let timer = timer::DP.init(ctx, timer_dp);
         let usi_uart = usi_uart::DP.init(ctx, usi_dp);
 
+        timer.setup(ctx);
         porta.setup(ctx);
         portb.setup(ctx);
         exint.setup(ctx);
@@ -110,7 +110,6 @@ fn main() -> ! {
     // is running in main() context.
     let m = unsafe { MainCtx::new_with_init(init_static_vars) };
 
-    timer_init(&m);
     SYSTEM.init(&m, &sp);
 
     // SAFETY: This must be after construction of MainCtx

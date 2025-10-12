@@ -1,7 +1,7 @@
 use crate::{
     fixpt::{Fixpt, fixpt},
     hw::{Mutex, interrupt, mcu, nop3},
-    mutex::{CriticalSection, IrqCtx, LazyMainInit, MainCtx},
+    mutex::{CriticalSection, IrqCtx, LazyMainInit, MainInitCtx},
     triac::triac_timer_interrupt,
 };
 use core::cell::Cell;
@@ -18,22 +18,24 @@ static TIMER_UPPER: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
 pub const TIMER_TICK_US: u8 = 16; // 16 us per tick.
 
-#[rustfmt::skip]
-pub fn timer_init(_m: &MainCtx) {
-    // Timer 1 configuration:
-    // CS: 256 -> 16 us per timer tick.
-    DP.TC1.tc1h().write(|w| w.set(0));
-    DP.TC1.tcnt1().write(|w| w.set(0));
-    DP.TC1.tccr1a().write(|w| w);
-    DP.TC1.tccr1c().write(|w| w);
-    DP.TC1.tccr1d().write(|w| w);
-    DP.TC1.tccr1e().write(|w| w);
-    DP.TC1.ocr1a().write(|w| w.set(0xFF));
-    DP.TC1.ocr1b().write(|w| w.set(0xFF));
-    DP.TC1.ocr1c().write(|w| w.set(0xFF)); // TOP value
-    DP.TC1.ocr1d().write(|w| w.set(0xFF));
-    DP.TC1.dt1().write(|w| w);
-    DP.TC1.tccr1b().write(|w| w.cs1().prescale_256());
+impl Dp {
+    #[rustfmt::skip]
+    pub fn setup(&self, _c: &MainInitCtx) {
+        // Timer 1 configuration:
+        // CS: 256 -> 16 us per timer tick.
+        DP.TC1.tc1h().write(|w| w.set(0));
+        DP.TC1.tcnt1().write(|w| w.set(0));
+        DP.TC1.tccr1a().write(|w| w);
+        DP.TC1.tccr1c().write(|w| w);
+        DP.TC1.tccr1d().write(|w| w);
+        DP.TC1.tccr1e().write(|w| w);
+        DP.TC1.ocr1a().write(|w| w.set(0xFF));
+        DP.TC1.ocr1b().write(|w| w.set(0xFF));
+        DP.TC1.ocr1c().write(|w| w.set(0xFF)); // TOP value
+        DP.TC1.ocr1d().write(|w| w.set(0xFF));
+        DP.TC1.dt1().write(|w| w);
+        DP.TC1.tccr1b().write(|w| w.cs1().prescale_256());
+    }
 }
 
 // SAFETY: This function may only do atomic-read-only accesses, because it's
