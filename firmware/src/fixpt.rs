@@ -275,14 +275,12 @@ impl BigFixpt {
         Self(self.0 - other.0)
     }
 
-    #[inline(never)]
     pub fn mul(self, other: Self) -> Self {
         Self(Int24::from_i32(
             (self.0.to_i32() * other.0.to_i32()) >> Self::SHIFT,
         ))
     }
 
-    #[inline(never)]
     pub fn div(self, other: Self) -> Self {
         self.const_div(other)
     }
