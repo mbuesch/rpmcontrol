@@ -26,7 +26,7 @@ impl Filter {
         let div: BigFixpt = div.into();
 
         let mut buf = self.buf.get(m);
-        buf -= buf / div;
+        buf -= self.out.get(m).into();
         buf += input.into();
         self.buf.set(m, buf);
 
