@@ -127,13 +127,13 @@ enum SysState {
 
 pub struct System {
     state: MutexCell<SysState>,
-    pocheck: PoCheck,
+    mon: Mon,
+    mon_pocheck: PoCheck,
     ac: Ac,
     adc: Adc,
     setpoint_filter: Filter,
     speedo: Speedo,
     speed_filter: Filter,
-    mon: Mon,
     temp: Temp,
     mains: Mains,
     rpm_pid: Pid,
@@ -147,13 +147,13 @@ impl System {
     pub const fn new() -> Self {
         Self {
             state: MutexCell::new(SysState::PoCheck),
-            pocheck: PoCheck::new(),
+            mon: Mon::new(),
+            mon_pocheck: PoCheck::new(),
             ac: Ac::new(),
             adc: Adc::new(),
             setpoint_filter: Filter::new(),
             speedo: Speedo::new(),
             speed_filter: Filter::new(),
-            mon: Mon::new(),
             temp: Temp::new(),
             mains: Mains::new(),
             rpm_pid: Pid::new(),
@@ -166,10 +166,11 @@ impl System {
 
     pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         set_secondary_shutoff(Shutoff::MachineShutoff);
-        self.pocheck.init(m);
+        self.triac.set_phi_offs_shutoff(m);
+
+        self.mon_pocheck.init(m);
         self.adc.init(m, sp);
         self.ac.init(sp);
-        self.triac.set_phi_offs_shutoff(m);
     }
 
     fn meas_runtime(&self, m: &MainCtx<'_>) {
@@ -192,37 +193,54 @@ impl System {
 
         // Run the power-on check state machine.
         if self.state.get(m) == SysState::PoCheck {
-            match self.pocheck.run(m, speed) {
+            match self.mon_pocheck.run(m, speed) {
                 PoState::CheckIdle
                 | PoState::CheckSecondaryShutoff
-                | PoState::CheckPrimaryShutoff
-                | PoState::Error => (),
+                | PoState::CheckPrimaryShutoff => {
+                    // Power-on check is still running.
+                }
+                PoState::Error => {
+                    // Power-on check detected an error.
+                }
                 PoState::DoneOk => {
-                    self.triac.set_phi_offs_shutoff(m);
+                    // Power-on check finished successfully.
+                    // Go to next system state.
                     self.state.set(m, SysState::Syncing);
+                    // Ensure triac is turned off.
+                    self.triac.set_phi_offs_shutoff(m);
                 }
             }
         }
 
-        // Get the actual motor speed and sync state.
-        let mut speedo_hz;
+        // Interpret and filter the motor speed.
+        let mut speed_filt;
         match self.state.get(m) {
             SysState::PoCheck => {
-                speedo_hz = fixpt!(0);
+                // No filtered speed during power-on check.
+                speed_filt = fixpt!(0);
                 self.speed_filter.reset(m);
             }
             state @ SysState::Syncing | state @ SysState::Running => {
                 if let Some(speed) = speed {
-                    speedo_hz = self.speed_filter.run(m, speed.as_16hz(), SPEED_FILTER_DIV);
+                    // Filter the speed.
+                    speed_filt = self.speed_filter.run(m, speed.as_16hz(), SPEED_FILTER_DIV);
+                    // We are sync'd now. Leave sync state.
                     self.state.set(m, SysState::Running);
                 } else if state == SysState::Running {
-                    speedo_hz = self.speed_filter.get(m);
+                    // No new speed from speedometer and system state is running.
+                    // Use the current filtered speed.
+                    speed_filt = self.speed_filter.get(m);
                 } else {
-                    speedo_hz = fixpt!(0);
+                    // No new speed from speedometer and not in running system state.
+                    // Assume zero.
+                    speed_filt = fixpt!(0);
+                    self.speed_filter.reset(m);
                 }
             }
         }
-        if speedo_hz > MOT_SOFT_LIMIT {
+
+        // If the motor is too fast, turn the triac off.
+        if speed_filt > MOT_SOFT_LIMIT {
             triac_shutoff = Shutoff::MachineShutoff;
         }
 
@@ -265,25 +283,20 @@ impl System {
 
             let setpoint_filt = self.setpoint_filter.run(m, setpoint, SETPOINT_FILTER_DIV);
 
-            Debug::Speedo.log_fixpt(speedo_hz);
+            if self.state.get(m) == SysState::Running && setpoint_filt <= RPM_SYNC_THRES {
+                self.state.set(m, SysState::Syncing);
+            }
 
             // Run the RPM controller.
             let rpmpi_params;
             let reset_i;
             match self.state.get(m) {
-                SysState::PoCheck => {
-                    rpmpi_params = &RPMPI_PARAMS_SYNCING;
-                    reset_i = true;
-                }
-                SysState::Syncing => {
-                    speedo_hz = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint_filt);
+                SysState::PoCheck | SysState::Syncing => {
+                    speed_filt = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint_filt);
                     rpmpi_params = &RPMPI_PARAMS_SYNCING;
                     reset_i = true;
                 }
                 SysState::Running => {
-                    if setpoint_filt <= RPM_SYNC_THRES {
-                        self.state.set(m, SysState::Syncing);
-                    }
                     rpmpi_params = &RPMPI_PARAMS;
                     reset_i = false;
                 }
@@ -292,15 +305,16 @@ impl System {
                 m,
                 rpmpi_params,
                 &PidIlim {
-                    pos: RPMPI_ILIM_POS.lin_inter(speedo_hz),
-                    neg: RPMPI_ILIM_NEG.lin_inter(speedo_hz),
+                    pos: RPMPI_ILIM_POS.lin_inter(speed_filt),
+                    neg: RPMPI_ILIM_NEG.lin_inter(speed_filt),
                 },
                 setpoint_filt,
-                speedo_hz,
+                speed_filt,
                 reset_i,
             );
 
             Debug::Setpoint.log_fixpt(setpoint_filt);
+            Debug::Speedo.log_fixpt(speed_filt);
             Debug::PidY.log_fixpt(y);
 
             let phi_offs_ms = f_to_trig_offs(y);
@@ -311,11 +325,11 @@ impl System {
         let mut safety_shutoff = self.temp.get_shutoff(m);
 
         // Safety monitoring check.
-        safety_shutoff |= self.mon.check(m, setpoint, speedo_hz, mains_90deg_trigger);
+        safety_shutoff |= self.mon.check(m, setpoint, speed_filt, mains_90deg_trigger);
 
         // Get power-on check triac offset override.
         if self.state.get(m) == SysState::PoCheck {
-            if let Some(phi_offs_ms) = self.pocheck.get_triac_phi_offs_ms(m) {
+            if let Some(phi_offs_ms) = self.mon_pocheck.get_triac_phi_offs_ms(m) {
                 self.triac.set_phi_offs_ms(m, phi_offs_ms);
             } else {
                 self.triac.set_phi_offs_shutoff(m);
@@ -323,8 +337,8 @@ impl System {
         }
 
         // Get power-on check primary and secondary shutoff path triggers.
-        triac_shutoff |= self.pocheck.get_triac_shutoff(m);
-        let pocheck_secondary_shutoff = self.pocheck.get_secondary_shutoff(m);
+        triac_shutoff |= self.mon_pocheck.get_triac_shutoff(m);
+        let pocheck_secondary_shutoff = self.mon_pocheck.get_secondary_shutoff(m);
 
         // Secondary shutoff path.
         if pocheck_secondary_shutoff == Shutoff::MachineShutoff {
