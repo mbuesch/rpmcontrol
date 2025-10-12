@@ -9,10 +9,10 @@ use crate::{
 };
 
 /// Duration of the `PoStatePart::Pre` part.
-const DUR_PRE: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
+const DUR_PRE: RelLargeTimestamp = RelLargeTimestamp::from_millis(50);
 
 /// Duration of the `PoStatePart::Check` part.
-const DUR_CHECK: RelLargeTimestamp = RelLargeTimestamp::from_millis(300);
+const DUR_CHECK: RelLargeTimestamp = RelLargeTimestamp::from_millis(400);
 
 /// RPM below or equal to this limit are considered to be zero RPM.
 const RPM_ZERO_LIMIT: Fixpt = rpm!(5);
