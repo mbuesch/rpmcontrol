@@ -23,14 +23,12 @@ impl Filter {
 
     #[inline(never)]
     pub fn run(&self, m: &MainCtx<'_>, input: Fixpt, div: Fixpt) -> Fixpt {
-        let div: BigFixpt = div.into();
-
         let mut buf = self.buf.get(m);
         buf -= self.out.get(m).into();
         buf += input.into();
         self.buf.set(m, buf);
 
-        let out = (buf / div).into();
+        let out = (buf / div.into()).into();
         self.out.set(m, out);
 
         out
