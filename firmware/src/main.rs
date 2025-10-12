@@ -29,7 +29,7 @@ mod usi_uart;
 
 use crate::{
     debug::debug_init,
-    hw::{Peripherals, interrupt, mcu},
+    hw::{Peripherals, interrupt},
     mutex::MainCtx,
     system::{SysPeriph, System},
 };
@@ -66,7 +66,7 @@ pub unsafe extern "C" fn wdt_init() {
     );
 }
 
-fn wdt_poke(_wp: &mcu::WDT) {
+fn wdt_poke() {
     avr_device::asm::wdr();
 }
 
@@ -118,7 +118,7 @@ fn main() -> ! {
 
     loop {
         SYSTEM.run(&m, &sp);
-        wdt_poke(&dp.WDT);
+        wdt_poke();
     }
 }
 
