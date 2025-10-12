@@ -24,6 +24,7 @@ mod raw;
 #[repr(transparent)]
 pub struct Int24(Int24Raw);
 
+#[allow(clippy::should_implement_trait)]
 impl Int24 {
     pub const fn zero() -> Self {
         Self(raw_zero())
@@ -159,6 +160,12 @@ impl Int24 {
     }
 }
 
+impl Default for Int24 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl core::cmp::Ord for Int24 {
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
         Self::cmp(*self, *other)
@@ -167,7 +174,7 @@ impl core::cmp::Ord for Int24 {
 
 impl core::cmp::PartialOrd for Int24 {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
-        Some(Self::cmp(*self, *other))
+        Some(self.cmp(other))
     }
 }
 
