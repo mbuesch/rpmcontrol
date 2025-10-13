@@ -7,7 +7,7 @@ use crate::{
     shutoff::Shutoff,
     timer::{
         LargeTimestamp, RelLargeTimestamp, RelTimestamp, Timestamp, timer_get_large,
-        timer_interrupt_a_arm,
+        timer_interrupt_a_arm, timer_interrupt_a_cancel,
     },
 };
 use core::{
@@ -43,32 +43,39 @@ fn triac_timer_do_arm(ts: Timestamp) {
     timer_interrupt_a_arm(ts);
 }
 
+fn triac_timer_do_cancel() {
+    fence(SeqCst);
+    timer_interrupt_a_cancel();
+}
+
 pub fn triac_timer_interrupt(c: &IrqCtx<'_>, now: Timestamp) {
     let cs = c.cs();
 
     let mut state = TRIAC_TIMER_STATE.borrow(cs).get();
     let mut count = TRIAC_TIMER_COUNT.borrow(cs).get();
 
-    let arm;
-    match state {
-        TriacTimerState::TrigSet => {
-            set_trigger(true);
-            arm = true;
-            state = TriacTimerState::TrigClr;
+    if count > 0 {
+        let arm;
+        match state {
+            TriacTimerState::TrigSet => {
+                set_trigger(true);
+                arm = true;
+                state = TriacTimerState::TrigClr;
+            }
+            TriacTimerState::TrigClr => {
+                set_trigger(false);
+                count -= 1;
+                arm = count != 0;
+                state = TriacTimerState::TrigSet;
+            }
         }
-        TriacTimerState::TrigClr => {
-            set_trigger(false);
-            count -= 1;
-            arm = count != 0;
-            state = TriacTimerState::TrigSet;
+
+        TRIAC_TIMER_STATE.borrow(cs).set(state);
+        TRIAC_TIMER_COUNT.borrow(cs).set(count);
+
+        if arm {
+            triac_timer_do_arm(now + HALF_PULSE_LEN);
         }
-    }
-
-    TRIAC_TIMER_STATE.borrow(cs).set(state);
-    TRIAC_TIMER_COUNT.borrow(cs).set(count);
-
-    if arm {
-        triac_timer_do_arm(now + HALF_PULSE_LEN);
     }
 }
 
@@ -77,6 +84,13 @@ fn triac_timer_arm(begin_time: Timestamp, count: u8) {
         TRIAC_TIMER_STATE.borrow(cs).set(TriacTimerState::TrigSet);
         TRIAC_TIMER_COUNT.borrow(cs).set(count);
         triac_timer_do_arm(begin_time);
+    });
+}
+
+fn triac_timer_cancel() {
+    interrupt::free(|cs| {
+        TRIAC_TIMER_COUNT.borrow(cs).set(0);
+        triac_timer_do_cancel();
     });
 }
 
@@ -129,12 +143,14 @@ impl Triac {
         shutoff: Shutoff,
     ) {
         if phase == Phase::Notsync || shutoff == Shutoff::MachineShutoff {
+            triac_timer_cancel();
             set_trigger(false);
             self.trigger_pending.set(m, false);
             return;
         }
 
         if phase_update == PhaseUpdate::Changed {
+            triac_timer_cancel();
             set_trigger(false);
             self.trigger_pending.set(m, true);
         }
