@@ -170,7 +170,9 @@ impl System {
         }
     }
 
+    /// System initialization.
     pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+        // Set all shutoff paths.
         set_secondary_shutoff(Shutoff::MachineShutoff);
         self.triac.set_phi_offs_shutoff(m);
 
@@ -182,6 +184,7 @@ impl System {
             .set(m, timer_get_large() + STARTUP_DELAY);
     }
 
+    /// Measure the main loop runtime.
     fn meas_runtime(&self, m: &MainCtx<'_>) {
         let now = timer_get_large();
 
@@ -195,7 +198,7 @@ impl System {
     }
 
     /// Run the initial startup delay.
-    pub fn run_startup(&self, m: &MainCtx<'_>) {
+    fn run_startup(&self, m: &MainCtx<'_>) {
         let now = timer_get_large();
 
         // On startup delay timeout, continue to power-on-check.
@@ -205,7 +208,7 @@ impl System {
     }
 
     /// Run the power-on-check.
-    pub fn run_pocheck(&self, m: &MainCtx<'_>, speed: Option<MotorSpeed>) -> Shutoff {
+    fn run_pocheck(&self, m: &MainCtx<'_>, speed: Option<MotorSpeed>) -> Shutoff {
         // Run the power-on-check state machine.
         match self.mon_pocheck.run(m, speed) {
             PoState::CheckIdle | PoState::CheckSecondaryShutoff | PoState::CheckPrimaryShutoff => {
@@ -243,7 +246,7 @@ impl System {
     }
 
     /// The system is in normal state (Syncing or Running).
-    pub fn run_normal(
+    fn run_normal(
         &self,
         m: &MainCtx<'_>,
         phase_update: PhaseUpdate,
@@ -365,6 +368,7 @@ impl System {
         triac_shutoff
     }
 
+    /// Main loop.
     pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
         self.meas_runtime(m);
 
