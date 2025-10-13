@@ -4,7 +4,7 @@ use crate::{
     mutex::{MainCtx, MutexCell},
     shutoff::Shutoff,
     speedo::MotorSpeed,
-    system::rpm,
+    system::{debug_toggle, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
 
@@ -16,6 +16,9 @@ const DUR_CHECK: RelLargeTimestamp = RelLargeTimestamp::from_millis(400);
 
 /// RPM below or equal to this limit are considered to be zero RPM.
 const RPM_ZERO_LIMIT: Fixpt = rpm!(5);
+
+/// Show state transitions on the debug pin?
+const DEBUG_PIN_ENA: bool = false;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum PoState {
@@ -91,6 +94,9 @@ impl PoCheck {
                         if transition {
                             self.part.set(m, PoStatePart::Check);
                             self.next_transition.set(m, now + DUR_CHECK);
+                            if DEBUG_PIN_ENA {
+                                debug_toggle();
+                            }
                         }
                     }
                     PoStatePart::Check => {
@@ -98,6 +104,9 @@ impl PoCheck {
                             self.part.set(m, PoStatePart::Pre);
                             state = state.next();
                             self.next_transition.set(m, now + DUR_PRE);
+                            if DEBUG_PIN_ENA {
+                                debug_toggle();
+                            }
                         }
 
                         // Run the actual machine state check.
