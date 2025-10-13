@@ -70,6 +70,22 @@ macro_rules! impl_port {
 
             #[inline(always)]
             #[allow(dead_code)]
+            pub fn toggle(&self, bit: usize) {
+                match bit {
+                    0 => $name.$name.$pin().modify(|_, w| w.$bit0().set_bit()),
+                    1 => $name.$name.$pin().modify(|_, w| w.$bit1().set_bit()),
+                    2 => $name.$name.$pin().modify(|_, w| w.$bit2().set_bit()),
+                    3 => $name.$name.$pin().modify(|_, w| w.$bit3().set_bit()),
+                    4 => $name.$name.$pin().modify(|_, w| w.$bit4().set_bit()),
+                    5 => $name.$name.$pin().modify(|_, w| w.$bit5().set_bit()),
+                    6 => $name.$name.$pin().modify(|_, w| w.$bit6().set_bit()),
+                    7 => $name.$name.$pin().modify(|_, w| w.$bit7().set_bit()),
+                    _ => unreachable!(),
+                };
+            }
+
+            #[inline(always)]
+            #[allow(dead_code)]
             pub fn output(&self, bit: usize) {
                 match bit {
                     0 => $name.$name.$ddr().modify(|_, w| w.$bit0().set_bit()),
