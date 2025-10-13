@@ -566,7 +566,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "55a5ceb4-5dbf-4a29-8393-2eb92423b355")
-		(property "Reference" "#PWR019"
+		(property "Reference" "#PWR020"
 			(at 139.7 82.55 0)
 			(effects
 				(font
@@ -617,7 +617,7 @@
 		(instances
 			(project "phaseanglecontrol"
 				(path "/167e0419-9f88-4ea4-ae96-d03af9cd26b8/880b4ef5-913d-4da3-a21c-dfaca4123863"
-					(reference "#PWR019")
+					(reference "#PWR020")
 					(unit 1)
 				)
 			)
@@ -633,7 +633,7 @@
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "8832e951-b3f1-4ac0-a6bd-402584b190db")
-		(property "Reference" "#PWR020"
+		(property "Reference" "#PWR021"
 			(at 149.86 92.71 0)
 			(effects
 				(font
@@ -684,7 +684,7 @@
 		(instances
 			(project "phaseanglecontrol"
 				(path "/167e0419-9f88-4ea4-ae96-d03af9cd26b8/880b4ef5-913d-4da3-a21c-dfaca4123863"
-					(reference "#PWR020")
+					(reference "#PWR021")
 					(unit 1)
 				)
 			)
