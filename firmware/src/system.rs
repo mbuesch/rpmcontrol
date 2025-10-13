@@ -112,9 +112,9 @@ pub struct SysPeriph {
     pub ADC: mcu::ADC,
 }
 
-#[allow(dead_code)]
+/// Toggle the debug pin.
 pub fn debug_toggle() {
-    PORTB.set(6, !PORTB.get(6));
+    PORTB.toggle(6);
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
