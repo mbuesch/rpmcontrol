@@ -130,7 +130,9 @@ impl Triac {
         self.phi_offs.set(m, RelLargeTimestamp::from_ms_fixpt(ms));
     }
 
+    #[inline(never)]
     pub fn set_phi_offs_shutoff(&self, m: &MainCtx<'_>) {
+        triac_timer_cancel();
         self.phi_offs.set(m, MAINS_HALFWAVE_DUR);
     }
 
