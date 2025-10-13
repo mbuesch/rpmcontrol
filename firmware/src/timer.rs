@@ -73,7 +73,7 @@ fn timer_sync_wait() {
 }
 
 macro_rules! define_timer_interrupt {
-    ($arm_fn:ident, $irq_fn:ident, $handler_fn:path, $ocr:ident, $ocie:ident, $ocf:ident) => {
+    ($arm_fn:ident, $cancel_fn:ident, $irq_fn:ident, $handler_fn:path, $ocr:ident, $ocie:ident, $ocf:ident) => {
         pub fn $arm_fn(trigger_time: Timestamp) {
             interrupt::free(|_| {
                 // Ensure it doesn't trigger right away by pushing OCR into the future.
@@ -111,6 +111,13 @@ macro_rules! define_timer_interrupt {
             });
         }
 
+        pub fn $cancel_fn() {
+            interrupt::free(|_| {
+                DP.TC1.timsk().modify(|_, w| w.$ocie().clear_bit());
+                DP.TC1.tifr().write(|w| w.$ocf().set_bit());
+            });
+        }
+
         pub fn $irq_fn(c: &IrqCtx<'_>) {
             DP.TC1.timsk().modify(|_, w| w.$ocie().clear_bit());
             DP.TC1.tifr().write(|w| w.$ocf().set_bit());
@@ -122,6 +129,7 @@ macro_rules! define_timer_interrupt {
 
 define_timer_interrupt!(
     timer_interrupt_a_arm,
+    timer_interrupt_a_cancel,
     irq_handler_timer1_compa,
     triac_timer_interrupt,
     ocr1a,
