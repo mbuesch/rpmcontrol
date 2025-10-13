@@ -101,14 +101,14 @@ fn calc_trig_count(trig_offs: RelLargeTimestamp) -> u8 {
 
 pub struct Triac {
     phi_offs: MutexCell<RelLargeTimestamp>,
-    triggered: MutexCell<bool>,
+    trigger_pending: MutexCell<bool>,
 }
 
 impl Triac {
     pub const fn new() -> Self {
         Self {
             phi_offs: MutexCell::new(RelLargeTimestamp::new()),
-            triggered: MutexCell::new(false),
+            trigger_pending: MutexCell::new(false),
         }
     }
 
@@ -130,15 +130,16 @@ impl Triac {
     ) {
         if phase == Phase::Notsync || shutoff == Shutoff::MachineShutoff {
             set_trigger(false);
+            self.trigger_pending.set(m, false);
             return;
         }
 
         if phase_update == PhaseUpdate::Changed {
             set_trigger(false);
-            self.triggered.set(m, false);
+            self.trigger_pending.set(m, true);
         }
 
-        if !self.triggered.get(m) {
+        if self.trigger_pending.get(m) {
             let trig_offs = self.phi_offs.get(m);
             if trig_offs <= MAX_TRIG_OFFS {
                 let trig_time = phaseref + trig_offs;
@@ -146,11 +147,11 @@ impl Triac {
                 if trig_time - timer_get_large() <= RelLargeTimestamp::from_ticks(0x3F) {
                     let trig_time: Timestamp = trig_time.into();
                     triac_timer_arm(trig_time, calc_trig_count(trig_offs));
-                    self.triggered.set(m, true);
+                    self.trigger_pending.set(m, false);
                 }
             } else {
                 set_trigger(false);
-                self.triggered.set(m, true);
+                self.trigger_pending.set(m, false);
             }
         }
     }
