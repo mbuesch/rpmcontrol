@@ -11,6 +11,11 @@ pub const fn raw_zero() -> Int24Raw {
 }
 
 #[inline(always)]
+pub const fn raw_minus_one() -> Int24Raw {
+    (0xFF, 0xFF, 0xFF)
+}
+
+#[inline(always)]
 pub const fn raw_min() -> Int24Raw {
     (0x00, 0x00, 0x80)
 }
@@ -32,10 +37,11 @@ pub fn div24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
     if b == raw_zero() {
         // Division by zero.
         if is_neg24(a) { raw_min() } else { raw_max() }
+    } else if a == raw_min() && b == raw_minus_one() {
+        // Saturate MIN / -1
+        raw_max()
     } else {
-        let res = asm_div24(a, b);
-        //TODO sat
-        res
+        asm_div24(a, b)
     }
 }
 

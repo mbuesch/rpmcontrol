@@ -463,7 +463,11 @@ mod test {
         assert_eq!(a / b, c);
         assert_eq!(a.const_div(b), c);
 
-        //TODO sat
+        let a = Int24::from_i32(-0x80_0000);
+        let b = Int24::from_i32(-1);
+        let c = Int24::from_i32(0x7F_FFFF); // sat
+        assert_eq!(a / b, c);
+        assert_eq!(a.const_div(b), c);
     }
 
     #[test]
