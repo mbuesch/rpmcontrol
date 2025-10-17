@@ -3,9 +3,9 @@
 
 pub use crate::raw::Int24Raw;
 use crate::raw::{
-    add24,
+    abs24, add24,
     conv::{i16_to_i24raw, i24raw_to_i16_sat, i24raw_to_i32, i32_to_i24raw_sat},
-    div24, eq24, ge24, is_neg24, mul24, neg24, raw_zero, shl24, shl24_by8, shr24, shr24_by8, sub24,
+    div24, eq24, ge24, mul24, neg24, raw_zero, shl24, shl24_by8, shr24, shr24_by8, sub24,
 };
 
 #[cfg(not(target_arch = "avr"))]
@@ -101,7 +101,7 @@ impl Int24 {
 
     #[inline(never)]
     pub fn abs(self) -> Self {
-        if is_neg24(self.0) { self.neg() } else { self }
+        Self(abs24(self.0))
     }
 
     pub const fn const_abs(self) -> Self {

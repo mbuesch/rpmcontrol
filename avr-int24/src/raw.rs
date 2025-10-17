@@ -72,6 +72,11 @@ pub fn neg24(a: Int24Raw) -> Int24Raw {
 }
 
 #[inline(always)]
+pub fn abs24(a: Int24Raw) -> Int24Raw {
+    if is_neg24(a) { neg24(a) } else { a }
+}
+
+#[inline(always)]
 pub const fn shl24_by8(a: Int24Raw) -> Int24Raw {
     (0x00, a.0, a.1)
 }
