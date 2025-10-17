@@ -18,8 +18,6 @@ pub const MAINS_HALFWAVE_DUR_MS: Fixpt = MAINS_PERIOD_MS.const_div(fixpt!(2));
 pub const MAINS_HALFWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(2);
 
 /// Mains sine wave quarter-wave length.
-pub const MAINS_QUARTERWAVE_DUR_MS: Fixpt = MAINS_HALFWAVE_DUR_MS.const_div(fixpt!(2));
-/// Mains sine wave quarter-wave length.
 pub const MAINS_QUARTERWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(4);
 
 fn read_vsense() -> bool {

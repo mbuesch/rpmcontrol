@@ -1,6 +1,6 @@
 use crate::{
-    fixpt::Fixpt,
-    mains::MAINS_QUARTERWAVE_DUR_MS,
+    fixpt::{Fixpt, fixpt},
+    mains::MAINS_HALFWAVE_DUR_MS,
     mutex::{MainCtx, MutexCell},
     shutoff::Shutoff,
     speedo::MotorSpeed,
@@ -16,6 +16,9 @@ const DUR_CHECK: RelLargeTimestamp = RelLargeTimestamp::from_millis(400);
 
 /// RPM below or equal to this limit are considered to be zero RPM.
 const RPM_ZERO_LIMIT: Fixpt = rpm!(5);
+
+/// Triac offset for the enabled-check.
+const TRIAC_TRIG_OFFS_ENABLED_MS: Fixpt = MAINS_HALFWAVE_DUR_MS.const_div(fixpt!(10));
 
 /// Show state transitions on the debug pin?
 const DEBUG_PIN_ENA: bool = false;
@@ -144,8 +147,8 @@ impl PoCheck {
     pub fn get_triac_phi_offs_ms(&self, m: &MainCtx<'_>) -> Option<Fixpt> {
         match self.state.get(m) {
             PoState::CheckIdle => None,
-            PoState::CheckSecondaryShutoff => Some(MAINS_QUARTERWAVE_DUR_MS),
-            PoState::CheckPrimaryShutoff => Some(MAINS_QUARTERWAVE_DUR_MS),
+            PoState::CheckSecondaryShutoff => Some(TRIAC_TRIG_OFFS_ENABLED_MS),
+            PoState::CheckPrimaryShutoff => Some(TRIAC_TRIG_OFFS_ENABLED_MS),
             PoState::Error => None,
             PoState::DoneOk => None,
         }
