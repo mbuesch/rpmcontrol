@@ -2,7 +2,7 @@ use crate::raw::{Int24Raw, abs24, is_neg24};
 use core::arch::asm;
 
 #[inline(always)]
-pub fn asm_mul24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
+pub fn asm_mulsat24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
     unsafe {
         asm!(
             "   ldi {loop}, 24",        // loop counter
@@ -31,6 +31,7 @@ pub fn asm_mul24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "   dec {loop}",
             "   brne 1b",               // loop counter == 0?
 
+//TODO sat
             a0 = in(reg) a.0,           // multiplicand
             a1 = in(reg) a.1,
             a2 = in(reg) a.2,
@@ -151,7 +152,7 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             // handle division by zero
             "50:",
             "   sbrs {a2}, 7",
-            "   rjmp 60f",
+            "   rjmp 70f",
 
             // saturate to negative min
             "60:",

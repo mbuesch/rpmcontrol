@@ -13,7 +13,8 @@ fn from_i32(a: i32) -> Int24Raw {
     (a[0], a[1], a[2])
 }
 
-pub fn asm_mul24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
+pub fn asm_mulsat24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
+    //TODO sat
     from_i32(to_i32(a) * to_i32(b))
 }
 

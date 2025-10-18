@@ -1,5 +1,5 @@
 use crate::{
-    asm::{asm_divsat24, asm_ge24, asm_mul24, asm_neg24, asm_shl24, asm_shr24},
+    asm::{asm_divsat24, asm_ge24, asm_mulsat24, asm_neg24, asm_shl24, asm_shr24},
     raw::conv::{i24raw_to_i32, i32_to_i24raw_sat},
 };
 
@@ -27,9 +27,7 @@ pub const fn raw_max() -> Int24Raw {
 
 #[inline(always)]
 pub fn mul24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
-    let res = asm_mul24(a, b);
-    //TODO sat
-    res
+    asm_mulsat24(a, b)
 }
 
 #[inline(always)]
