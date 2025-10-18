@@ -5,6 +5,29 @@ use core::arch::asm;
 pub fn asm_mulsat24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
     unsafe {
         asm!(
+            // any operand is zero?
+            "   cp {a0}, __zero_reg__",
+            "   cpc {a1}, __zero_reg__",
+            "   cpc {a2}, __zero_reg__",
+            "   breq 80f",
+            "   cp {b0}, __zero_reg__",
+            "   cpc {b1}, __zero_reg__",
+            "   cpc {b2}, __zero_reg__",
+            "   breq 80f",
+
+            // handle multiplicand == MIN
+            "   cp {a0}, __zero_reg__",
+            "   cpc {a1}, __zero_reg__",
+            "   ldi {t}, 0x80",
+            "   cpc {a2}, {t}",
+            "   brne 10f",
+            "   sbrs {b2}, 7",
+            "   rjmp 60f",
+            "   rjmp 70f",
+            "10:",
+
+            // multiplication logic
+
             "   ldi {t}, 24",           // loop counter
             "   sub {p3}, {p3}",        // clear upper product and carry
             "   sub {p4}, {p4}",
@@ -35,28 +58,39 @@ pub fn asm_mulsat24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "   cp {p3}, __zero_reg__",
             "   cpc {p4}, __zero_reg__",
             "   cpc {p5}, __zero_reg__",
-            "   breq 5f",
+            "   breq 90f",
             "   ldi {t}, 0xFF",
             "   cp {p3}, {t}",
             "   cpc {p4}, {t}",
             "   cpc {p5}, {t}",
-            "   breq 5f",
+            "   breq 90f",
+            "   sbrs {p5}, 7",          // saturate pos or neg
+            "   rjmp 70f",
 
-            // saturate pos or neg
-            "   sbrs {p5}, 7",
-            "   rjmp 4f",
+            // saturate to negative min
+            "60:",
             "   mov {b0}, __zero_reg__",
             "   mov {b1}, __zero_reg__",
             "   ldi {t}, 0x80",
             "   mov {b2}, {t}",
-            "   rjmp 5f",
-            "4: ldi {t}, 0xFF",
+            "   rjmp 90f",
+
+            // saturate to positive max
+            "70:",
+            "   ldi {t}, 0xFF",
             "   mov {b0}, {t}",
             "   mov {b1}, {t}",
             "   ldi {t}, 0x7F",
             "   mov {b2}, {t}",
+            "   rjmp 90f",
 
-            "5:",
+            // zero result
+            "80:",
+            "   clr {b0}",
+            "   clr {b1}",
+            "   clr {b2}",
+
+            "90:",
 
             a0 = in(reg) a.0,           // multiplicand
             a1 = in(reg) a.1,
