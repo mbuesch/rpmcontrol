@@ -185,7 +185,7 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             rem1 = out(reg) _,
             rem2 = out(reg) _,
 
-            b0 = inout(reg) b.0,           // divisor
+            b0 = inout(reg) b.0,        // divisor
             b1 = inout(reg) b.1,
             b2 = inout(reg) b.2,
 
@@ -205,11 +205,11 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
 pub fn asm_neg24(mut a: Int24Raw) -> Int24Raw {
     unsafe {
         asm!(
-            "com {a2}",
-            "com {a1}",
-            "neg {a0}",
-            "sbci {a1}, 0xFF",
-            "sbci {a2}, 0xFF",
+            "   com {a2}",
+            "   com {a1}",
+            "   neg {a0}",
+            "   sbci {a1}, 0xFF",
+            "   sbci {a2}, 0xFF",
 
             a0 = inout(reg) a.0,
             a1 = inout(reg_upper) a.1,
@@ -226,13 +226,13 @@ pub fn asm_neg24(mut a: Int24Raw) -> Int24Raw {
 pub fn asm_shl24(mut a: Int24Raw, mut count: u8) -> Int24Raw {
     unsafe {
         asm!(
-            "and {count}, {count}",
-            "breq 2f",
+            "   and {count}, {count}",
+            "   breq 2f",
             "1: lsl {a0}",
-            "rol {a1}",
-            "rol {a2}",
-            "dec {count}",
-            "brne 1b",
+            "   rol {a1}",
+            "   rol {a2}",
+            "   dec {count}",
+            "   brne 1b",
             "2:",
 
             a0 = inout(reg) a.0,
@@ -251,13 +251,13 @@ pub fn asm_shl24(mut a: Int24Raw, mut count: u8) -> Int24Raw {
 pub fn asm_shr24(mut a: Int24Raw, mut count: u8) -> Int24Raw {
     unsafe {
         asm!(
-            "and {count}, {count}",
-            "breq 2f",
+            "   and {count}, {count}",
+            "   breq 2f",
             "1: asr {a2}",
-            "ror {a1}",
-            "ror {a0}",
-            "dec {count}",
-            "brne 1b",
+            "   ror {a1}",
+            "   ror {a0}",
+            "   dec {count}",
+            "   brne 1b",
             "2:",
 
             a0 = inout(reg) a.0,
@@ -275,12 +275,12 @@ pub fn asm_shr24(mut a: Int24Raw, mut count: u8) -> Int24Raw {
 pub fn asm_ge24(mut a: Int24Raw, b: Int24Raw) -> bool {
     unsafe {
         asm!(
-            "cp {a0}, {b0}",
-            "cpc {a1}, {b1}",
-            "cpc {a2}, {b2}",
-            "ldi {a0}, 1",
-            "brge 1f",
-            "clr {a0}",
+            "   cp {a0}, {b0}",
+            "   cpc {a1}, {b1}",
+            "   cpc {a2}, {b2}",
+            "   ldi {a0}, 1",
+            "   brge 1f",
+            "   clr {a0}",
             "1:",
 
             a0 = inout(reg) a.0,
