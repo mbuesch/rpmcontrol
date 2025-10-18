@@ -64,16 +64,19 @@ pub const fn is_neg24(a: Int24Raw) -> bool {
 
 #[inline(always)]
 pub fn neg24(a: Int24Raw) -> Int24Raw {
-    if a == raw_min() {
-        raw_max()
-    } else {
-        asm_neg24(a)
-    }
+    let a_neg = is_neg24(a);
+    let b = asm_neg24(a);
+    if a_neg && is_neg24(b) { raw_max() } else { b }
 }
 
 #[inline(always)]
 pub fn abs24(a: Int24Raw) -> Int24Raw {
-    if is_neg24(a) { neg24(a) } else { a }
+    if is_neg24(a) {
+        let b = asm_neg24(a);
+        if is_neg24(b) { raw_max() } else { b }
+    } else {
+        a
+    }
 }
 
 #[inline(always)]
