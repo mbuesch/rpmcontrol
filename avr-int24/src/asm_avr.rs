@@ -2,28 +2,52 @@ use crate::raw::{Int24Raw, abs24, is_neg24};
 use core::arch::asm;
 
 #[inline(always)]
-pub fn asm_mul24(mut a: Int24Raw, b: Int24Raw) -> Int24Raw {
+pub fn asm_mul24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
     unsafe {
         asm!(
-            "mov {r0_save}, r0",
-            "rcall __mulpsi3",
-            "mov r0, {r0_save}",
+            "   ldi {loop}, 24",        // loop counter
+            "   sub {p3}, {p3}",        // clear upper product and carry
+            "   sub {p4}, {p4}",
+            "   sub {p5}, {p5}",
 
-            inout("r22") a.0,
-            inout("r23") a.1,
-            inout("r24") a.2,
+            "1: brcc 2f",
+            "   add {p3}, {a0}",
+            "   adc {p4}, {a1}",
+            "   adc {p5}, {a2}",
 
-            in("r18") b.0,
-            in("r19") b.1,
-            in("r20") b.2,
+            "2: sbrs {b0}, 0",
+            "   rjmp 3f",
+            "   sub {p3}, {a0}",
+            "   sbc {p4}, {a1}",
+            "   sbc {p5}, {a2}",
 
-            out("r21") _, // clobbered by __mulpsi3
-            r0_save = out(reg) _, // clobbered by __mulpsi3
+            "3: asr {p5}",
+            "   ror {p4}",
+            "   ror {p3}",
+            "   ror {b2}",
+            "   ror {b1}",
+            "   ror {b0}",
+
+            "   dec {loop}",
+            "   brne 1b",               // loop counter == 0?
+
+            a0 = in(reg) a.0,           // multiplicand
+            a1 = in(reg) a.1,
+            a2 = in(reg) a.2,
+
+            b0 = inout(reg) b.0,        // multiplier and product low
+            b1 = inout(reg) b.1,
+            b2 = inout(reg) b.2,
+            p3 = out(reg) _,            // product high
+            p4 = out(reg) _,
+            p5 = out(reg) _,
+
+            loop = out(reg_upper) _,
 
             options(pure, nomem),
         );
     }
-    a
+    b
 }
 
 #[inline(always)]
