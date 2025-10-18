@@ -1,5 +1,5 @@
 use crate::{
-    asm::{asm_div24, asm_ge24, asm_mul24, asm_neg24, asm_shl24, asm_shr24},
+    asm::{asm_divsat24, asm_ge24, asm_mul24, asm_neg24, asm_shl24, asm_shr24},
     raw::conv::{i24raw_to_i32, i32_to_i24raw_sat},
 };
 
@@ -34,15 +34,7 @@ pub fn mul24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
 
 #[inline(always)]
 pub fn div24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
-    if b == raw_zero() {
-        // Division by zero.
-        if is_neg24(a) { raw_min() } else { raw_max() }
-    } else if a == raw_min() && b == raw_minus_one() {
-        // Saturate MIN / -1
-        raw_max()
-    } else {
-        asm_div24(a, b)
-    }
+    asm_divsat24(a, b)
 }
 
 #[inline(always)]

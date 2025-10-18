@@ -51,14 +51,73 @@ pub fn asm_mul24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
 }
 
 #[inline(always)]
-pub fn asm_div24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
-    let res_neg = is_neg24(a) ^ is_neg24(b);
-    let mut a = abs24(a);
-    let b = abs24(b);
-
+#[allow(unused_assignments)]
+pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
     unsafe {
         asm!(
-            "   ldi {loop}, 25",        // loop counter
+            // check division by zero
+            "   cp {b0}, __zero_reg__",
+            "   cpc {b1}, __zero_reg__",
+            "   cpc {b2}, __zero_reg__",
+            "   brne 10f",
+            "   rjmp 5f",
+            "10:",
+
+            // saturate MIN/-1
+            "   ldi {t}, 0xFF",
+            "   cp {b0}, {t}",
+            "   cpc {b1}, {t}",
+            "   cpc {b2}, {t}",
+            "   cpc {a0}, __zero_reg__",
+            "   cpc {a1}, __zero_reg__",
+            "   ldi {t}, 0x80",
+            "   cpc {a2}, {t}",
+            "   breq 6f",
+
+            // store the result sign in SREG.T
+            "   clt",
+            "   mov {t}, {a2}",
+            "   eor {t}, {b2}",
+            "   sbrc {t}, 7",
+            "   set",
+
+            // a = abs(a)
+            "   sbrs {a2}, 7",
+            "   rjmp 20f",
+            "   com {a2}",              // negate
+            "   com {a1}",
+            "   neg {a0}",
+            "   sbci {a1}, 0xFF",
+            "   sbci {a2}, 0xFF",
+            "   sbrs {a2}, 7",
+            "   rjmp 20f",
+            "   ldi {t}, 0xFF",         // saturate to max
+            "   mov {a0}, {t}",
+            "   mov {a1}, {t}",
+            "   ldi {t}, 0x7F",
+            "   mov {a2}, {t}",
+            "20:",
+
+            // b = abs(b)
+            "   sbrs {b2}, 7",
+            "   rjmp 30f",
+            "   com {b2}",              // negate
+            "   com {b1}",
+            "   neg {b0}",
+            "   sbci {b1}, 0xFF",
+            "   sbci {b2}, 0xFF",
+            "   sbrs {b2}, 7",
+            "   rjmp 30f",
+            "   ldi {t}, 0xFF",         // saturate to max
+            "   mov {b0}, {t}",
+            "   mov {b1}, {t}",
+            "   ldi {t}, 0x7F",
+            "   mov {b2}, {t}",
+            "30:",
+
+            // division logic
+
+            "   ldi {t}, 25",           // loop counter
 
             "   sub {rem0}, {rem0}",    // remainder = 0 and carry = 0
             "   sub {rem1}, {rem1}",
@@ -68,7 +127,7 @@ pub fn asm_div24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
             "   rol {a1}",
             "   rol {a2}",
 
-            "   dec {loop}",
+            "   dec {t}",
             "   breq 3f",               // loop counter == 0?
 
             "   rol {rem0}",            // (remainder << 1) + dividend.23
@@ -87,27 +146,52 @@ pub fn asm_div24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
             "   clc",                   // result lsb = 0
             "   rjmp 1b",
 
-            "3:",
+            // handle division by zero
+            "5: sbrs {a2}, 7",
+            "   rjmp 6f",
+
+            // saturate to negative min
+            "   mov {a0}, __zero_reg__",
+            "   mov {a1}, __zero_reg__",
+            "   ldi {t}, 0x80",
+            "   mov {a2}, {t}",
+            "   rjmp 4f",
+
+            // saturate to positive max
+            "6: ldi {t}, 0xFF",
+            "   mov {a0}, {t}",
+            "   mov {a1}, {t}",
+            "   ldi {t}, 0x7F",
+            "   mov {a2}, {t}",
+
+            // adjust the result sign according to SREG.T
+            "3: brtc 4f",
+            "   com {a2}",              // negate
+            "   com {a1}",
+            "   neg {a0}",
+            "   sbci {a1}, 0xFF",
+            "   sbci {a2}, 0xFF",
+
+            "4:",
 
             rem0 = out(reg) _,          // remainder
             rem1 = out(reg) _,
             rem2 = out(reg) _,
 
-            b0 = in(reg) b.0,           // divisor
-            b1 = in(reg) b.1,
-            b2 = in(reg) b.2,
+            b0 = inout(reg) b.0,           // divisor
+            b1 = inout(reg) b.1,
+            b2 = inout(reg) b.2,
 
             a0 = inout(reg) a.0,        // dividend and quotient
             a1 = inout(reg) a.1,
             a2 = inout(reg) a.2,
 
-            loop = out(reg_upper) _,    // loop counter
+            t = out(reg_upper) _,       // temporary and loop counter
 
             options(pure, nomem),
         );
     }
-
-    if res_neg { asm_neg24(a) } else { a }
+    a
 }
 
 #[inline(always)]
