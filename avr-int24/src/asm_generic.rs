@@ -14,8 +14,14 @@ fn from_i32(a: i32) -> Int24Raw {
 }
 
 pub fn asm_mulsat24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
-    //TODO sat
-    from_i32(to_i32(a) * to_i32(b))
+    let c = to_i32(a) as i64 * to_i32(b) as i64;
+    if c > 0x7F_FFFF {
+        from_i32(0x7F_FFFF)
+    } else if c < -0x80_0000 {
+        from_i32(-0x80_0000)
+    } else {
+        from_i32(c as i32)
+    }
 }
 
 pub fn asm_divsat24(a: Int24Raw, b: Int24Raw) -> Int24Raw {

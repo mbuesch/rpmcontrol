@@ -5,7 +5,7 @@ use core::arch::asm;
 pub fn asm_mulsat24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
     unsafe {
         asm!(
-            "   ldi {loop}, 24",        // loop counter
+            "   ldi {t}, 24",           // loop counter
             "   sub {p3}, {p3}",        // clear upper product and carry
             "   sub {p4}, {p4}",
             "   sub {p5}, {p5}",
@@ -28,10 +28,36 @@ pub fn asm_mulsat24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "   ror {b1}",
             "   ror {b0}",
 
-            "   dec {loop}",
-            "   brne 1b",               // loop counter == 0?
+            "   dec {t}",
+            "   brne 1b",               // loop counter != 0?
 
-//TODO sat
+            // check if saturation is needed
+            "   cp {p3}, __zero_reg__",
+            "   cpc {p4}, __zero_reg__",
+            "   cpc {p5}, __zero_reg__",
+            "   breq 5f",
+            "   ldi {t}, 0xFF",
+            "   cp {p3}, {t}",
+            "   cpc {p4}, {t}",
+            "   cpc {p5}, {t}",
+            "   breq 5f",
+
+            // saturate pos or neg
+            "   sbrs {p5}, 7",
+            "   rjmp 4f",
+            "   mov {b0}, __zero_reg__",
+            "   mov {b1}, __zero_reg__",
+            "   ldi {t}, 0x80",
+            "   mov {b2}, {t}",
+            "   rjmp 5f",
+            "4: ldi {t}, 0xFF",
+            "   mov {b0}, {t}",
+            "   mov {b1}, {t}",
+            "   ldi {t}, 0x7F",
+            "   mov {b2}, {t}",
+
+            "5:",
+
             a0 = in(reg) a.0,           // multiplicand
             a1 = in(reg) a.1,
             a2 = in(reg) a.2,
@@ -43,7 +69,7 @@ pub fn asm_mulsat24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             p4 = out(reg) _,
             p5 = out(reg) _,
 
-            loop = out(reg_upper) _,
+            t = out(reg_upper) _,
 
             options(pure, nomem),
         );
