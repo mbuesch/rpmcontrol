@@ -60,7 +60,7 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "   cpc {b1}, __zero_reg__",
             "   cpc {b2}, __zero_reg__",
             "   brne 10f",
-            "   rjmp 5f",
+            "   rjmp 50f",
             "10:",
 
             // saturate MIN/-1
@@ -72,7 +72,7 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "   cpc {a1}, __zero_reg__",
             "   ldi {t}, 0x80",
             "   cpc {a2}, {t}",
-            "   breq 6f",
+            "   breq 70f",
 
             // store the result sign in SREG.T
             "   clt",
@@ -123,12 +123,13 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "   sub {rem1}, {rem1}",
             "   sub {rem2}, {rem2}",
 
-            "1: rol {a0}",              // (dividend << 1) + carry
+            "40:",
+            "   rol {a0}",              // (dividend << 1) + carry
             "   rol {a1}",
             "   rol {a2}",
 
             "   dec {t}",
-            "   breq 3f",               // loop counter == 0?
+            "   breq 80f",              // loop counter == 0?
 
             "   rol {rem0}",            // (remainder << 1) + dividend.23
             "   rol {rem1}",
@@ -137,42 +138,48 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "   sub {rem0}, {b0}",      // remainder -= divisor
             "   sbc {rem1}, {b1}",
             "   sbc {rem2}, {b2}",
-            "   brcs 2f",               // remainder was less than divisor?
+            "   brcs 41f",              // remainder was less than divisor?
             "   sec",                   // result lsb = 1
-            "   rjmp 1b",
-            "2: add {rem0}, {b0}",
+            "   rjmp 40b",
+            "41:",
+            "   add {rem0}, {b0}",
             "   adc {rem1}, {b1}",
             "   adc {rem2}, {b2}",
             "   clc",                   // result lsb = 0
-            "   rjmp 1b",
+            "   rjmp 40b",
 
             // handle division by zero
-            "5: sbrs {a2}, 7",
-            "   rjmp 6f",
+            "50:",
+            "   sbrs {a2}, 7",
+            "   rjmp 60f",
 
             // saturate to negative min
+            "60:",
             "   mov {a0}, __zero_reg__",
             "   mov {a1}, __zero_reg__",
             "   ldi {t}, 0x80",
             "   mov {a2}, {t}",
-            "   rjmp 4f",
+            "   rjmp 90f",
 
             // saturate to positive max
-            "6: ldi {t}, 0xFF",
+            "70:",
+            "   ldi {t}, 0xFF",
             "   mov {a0}, {t}",
             "   mov {a1}, {t}",
             "   ldi {t}, 0x7F",
             "   mov {a2}, {t}",
+            "   rjmp 90f",
 
             // adjust the result sign according to SREG.T
-            "3: brtc 4f",
+            "80:",
+            "   brtc 90f",
             "   com {a2}",              // negate
             "   com {a1}",
             "   neg {a0}",
             "   sbci {a1}, 0xFF",
             "   sbci {a2}, 0xFF",
 
-            "4:",
+            "90:",
 
             rem0 = out(reg) _,          // remainder
             rem1 = out(reg) _,
