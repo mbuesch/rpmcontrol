@@ -39,7 +39,7 @@ dependencies = [
 [[package]]
 name = "avr-device"
 version = "0.7.0"
-source = "git+https://github.com/Rahix/avr-device.git?rev=d935a567049140628de0041d9488b60f9b8f6266#d935a567049140628de0041d9488b60f9b8f6266"
+source = "git+https://github.com/Rahix/avr-device.git?rev=ee1b9885ba0f71cd1b83d1e6422e9d9b27e32288#ee1b9885ba0f71cd1b83d1e6422e9d9b27e32288"
 dependencies = [
  "anyhow",
  "atdf2svd",
@@ -59,7 +59,7 @@ dependencies = [
 [[package]]
 name = "avr-device-macros"
 version = "0.7.0"
-source = "git+https://github.com/Rahix/avr-device.git?rev=d935a567049140628de0041d9488b60f9b8f6266#d935a567049140628de0041d9488b60f9b8f6266"
+source = "git+https://github.com/Rahix/avr-device.git?rev=ee1b9885ba0f71cd1b83d1e6422e9d9b27e32288#ee1b9885ba0f71cd1b83d1e6422e9d9b27e32288"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -84,9 +84,9 @@ dependencies = [
 
 [[package]]
 name = "cfg-if"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fd1289c04a9ea8cb22300a459a72a385d7c73d3259e2ed7dcb2af674838cfa9"
+checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
 name = "commands"
@@ -158,9 +158,9 @@ dependencies = [
 
 [[package]]
 name = "globset"
-version = "0.4.16"
+version = "0.4.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54a1028dfc5f5df5da8a56a73e6c153c9a9708ec57232470703592a3f18e49f5"
+checksum = "eab69130804d941f8075cfd713bf8848a2c3b3f201a9457a11e6f87e1ab62305"
 dependencies = [
  "aho-corasick",
  "bstr",
@@ -302,9 +302,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.11.4"
+version = "2.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b0f83760fb341a774ed326568e19f5a863af4a952def8c39f9ab92fd95b88e5"
+checksum = "6717a8d2a5a929a1a2eb43a12812498ed141a0bcfb7e8f7844fbdbe4303bba9f"
 dependencies = [
  "equivalent",
  "hashbrown 0.16.0",
@@ -805,9 +805,9 @@ dependencies = [
 
 [[package]]
 name = "yaml-rust2"
-version = "0.10.2"
+version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18b783b2c2789414f8bb84ca3318fc9c2d7e7be1c22907d37839a58dedb369d3"
+checksum = "2462ea039c445496d8793d052e13787f2b90e750b833afee748e601c17621ed9"
 dependencies = [
  "arraydeque",
  "encoding_rs",

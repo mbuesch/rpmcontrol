@@ -13,7 +13,7 @@ bench = false
 
 [dependencies]
 #avr-device = { version = "0.7", features = [ "atmega8", "rt" ] }
-avr-device = { git = "https://github.com/Rahix/avr-device.git", rev = "d935a567049140628de0041d9488b60f9b8f6266", features = [ "atmega8", "rt" ] }
+avr-device = { git = "https://github.com/Rahix/avr-device.git", rev = "ee1b9885ba0f71cd1b83d1e6422e9d9b27e32288", features = [ "atmega8", "rt" ] }
 
 [profile.dev]
 panic = "abort"
@@ -25,9 +25,6 @@ panic = "abort"
 codegen-units = 1
 lto = "fat"
 opt-level = "s"
-
-#[patch.crates-io]
-#avr-device = { path = "../../../avr-device" }
 
 [lints.clippy]
 undocumented_unsafe_blocks = "warn"
