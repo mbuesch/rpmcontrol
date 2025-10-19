@@ -26,7 +26,7 @@ macro_rules! define_context {
                 //         If a function takes a `MainCtx` argument, it can only be
                 //         called from `main()` context. Correspondingly for `IrqCtx`.
                 //
-                //         At the low level the `MutexCell` and `MutexRefCell` ensure
+                //         At the low level the `MainCtxCell` ensures
                 //         that they can only being used from the main context.
                 //         With this mechanism we can run the main context with IRQs
                 //         enabled. There cannot be any concurrency in safe code.
@@ -51,9 +51,8 @@ define_context!(IrqCtx);
 impl<'cs> MainCtx<'cs> {
     /// Get the `CriticalSection` that belongs to this context.
     /// In the main context interrupts are enabled.
-    /// Therefore, this cs can ONLY be used together with `MutexCell` and `MutexRefCell`.
+    /// Therefore, this cs can ONLY be used together with `MainCtxCell`.
     #[inline(always)]
-    #[allow(dead_code)]
     unsafe fn cs(&self) -> CriticalSection<'cs> {
         self.0
     }
@@ -64,7 +63,6 @@ impl<'cs> IrqCtx<'cs> {
     /// In IRQ context interrupts are disabled.
     /// Therefore, this cs can be used for any critical section work.
     #[inline(always)]
-    #[allow(dead_code)]
     pub fn cs(&self) -> CriticalSection<'cs> {
         self.0
     }
@@ -81,7 +79,6 @@ impl MainInitCtx {
     /// In initialization context interrupts are disabled.
     /// Therefore, this cs can be used for any critical section work.
     #[inline(always)]
-    #[allow(dead_code)]
     pub fn cs<'cs>(&self) -> CriticalSection<'cs> {
         // SAFETY: This can only be called during init with interrupts disabled.
         unsafe { CriticalSection::new() }
@@ -210,14 +207,15 @@ unsafe impl Sync for AvrAtomic {}
 
 impl AvrAtomic {
     #[inline(always)]
-    pub const fn new() -> Self {
-        Self(UnsafeCell::new(0))
+    pub const fn new(value: u8) -> Self {
+        Self(UnsafeCell::new(value))
     }
 
     #[inline(always)]
     pub fn get(&self) -> u8 {
         fence();
         // SAFETY: u8 load is atomic on AVR.
+        // This code expects the compiler to emit a single LD, LDS or LDD.
         let value = unsafe { *self.0.get() };
         fence();
         value
@@ -227,9 +225,8 @@ impl AvrAtomic {
     pub fn set(&self, value: u8) {
         fence();
         // SAFETY: u8 store is atomic on AVR.
-        unsafe {
-            *self.0.get() = value;
-        }
+        // This code expects the compiler to emit a single ST, STS or STD.
+        unsafe { *self.0.get() = value };
         fence();
     }
 
@@ -240,7 +237,7 @@ impl AvrAtomic {
 
     #[inline(always)]
     pub fn set_bool(&self, value: bool) {
-        self.set(value as _);
+        self.set(value.into());
     }
 }
 

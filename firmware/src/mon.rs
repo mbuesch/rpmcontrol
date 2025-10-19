@@ -44,7 +44,7 @@ const SPEEDO_TOLERANCE: Fixpt = rpm!(1000);
 /// Monitoring is not active below this threshold.
 const MON_ACTIVE_THRES: Fixpt = rpm!(7500);
 
-static ANALOG_FAILURE: AvrAtomic = AvrAtomic::new();
+static ANALOG_FAILURE: AvrAtomic = AvrAtomic::new(0);
 
 pub struct Mon {
     prev_check: MainCtxCell<LargeTimestamp>,
