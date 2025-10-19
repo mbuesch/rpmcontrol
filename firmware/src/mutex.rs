@@ -212,6 +212,11 @@ impl AvrAtomic {
     }
 
     #[inline(always)]
+    pub const fn new_bool(value: bool) -> Self {
+        Self::new(value as _)
+    }
+
+    #[inline(always)]
     pub fn get(&self) -> u8 {
         fence();
         // SAFETY: u8 load is atomic on AVR.
