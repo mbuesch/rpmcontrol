@@ -161,21 +161,21 @@ pub struct MainCtxCell<T> {
 }
 
 impl<T> MainCtxCell<T> {
-    #[inline]
+    #[inline(always)]
     pub const fn new(inner: T) -> Self {
         Self {
             inner: Mutex::new(Cell::new(inner)),
         }
     }
 
-    #[inline]
+    #[inline(always)]
     #[allow(dead_code)]
     pub fn replace(&self, m: &MainCtx<'_>, inner: T) -> T {
         // SAFETY: We only use the cs for the main context, where it is allowed to be used.
         self.inner.borrow(unsafe { m.cs() }).replace(inner)
     }
 
-    #[inline]
+    #[inline(always)]
     #[allow(dead_code)]
     pub fn as_ref<'cs>(&self, m: &MainCtx<'cs>) -> &'cs T {
         // SAFETY: The returned reference is bound to the
@@ -186,13 +186,13 @@ impl<T> MainCtxCell<T> {
 }
 
 impl<T: Copy> MainCtxCell<T> {
-    #[inline]
+    #[inline(always)]
     pub fn get(&self, m: &MainCtx<'_>) -> T {
         // SAFETY: We only use the cs for the main context, where it is allowed to be used.
         self.inner.borrow(unsafe { m.cs() }).get()
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn set(&self, m: &MainCtx<'_>, inner: T) {
         // SAFETY: We only use the cs for the main context, where it is allowed to be used.
         self.inner.borrow(unsafe { m.cs() }).set(inner);
@@ -209,12 +209,12 @@ unsafe impl Send for AvrAtomic {}
 unsafe impl Sync for AvrAtomic {}
 
 impl AvrAtomic {
-    #[inline]
+    #[inline(always)]
     pub const fn new() -> Self {
         Self(UnsafeCell::new(0))
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn get(&self) -> u8 {
         fence();
         // SAFETY: u8 load is atomic on AVR.
@@ -223,7 +223,7 @@ impl AvrAtomic {
         value
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn set(&self, value: u8) {
         fence();
         // SAFETY: u8 store is atomic on AVR.
@@ -233,12 +233,12 @@ impl AvrAtomic {
         fence();
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn get_bool(&self) -> bool {
         self.get() != 0
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn set_bool(&self, value: bool) {
         self.set(value as _);
     }
