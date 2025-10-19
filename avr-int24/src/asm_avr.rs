@@ -1,4 +1,4 @@
-use crate::raw::{Int24Raw, abs24, is_neg24};
+use crate::raw::Int24Raw;
 use core::arch::asm;
 
 #[inline(always)]

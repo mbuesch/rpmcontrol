@@ -1,4 +1,4 @@
-use crate::raw::{Int24Raw, is_neg24, raw_max, raw_min, raw_minus_one, raw_zero};
+use crate::raw::Int24Raw;
 
 fn to_i32(a: Int24Raw) -> i32 {
     if a.2 & 0x80 == 0 {
@@ -25,10 +25,14 @@ pub fn asm_mulsat24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
 }
 
 pub fn asm_divsat24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
-    if b == raw_zero() {
-        if is_neg24(a) { raw_min() } else { raw_max() }
-    } else if a == raw_min() && b == raw_minus_one() {
-        raw_max()
+    if b == (0, 0, 0) {
+        if a.2 & 0x80 == 0 {
+            (0xFF, 0xFF, 0x7F)
+        } else {
+            (0x00, 0x00, 0x80)
+        }
+    } else if a == (0x00, 0x00, 0x80) && b == (0xFF, 0xFF, 0xFF) {
+        (0xFF, 0xFF, 0x7F)
     } else {
         from_i32(to_i32(a) / to_i32(b))
     }

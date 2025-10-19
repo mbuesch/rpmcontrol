@@ -11,11 +11,6 @@ pub const fn raw_zero() -> Int24Raw {
 }
 
 #[inline(always)]
-pub const fn raw_minus_one() -> Int24Raw {
-    (0xFF, 0xFF, 0xFF)
-}
-
-#[inline(always)]
 pub const fn raw_min() -> Int24Raw {
     (0x00, 0x00, 0x80)
 }
