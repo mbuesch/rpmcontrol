@@ -1,8 +1,10 @@
-# RPM Control
+# AC motor speed controller
 
 This is a closed-loop AC motor speed controller.
 It uses phase-angle control with a triac to regulate the motor's speed.
 The firmware is written in Rust and runs on an ATtiny861A microcontroller.
+
+Note that currently only 50 Hz mains is supported, but adding support for other mains frequencies is possible.
 
 ## Components
 
