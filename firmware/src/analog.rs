@@ -1,7 +1,7 @@
 use crate::{
     hw::interrupt,
     mon::mon_report_analog_failure,
-    mutex::{IrqCtx, MainCtx, Mutex, MutexCell},
+    mutex::{IrqCtx, MainCtx, MainCtxCell, Mutex},
     ports::setup_didr,
     ring::Ring,
     system::SysPeriph,
@@ -32,21 +32,25 @@ impl AdcChannel {
 }
 
 pub struct Adc {
-    chan: MutexCell<AdcChannel>,
-    settled: MutexCell<bool>,
-    running: MutexCell<bool>,
-    result: [MutexCell<u16>; 3],
-    ok: MutexCell<u8>,
+    chan: MainCtxCell<AdcChannel>,
+    settled: MainCtxCell<bool>,
+    running: MainCtxCell<bool>,
+    result: [MainCtxCell<u16>; 3],
+    ok: MainCtxCell<u8>,
 }
 
 impl Adc {
     pub const fn new() -> Self {
         Self {
-            chan: MutexCell::new(AdcChannel::Setpoint),
-            settled: MutexCell::new(false),
-            running: MutexCell::new(false),
-            result: [MutexCell::new(0), MutexCell::new(0), MutexCell::new(0)],
-            ok: MutexCell::new(0),
+            chan: MainCtxCell::new(AdcChannel::Setpoint),
+            settled: MainCtxCell::new(false),
+            running: MainCtxCell::new(false),
+            result: [
+                MainCtxCell::new(0),
+                MainCtxCell::new(0),
+                MainCtxCell::new(0),
+            ],
+            ok: MainCtxCell::new(0),
         }
     }
 

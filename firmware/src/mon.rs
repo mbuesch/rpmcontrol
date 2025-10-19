@@ -4,7 +4,7 @@ use crate::{
     fixpt::{Fixpt, fixpt},
     history::History,
     mon_stack::estimate_unused_stack_space,
-    mutex::{AvrAtomic, MainCtx, MutexCell},
+    mutex::{AvrAtomic, MainCtx, MainCtxCell},
     shutoff::Shutoff,
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
@@ -47,31 +47,31 @@ const MON_ACTIVE_THRES: Fixpt = rpm!(7500);
 static ANALOG_FAILURE: AvrAtomic = AvrAtomic::new();
 
 pub struct Mon {
-    prev_check: MutexCell<LargeTimestamp>,
-    prev_mains_90deg: MutexCell<LargeTimestamp>,
+    prev_check: MainCtxCell<LargeTimestamp>,
+    prev_mains_90deg: MainCtxCell<LargeTimestamp>,
     error_deb: Debounce<ERROR_DEBOUNCE_ERRSTEP, ERROR_DEBOUNCE_LIMIT, ERROR_DEBOUNCE_STICKY>,
     sp_hist: History<Fixpt, SP_HIST_COUNT>,
-    prev_sp: MutexCell<LargeTimestamp>,
+    prev_sp: MainCtxCell<LargeTimestamp>,
 }
 
 impl Mon {
     pub const fn new() -> Self {
         Self {
-            prev_check: MutexCell::new(LargeTimestamp::new()),
-            prev_mains_90deg: MutexCell::new(LargeTimestamp::new()),
+            prev_check: MainCtxCell::new(LargeTimestamp::new()),
+            prev_mains_90deg: MainCtxCell::new(LargeTimestamp::new()),
             error_deb: Debounce::new(),
             sp_hist: History::new([
-                MutexCell::new(fixpt!(0)),
-                MutexCell::new(fixpt!(0)),
-                MutexCell::new(fixpt!(0)),
-                MutexCell::new(fixpt!(0)),
-                MutexCell::new(fixpt!(0)),
-                MutexCell::new(fixpt!(0)),
-                MutexCell::new(fixpt!(0)),
-                MutexCell::new(fixpt!(0)),
-                MutexCell::new(fixpt!(0)),
+                MainCtxCell::new(fixpt!(0)),
+                MainCtxCell::new(fixpt!(0)),
+                MainCtxCell::new(fixpt!(0)),
+                MainCtxCell::new(fixpt!(0)),
+                MainCtxCell::new(fixpt!(0)),
+                MainCtxCell::new(fixpt!(0)),
+                MainCtxCell::new(fixpt!(0)),
+                MainCtxCell::new(fixpt!(0)),
+                MainCtxCell::new(fixpt!(0)),
             ]),
-            prev_sp: MutexCell::new(LargeTimestamp::new()),
+            prev_sp: MainCtxCell::new(LargeTimestamp::new()),
         }
     }
 

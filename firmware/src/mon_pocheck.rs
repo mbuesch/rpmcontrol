@@ -1,7 +1,7 @@
 use crate::{
     fixpt::{Fixpt, fixpt},
     mains::MAINS_HALFWAVE_DUR_MS,
-    mutex::{MainCtx, MutexCell},
+    mutex::{MainCtx, MainCtxCell},
     shutoff::Shutoff,
     speedo::MotorSpeed,
     system::{debug_toggle, rpm},
@@ -65,17 +65,17 @@ impl PoState {
 }
 
 pub struct PoCheck {
-    state: MutexCell<PoState>,
-    next_transition: MutexCell<LargeTimestamp>,
-    part: MutexCell<PoStatePart>,
+    state: MainCtxCell<PoState>,
+    next_transition: MainCtxCell<LargeTimestamp>,
+    part: MainCtxCell<PoStatePart>,
 }
 
 impl PoCheck {
     pub const fn new() -> Self {
         Self {
-            state: MutexCell::new(PoState::CheckIdle),
-            next_transition: MutexCell::new(LargeTimestamp::new()),
-            part: MutexCell::new(PoStatePart::Pre),
+            state: MainCtxCell::new(PoState::CheckIdle),
+            next_transition: MainCtxCell::new(LargeTimestamp::new()),
+            part: MainCtxCell::new(PoStatePart::Pre),
         }
     }
 

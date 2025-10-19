@@ -1,18 +1,18 @@
 use crate::{
     fixpt::{BigFixpt, Fixpt, fixpt},
-    mutex::{MainCtx, MutexCell},
+    mutex::{MainCtx, MainCtxCell},
 };
 
 pub struct Filter {
-    buf: MutexCell<BigFixpt>,
-    out: MutexCell<Fixpt>,
+    buf: MainCtxCell<BigFixpt>,
+    out: MainCtxCell<Fixpt>,
 }
 
 impl Filter {
     pub const fn new() -> Self {
         Self {
-            buf: MutexCell::new(fixpt!(0).upgrade()),
-            out: MutexCell::new(fixpt!(0)),
+            buf: MainCtxCell::new(fixpt!(0).upgrade()),
+            out: MainCtxCell::new(fixpt!(0)),
         }
     }
 

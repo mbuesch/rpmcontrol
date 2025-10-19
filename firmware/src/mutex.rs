@@ -156,11 +156,11 @@ pub fn fence() {
     core::sync::atomic::fence(core::sync::atomic::Ordering::SeqCst);
 }
 
-pub struct MutexCell<T> {
+pub struct MainCtxCell<T> {
     inner: Mutex<Cell<T>>,
 }
 
-impl<T> MutexCell<T> {
+impl<T> MainCtxCell<T> {
     #[inline]
     pub const fn new(inner: T) -> Self {
         Self {
@@ -185,7 +185,7 @@ impl<T> MutexCell<T> {
     }
 }
 
-impl<T: Copy> MutexCell<T> {
+impl<T: Copy> MainCtxCell<T> {
     #[inline]
     pub fn get(&self, m: &MainCtx<'_>) -> T {
         // SAFETY: We only use the cs for the main context, where it is allowed to be used.

@@ -1,6 +1,6 @@
 use crate::{
     fixpt::{Fixpt, fixpt},
-    mutex::{MainCtx, MutexCell},
+    mutex::{MainCtx, MainCtxCell},
 };
 
 #[derive(Clone)]
@@ -17,15 +17,15 @@ pub struct PidIlim {
 }
 
 pub struct Pid {
-    i: MutexCell<Fixpt>,
-    prev_e: MutexCell<Fixpt>,
+    i: MainCtxCell<Fixpt>,
+    prev_e: MainCtxCell<Fixpt>,
 }
 
 impl Pid {
     pub const fn new() -> Self {
         Self {
-            i: MutexCell::new(Fixpt::from_int(0)),
-            prev_e: MutexCell::new(Fixpt::from_int(0)),
+            i: MainCtxCell::new(Fixpt::from_int(0)),
+            prev_e: MainCtxCell::new(Fixpt::from_int(0)),
         }
     }
 

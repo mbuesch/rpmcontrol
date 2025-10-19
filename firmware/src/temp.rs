@@ -2,7 +2,7 @@ use crate::{
     debug::Debug,
     filter::Filter,
     fixpt::{Fixpt, fixpt},
-    mutex::{MainCtx, MutexCell},
+    mutex::{MainCtx, MainCtxCell},
     shutoff::Shutoff,
 };
 use curveipo::Curve;
@@ -69,7 +69,7 @@ pub struct TempAdc {
 }
 
 pub struct Temp {
-    shutoff: MutexCell<Shutoff>,
+    shutoff: MainCtxCell<Shutoff>,
     filter_uc: Filter,
     filter_mot: Filter,
 }
@@ -77,7 +77,7 @@ pub struct Temp {
 impl Temp {
     pub const fn new() -> Self {
         Self {
-            shutoff: MutexCell::new(Shutoff::MachineShutoff),
+            shutoff: MainCtxCell::new(Shutoff::MachineShutoff),
             filter_uc: Filter::new(),
             filter_mot: Filter::new(),
         }

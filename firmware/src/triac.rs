@@ -2,7 +2,7 @@ use crate::{
     fixpt::Fixpt,
     hw::interrupt,
     mains::{MAINS_HALFWAVE_DUR, Phase, PhaseUpdate},
-    mutex::{IrqCtx, MainCtx, Mutex, MutexCell},
+    mutex::{IrqCtx, MainCtx, MainCtxCell, Mutex},
     ports::PORTB,
     shutoff::Shutoff,
     timer::{
@@ -134,15 +134,15 @@ fn set_trigger(trigger: bool) {
 }
 
 pub struct Triac {
-    phi_offs: MutexCell<RelLargeTimestamp>,
-    trigger_pending: MutexCell<bool>,
+    phi_offs: MainCtxCell<RelLargeTimestamp>,
+    trigger_pending: MainCtxCell<bool>,
 }
 
 impl Triac {
     pub const fn new() -> Self {
         Self {
-            phi_offs: MutexCell::new(RelLargeTimestamp::new()),
-            trigger_pending: MutexCell::new(false),
+            phi_offs: MainCtxCell::new(RelLargeTimestamp::new()),
+            trigger_pending: MainCtxCell::new(false),
         }
     }
 

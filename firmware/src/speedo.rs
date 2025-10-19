@@ -2,7 +2,7 @@ use crate::{
     analog::ac_capture_get,
     debug::Debug,
     fixpt::Fixpt,
-    mutex::{MainCtx, MutexCell},
+    mutex::{MainCtx, MainCtxCell},
     timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
 use avr_int24::Int24;
@@ -40,21 +40,21 @@ impl MotorSpeed {
 }
 
 pub struct Speedo {
-    ok_count: MutexCell<u8>,
-    prev_stamp: MutexCell<LargeTimestamp>,
-    dur: [MutexCell<i16>; 4],
+    ok_count: MainCtxCell<u8>,
+    prev_stamp: MainCtxCell<LargeTimestamp>,
+    dur: [MainCtxCell<i16>; 4],
 }
 
 impl Speedo {
     pub const fn new() -> Self {
         Self {
-            ok_count: MutexCell::new(0),
-            prev_stamp: MutexCell::new(LargeTimestamp::new()),
+            ok_count: MainCtxCell::new(0),
+            prev_stamp: MainCtxCell::new(LargeTimestamp::new()),
             dur: [
-                MutexCell::new(0),
-                MutexCell::new(0),
-                MutexCell::new(0),
-                MutexCell::new(0),
+                MainCtxCell::new(0),
+                MainCtxCell::new(0),
+                MainCtxCell::new(0),
+                MainCtxCell::new(0),
             ],
         }
     }

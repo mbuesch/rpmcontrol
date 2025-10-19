@@ -1,7 +1,7 @@
 use crate::{
     fixpt::{Fixpt, fixpt},
     hw::interrupt,
-    mutex::{IrqCtx, MainCtx, Mutex, MutexCell},
+    mutex::{IrqCtx, MainCtx, MainCtxCell, Mutex},
     ports::PORTA,
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large, timer_get_large_cs},
 };
@@ -38,17 +38,17 @@ pub enum PhaseUpdate {
 }
 
 pub struct Mains {
-    prev_vsense: MutexCell<bool>,
-    phase: MutexCell<Phase>,
-    phaseref: MutexCell<LargeTimestamp>,
+    prev_vsense: MainCtxCell<bool>,
+    phase: MainCtxCell<Phase>,
+    phaseref: MainCtxCell<LargeTimestamp>,
 }
 
 impl Mains {
     pub const fn new() -> Self {
         Self {
-            prev_vsense: MutexCell::new(false),
-            phase: MutexCell::new(Phase::Notsync),
-            phaseref: MutexCell::new(LargeTimestamp::new()),
+            prev_vsense: MainCtxCell::new(false),
+            phase: MainCtxCell::new(Phase::Notsync),
+            phaseref: MainCtxCell::new(LargeTimestamp::new()),
         }
     }
 

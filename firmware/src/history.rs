@@ -1,11 +1,11 @@
-use crate::mutex::{MainCtx, MutexCell};
+use crate::mutex::{MainCtx, MainCtxCell};
 
 pub struct History<T, const SIZE: usize> {
-    hist: [MutexCell<T>; SIZE],
+    hist: [MainCtxCell<T>; SIZE],
 }
 
 impl<T, const SIZE: usize> History<T, SIZE> {
-    pub const fn new(hist: [MutexCell<T>; SIZE]) -> Self {
+    pub const fn new(hist: [MainCtxCell<T>; SIZE]) -> Self {
         Self { hist }
     }
 }

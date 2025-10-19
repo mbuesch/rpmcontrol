@@ -7,7 +7,7 @@ use crate::{
     mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
     mon::Mon,
     mon_pocheck::{PoCheck, PoState},
-    mutex::{MainCtx, MutexCell},
+    mutex::{MainCtx, MainCtxCell},
     pid::{Pid, PidIlim, PidParams},
     ports::PORTB,
     shutoff::{Shutoff, set_secondary_shutoff},
@@ -130,8 +130,8 @@ enum SysState {
 }
 
 pub struct System {
-    startup_delay_timeout: MutexCell<LargeTimestamp>,
-    state: MutexCell<SysState>,
+    startup_delay_timeout: MainCtxCell<LargeTimestamp>,
+    state: MainCtxCell<SysState>,
     mon: Mon,
     mon_pocheck: PoCheck,
     ac: Ac,
@@ -142,17 +142,17 @@ pub struct System {
     temp: Temp,
     mains: Mains,
     rpm_pid: Pid,
-    mains_90deg_done: MutexCell<bool>,
+    mains_90deg_done: MainCtxCell<bool>,
     triac: Triac,
-    prev_time: MutexCell<LargeTimestamp>,
-    max_rt: MutexCell<RelLargeTimestamp>,
+    prev_time: MainCtxCell<LargeTimestamp>,
+    max_rt: MainCtxCell<RelLargeTimestamp>,
 }
 
 impl System {
     pub const fn new() -> Self {
         Self {
-            startup_delay_timeout: MutexCell::new(LargeTimestamp::new()),
-            state: MutexCell::new(SysState::Startup),
+            startup_delay_timeout: MainCtxCell::new(LargeTimestamp::new()),
+            state: MainCtxCell::new(SysState::Startup),
             mon: Mon::new(),
             mon_pocheck: PoCheck::new(),
             ac: Ac::new(),
@@ -163,10 +163,10 @@ impl System {
             temp: Temp::new(),
             mains: Mains::new(),
             rpm_pid: Pid::new(),
-            mains_90deg_done: MutexCell::new(false),
+            mains_90deg_done: MainCtxCell::new(false),
             triac: Triac::new(),
-            prev_time: MutexCell::new(LargeTimestamp::new()),
-            max_rt: MutexCell::new(RelLargeTimestamp::new()),
+            prev_time: MainCtxCell::new(LargeTimestamp::new()),
+            max_rt: MainCtxCell::new(RelLargeTimestamp::new()),
         }
     }
 

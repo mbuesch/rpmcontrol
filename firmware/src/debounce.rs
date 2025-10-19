@@ -1,13 +1,13 @@
-use crate::mutex::{MainCtx, MutexCell};
+use crate::mutex::{MainCtx, MainCtxCell};
 
 pub struct Debounce<const ERRSTEP: u8, const LIMIT: u8, const STICKY: bool> {
-    count: MutexCell<u8>,
+    count: MainCtxCell<u8>,
 }
 
 impl<const ERRSTEP: u8, const LIMIT: u8, const STICKY: bool> Debounce<ERRSTEP, LIMIT, STICKY> {
     pub const fn new() -> Self {
         Self {
-            count: MutexCell::new(0),
+            count: MainCtxCell::new(0),
         }
     }
 
