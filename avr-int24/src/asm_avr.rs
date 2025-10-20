@@ -333,18 +333,17 @@ pub fn asm_shr24(mut a: Int24Raw, mut count: u8) -> Int24Raw {
 }
 
 #[inline(always)]
-pub fn asm_ge24(mut a: Int24Raw, b: Int24Raw) -> bool {
+pub fn asm_ge24(a: Int24Raw, b: Int24Raw) -> bool {
+    let mut c: u8;
     unsafe {
         asm!(
             "   cp {a0}, {b0}",
             "   cpc {a1}, {b1}",
             "   cpc {a2}, {b2}",
-            "   ldi {a0}, 1",
-            "   brge 1f",
-            "   clr {a0}",
-            "1:",
+            "   in {c}, __SREG__",
+            "   andi {c}, 0x10",
 
-            a0 = inout(reg) a.0,
+            a0 = in(reg) a.0,
             a1 = in(reg) a.1,
             a2 = in(reg) a.2,
 
@@ -352,10 +351,12 @@ pub fn asm_ge24(mut a: Int24Raw, b: Int24Raw) -> bool {
             b1 = in(reg) b.1,
             b2 = in(reg) b.2,
 
+            c = out(reg_upper) c,
+
             options(pure, nomem, nostack),
         );
     }
-    a.0 != 0
+    c == 0
 }
 
 // vim: ts=4 sw=4 expandtab
