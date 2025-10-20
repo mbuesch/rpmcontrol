@@ -28,8 +28,5 @@ codegen-units = 1
 lto = "fat"
 opt-level = "s"
 
-#[patch.crates-io]
-#avr-device = { path = "../../avr-device" }
-
 [lints.clippy]
 undocumented_unsafe_blocks = "warn"
