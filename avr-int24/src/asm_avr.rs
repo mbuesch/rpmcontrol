@@ -21,9 +21,9 @@ pub fn asm_mulsat24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "   ldi {t}, 0x80",
             "   cpc {a2}, {t}",
             "   brne 10f",
-            "   sbrs {b2}, 7",
-            "   rjmp 60f",
-            "   rjmp 70f",
+            "   sbrs {b2}, 7",          // multiplier is negative?
+            "   rjmp 60f",              // saturate to neg min
+            "   rjmp 70f",              // saturate to pos max
             "10:",
 
             // multiplication logic
@@ -55,11 +55,11 @@ pub fn asm_mulsat24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "   brne 1b",               // loop counter != 0?
 
             // check if saturation is needed
-            "   cp {p3}, __zero_reg__",
+            "   cp {p3}, __zero_reg__", // product high all bits cleared?
             "   cpc {p4}, __zero_reg__",
             "   cpc {p5}, __zero_reg__",
             "   breq 90f",
-            "   ldi {t}, 0xFF",
+            "   ldi {t}, 0xFF",         // product high all bits set?
             "   cp {p3}, {t}",
             "   cpc {p4}, {t}",
             "   cpc {p5}, {t}",
@@ -71,17 +71,14 @@ pub fn asm_mulsat24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "60:",
             "   mov {b0}, __zero_reg__",
             "   mov {b1}, __zero_reg__",
-            "   ldi {t}, 0x80",
-            "   mov {b2}, {t}",
+            "   ldi {b2}, 0x80",
             "   rjmp 90f",
 
             // saturate to positive max
             "70:",
-            "   ldi {t}, 0xFF",
-            "   mov {b0}, {t}",
-            "   mov {b1}, {t}",
-            "   ldi {t}, 0x7F",
-            "   mov {b2}, {t}",
+            "   ldi {b1}, 0xFF",
+            "   mov {b0}, {b1}",
+            "   ldi {b2}, 0x7F",
             "   rjmp 90f",
 
             // zero result
@@ -97,8 +94,8 @@ pub fn asm_mulsat24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             a2 = in(reg) a.2,
 
             b0 = inout(reg) b.0,        // multiplier and product low
-            b1 = inout(reg) b.1,
-            b2 = inout(reg) b.2,
+            b1 = inout(reg_upper) b.1,
+            b2 = inout(reg_upper) b.2,
             p3 = out(reg) _,            // product high
             p4 = out(reg) _,
             p5 = out(reg) _,
@@ -152,11 +149,9 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "   sbci {a2}, 0xFF",
             "   sbrs {a2}, 7",
             "   rjmp 20f",
-            "   ldi {t}, 0xFF",         // saturate to max
-            "   mov {a0}, {t}",
-            "   mov {a1}, {t}",
-            "   ldi {t}, 0x7F",
-            "   mov {a2}, {t}",
+            "   ldi {a1}, 0xFF",        // saturate to max
+            "   mov {a0}, {a1}",
+            "   ldi {a2}, 0x7F",
             "20:",
 
             // b = abs(b)
@@ -169,11 +164,9 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "   sbci {b2}, 0xFF",
             "   sbrs {b2}, 7",
             "   rjmp 30f",
-            "   ldi {t}, 0xFF",         // saturate to max
-            "   mov {b0}, {t}",
-            "   mov {b1}, {t}",
-            "   ldi {t}, 0x7F",
-            "   mov {b2}, {t}",
+            "   ldi {b1}, 0xFF",        // saturate to max
+            "   mov {b0}, {b1}",
+            "   ldi {b2}, 0x7F",
             "30:",
 
             // division logic
@@ -218,17 +211,14 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             "60:",
             "   mov {a0}, __zero_reg__",
             "   mov {a1}, __zero_reg__",
-            "   ldi {t}, 0x80",
-            "   mov {a2}, {t}",
+            "   ldi {a2}, 0x80",
             "   rjmp 90f",
 
             // saturate to positive max
             "70:",
-            "   ldi {t}, 0xFF",
-            "   mov {a0}, {t}",
-            "   mov {a1}, {t}",
-            "   ldi {t}, 0x7F",
-            "   mov {a2}, {t}",
+            "   ldi {a1}, 0xFF",
+            "   mov {a0}, {a1}",
+            "   ldi {a2}, 0x7F",
             "   rjmp 90f",
 
             // adjust the result sign according to SREG.T
@@ -247,12 +237,12 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
             rem2 = out(reg) _,
 
             b0 = inout(reg) b.0,        // divisor
-            b1 = inout(reg) b.1,
-            b2 = inout(reg) b.2,
+            b1 = inout(reg_upper) b.1,
+            b2 = inout(reg_upper) b.2,
 
             a0 = inout(reg) a.0,        // dividend and quotient
-            a1 = inout(reg) a.1,
-            a2 = inout(reg) a.2,
+            a1 = inout(reg_upper) a.1,
+            a2 = inout(reg_upper) a.2,
 
             t = out(reg_upper) _,       // temporary and loop counter
 
