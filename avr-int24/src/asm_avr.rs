@@ -105,7 +105,7 @@ pub fn asm_mulsat24(a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
 
             t = out(reg_upper) _,
 
-            options(pure, nomem),
+            options(pure, nomem, nostack),
         );
     }
     b
@@ -256,7 +256,7 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
 
             t = out(reg_upper) _,       // temporary and loop counter
 
-            options(pure, nomem),
+            options(pure, nomem, nostack),
         );
     }
     a
