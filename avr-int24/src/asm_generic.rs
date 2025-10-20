@@ -38,8 +38,13 @@ pub fn asm_divsat24(a: Int24Raw, b: Int24Raw) -> Int24Raw {
     }
 }
 
-pub fn asm_neg24(a: Int24Raw) -> Int24Raw {
-    from_i32(-to_i32(a))
+pub fn asm_negsat24(a: Int24Raw) -> Int24Raw {
+    let b = from_i32(to_i32(a).wrapping_neg());
+    if a.2 & 0x80 != 0 && b.2 & 0x80 != 0 {
+        (0xFF, 0xFF, 0x7F)
+    } else {
+        b
+    }
 }
 
 pub fn asm_shl24(a: Int24Raw, count: u8) -> Int24Raw {

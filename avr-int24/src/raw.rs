@@ -1,5 +1,5 @@
 use crate::{
-    asm::{asm_divsat24, asm_ge24, asm_mulsat24, asm_neg24, asm_shl24, asm_shr24},
+    asm::{asm_divsat24, asm_ge24, asm_mulsat24, asm_negsat24, asm_shl24, asm_shr24},
     raw::conv::{i24raw_to_i32, i32_to_i24raw_sat},
 };
 
@@ -49,19 +49,12 @@ pub const fn is_neg24(a: Int24Raw) -> bool {
 
 #[inline(always)]
 pub fn neg24(a: Int24Raw) -> Int24Raw {
-    let a_neg = is_neg24(a);
-    let b = asm_neg24(a);
-    if a_neg && is_neg24(b) { raw_max() } else { b }
+    asm_negsat24(a)
 }
 
 #[inline(always)]
 pub fn abs24(a: Int24Raw) -> Int24Raw {
-    if is_neg24(a) {
-        let b = asm_neg24(a);
-        if is_neg24(b) { raw_max() } else { b }
-    } else {
-        a
-    }
+    if is_neg24(a) { asm_negsat24(a) } else { a }
 }
 
 #[inline(always)]

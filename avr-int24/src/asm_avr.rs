@@ -263,18 +263,30 @@ pub fn asm_divsat24(mut a: Int24Raw, mut b: Int24Raw) -> Int24Raw {
 }
 
 #[inline(always)]
-pub fn asm_neg24(mut a: Int24Raw) -> Int24Raw {
+pub fn asm_negsat24(mut a: Int24Raw) -> Int24Raw {
     unsafe {
         asm!(
+            "   mov {t}, {a2}",
+
             "   com {a2}",
             "   com {a1}",
             "   neg {a0}",
             "   sbci {a1}, 0xFF",
             "   sbci {a2}, 0xFF",
 
+            "   and {t}, {a2}",
+            "   sbrs {t}, 7",
+            "   rjmp 1f",
+            "   ldi {a1}, 0xFF",
+            "   mov {a0}, {a1}",
+            "   ldi {a2}, 0x7F",
+            "1:",
+
             a0 = inout(reg) a.0,
             a1 = inout(reg_upper) a.1,
             a2 = inout(reg_upper) a.2,
+
+            t = out(reg) _,
 
             options(pure, nomem, nostack),
         );
