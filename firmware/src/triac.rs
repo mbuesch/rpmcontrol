@@ -94,6 +94,7 @@ fn triac_timer_cancel() {
     interrupt::free(|cs| {
         TRIAC_TIMER_COUNT.borrow(cs).set(0);
         triac_timer_do_cancel();
+        set_trigger(false);
     });
 }
 
@@ -172,7 +173,6 @@ impl Triac {
         // or if we have a shutoff request.
         if phase == Phase::Notsync || shutoff == Shutoff::MachineShutoff {
             triac_timer_cancel();
-            set_trigger(false);
             self.trigger_pending.set(m, false);
             return;
         }
@@ -181,7 +181,6 @@ impl Triac {
         // If so, then we need to arm the next trigger timer soon.
         if phase_update == PhaseUpdate::Changed {
             triac_timer_cancel();
-            set_trigger(false);
             self.trigger_pending.set(m, true);
         }
 
