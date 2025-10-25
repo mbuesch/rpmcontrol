@@ -15,8 +15,8 @@ bench = false
 #avr-device = { version = "0.7", features = [ "attiny861a", "rt" ] }
 avr-device = { git = "https://github.com/Rahix/avr-device.git", rev = "ee1b9885ba0f71cd1b83d1e6422e9d9b27e32288", features = [ "attiny861a", "rt" ] }
 curveipo = "1"
-#avr-int24 = "1"
-avr-int24 = { git = "https://github.com/mbuesch/avr-int24.git", branch = "main" }
+avr-int24 = "1"
+#avr-int24 = { git = "https://github.com/mbuesch/avr-int24.git", branch = "main" }
 
 [profile.dev]
 panic = "abort"

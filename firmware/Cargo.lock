@@ -69,7 +69,8 @@ dependencies = [
 [[package]]
 name = "avr-int24"
 version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-int24.git?branch=main#8f662ead5eb4e9e3ea9a410122a81bc1a899edae"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59cec805e6445a9f8ceeafb0bdbba88e70fa3b263f10752f0cdd8e45710ca15b"
 
 [[package]]
 name = "bare-metal"
