@@ -276,7 +276,10 @@ impl BigFixpt {
     }
 
     pub fn div(self, other: Self) -> Self {
-        self.const_div(other)
+        const {
+            assert!(Self::SHIFT == 8);
+        }
+        Self(self.0.shl8div(other.0))
     }
 
     pub const fn const_div(self, other: Self) -> Self {
