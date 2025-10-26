@@ -1,9 +1,9 @@
 use crate::{
-    fixpt::{Fixpt, fixpt},
     hw::{Mutex, interrupt, mcu, nop3},
     mutex::{CriticalSection, IrqCtx, LazyMainInit, MainInitCtx},
     triac::triac_timer_interrupt,
 };
+use avr_q::{Q7p8, q7p8};
 use core::cell::Cell;
 
 #[allow(non_snake_case)]
@@ -346,7 +346,7 @@ impl From<LargeTimestamp> for Timestamp {
 }
 
 impl RelLargeTimestamp {
-    pub fn from_ms_fixpt(ms: Fixpt) -> RelLargeTimestamp {
+    pub fn from_ms_fixpt(ms: Q7p8) -> RelLargeTimestamp {
         // We must convert `ms` milliseconds to a corresponding number of ticks.
         //
         // Basically, we want to do:
@@ -364,9 +364,9 @@ impl RelLargeTimestamp {
         // ticks = --------------
         //              32
         //
-        // But we split it up into a Fixpt calculation and the final bias shift.
+        // But we split it up into a Q7p8 calculation and the final bias shift.
         //
-        // Fixpt calculation:
+        // Q7p8 calculation:
         //
         //         ms * 62.5
         // ticks = ---------
@@ -376,13 +376,13 @@ impl RelLargeTimestamp {
         // See comment above.
         assert_eq!(TIMER_TICK_US, 16);
 
-        // First part: Fixpt multiplication with bias.
-        let fac = fixpt!(125 / 64); // 62.5 / 32
+        // First part: Q7p8 multiplication with bias.
+        let fac = q7p8!(const 125 / 64); // 62.5 / 32
         let scaled = ms * fac;
 
         // Second part: Bias division.
         // Get the raw fixpt value and shift by 5.
-        let ticks = scaled.to_q() >> (Fixpt::SHIFT - 5);
+        let ticks = scaled.to_q() >> (Q7p8::SHIFT - 5);
 
         Self::from_ticks(ticks)
     }

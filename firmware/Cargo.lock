@@ -69,8 +69,16 @@ dependencies = [
 [[package]]
 name = "avr-int24"
 version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59cec805e6445a9f8ceeafb0bdbba88e70fa3b263f10752f0cdd8e45710ca15b"
+source = "git+https://github.com/mbuesch/avr-int24.git?branch=main#aab0891de6a4bf5e5f9ecb0b8d1a53a1cee2c7a0"
+
+[[package]]
+name = "avr-q"
+version = "1.0.0"
+source = "git+https://github.com/mbuesch/avr-q.git?branch=main#2f6d90de731632b5ef535bf5d31d85bccd764e51"
+dependencies = [
+ "avr-int24",
+ "curveipo",
+]
 
 [[package]]
 name = "bare-metal"
@@ -521,6 +529,7 @@ version = "0.1.0"
 dependencies = [
  "avr-device",
  "avr-int24",
+ "avr-q",
  "curveipo",
 ]
 

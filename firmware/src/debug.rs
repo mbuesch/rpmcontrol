@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::{
-    fixpt::Fixpt,
     hw::interrupt,
     mutex::{IrqCtx, MainInitCtx, Mutex},
     timer::RelLargeTimestamp,
     usi_uart::uart_tx_cs,
 };
+use avr_q::Q7p8;
 use core::cell::Cell;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -100,7 +100,7 @@ impl Debug {
         self.log_u16(value.into());
     }
 
-    pub fn log_fixpt(&self, value: Fixpt) {
+    pub fn log_fixpt(&self, value: Q7p8) {
         self.log_u16(value.to_q() as _);
     }
 

@@ -1,19 +1,19 @@
 use crate::{
-    fixpt::{Fixpt, fixpt},
     hw::interrupt,
     mutex::{IrqCtx, MainCtx, MainCtxCell, Mutex},
     ports::PORTA,
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large, timer_get_large_cs},
 };
+use avr_q::{Q7p8, q7p8};
 use core::cell::Cell;
 
 /// Mains sine wave period (50 Hz).
-pub const MAINS_PERIOD_MS: Fixpt = fixpt!(20);
+pub const MAINS_PERIOD_MS: Q7p8 = q7p8!(const 20);
 /// Mains sine wave period (50 Hz).
 pub const MAINS_PERIOD: RelLargeTimestamp = RelLargeTimestamp::from_millis(20);
 
 /// Mains sine wave half-wave length.
-pub const MAINS_HALFWAVE_DUR_MS: Fixpt = MAINS_PERIOD_MS.const_div(fixpt!(2));
+pub const MAINS_HALFWAVE_DUR_MS: Q7p8 = MAINS_PERIOD_MS.const_div(q7p8!(const 2));
 /// Mains sine wave half-wave length.
 pub const MAINS_HALFWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(2);
 

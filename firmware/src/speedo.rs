@@ -1,11 +1,11 @@
 use crate::{
     analog::ac_capture_get,
     debug::Debug,
-    fixpt::Fixpt,
     mutex::{MainCtx, MainCtxCell},
     timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
 use avr_int24::Int24;
+use avr_q::Q7p8;
 
 /// 4 speedometer edges per motor revolution
 const SPEEDO_FACT: u32 = 4;
@@ -13,16 +13,16 @@ const SPEEDO_FACT: u32 = 4;
 const OK_THRES: u8 = 4;
 
 #[derive(Copy, Clone)]
-pub struct MotorSpeed(Fixpt);
+pub struct MotorSpeed(Q7p8);
 
 impl MotorSpeed {
     const FACT_16HZ: i16 = 16;
 
-    pub const fn as_16hz(&self) -> Fixpt {
+    pub const fn as_16hz(&self) -> Q7p8 {
         self.0
     }
 
-    pub fn from_16hz(value: Fixpt) -> Self {
+    pub fn from_16hz(value: Q7p8) -> Self {
         Self(value)
     }
 
@@ -35,7 +35,7 @@ impl MotorSpeed {
         let num = (1_000_000 / (TIMER_TICK_US as u32 * (SPEEDO_FACT / 2))) as i16;
         let denom = dur * Self::FACT_16HZ * 2;
 
-        Self::from_16hz(Fixpt::from_fraction(num, denom))
+        Self::from_16hz(Q7p8::from_fraction(num, denom))
     }
 }
 

@@ -8,7 +8,6 @@ mod debounce;
 mod debug;
 mod exint;
 mod filter;
-mod fixpt;
 mod history;
 mod hw;
 mod mains;

@@ -1,5 +1,4 @@
 use crate::{
-    fixpt::Fixpt,
     hw::interrupt,
     mains::{MAINS_HALFWAVE_DUR, Phase, PhaseUpdate},
     mutex::{IrqCtx, MainCtx, MainCtxCell, Mutex},
@@ -10,6 +9,7 @@ use crate::{
         timer_interrupt_a_arm, timer_interrupt_a_cancel,
     },
 };
+use avr_q::Q7p8;
 use core::{
     cell::Cell,
     sync::atomic::{Ordering::SeqCst, fence},
@@ -149,7 +149,7 @@ impl Triac {
 
     /// Set the next triac trigger offset, in milliseconds.
     /// Relative to the mains zero crossing.
-    pub fn set_phi_offs_ms(&self, m: &MainCtx<'_>, ms: Fixpt) {
+    pub fn set_phi_offs_ms(&self, m: &MainCtx<'_>, ms: Q7p8) {
         self.phi_offs.set(m, RelLargeTimestamp::from_ms_fixpt(ms));
     }
 

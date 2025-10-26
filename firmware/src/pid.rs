@@ -1,31 +1,29 @@
-use crate::{
-    fixpt::{Fixpt, fixpt},
-    mutex::{MainCtx, MainCtxCell},
-};
+use crate::mutex::{MainCtx, MainCtxCell};
+use avr_q::{Q7p8, q7p8};
 
 #[derive(Clone)]
 pub struct PidParams {
-    pub kp: Fixpt,
-    pub ki: Fixpt,
-    pub kd: Fixpt,
+    pub kp: Q7p8,
+    pub ki: Q7p8,
+    pub kd: Q7p8,
 }
 
 #[derive(Clone)]
 pub struct PidIlim {
-    pub neg: Fixpt,
-    pub pos: Fixpt,
+    pub neg: Q7p8,
+    pub pos: Q7p8,
 }
 
 pub struct Pid {
-    i: MainCtxCell<Fixpt>,
-    prev_e: MainCtxCell<Fixpt>,
+    i: MainCtxCell<Q7p8>,
+    prev_e: MainCtxCell<Q7p8>,
 }
 
 impl Pid {
     pub const fn new() -> Self {
         Self {
-            i: MainCtxCell::new(Fixpt::from_int(0)),
-            prev_e: MainCtxCell::new(Fixpt::from_int(0)),
+            i: MainCtxCell::new(q7p8!(const 0)),
+            prev_e: MainCtxCell::new(q7p8!(const 0)),
         }
     }
 
@@ -34,10 +32,10 @@ impl Pid {
         m: &MainCtx<'_>,
         params: &PidParams,
         ilim: &PidIlim,
-        sp: Fixpt,
-        r: Fixpt,
+        sp: Q7p8,
+        r: Q7p8,
         reset: bool,
-    ) -> Fixpt {
+    ) -> Q7p8 {
         // deviation
         let e = sp - r;
 
@@ -47,7 +45,7 @@ impl Pid {
         // I term
         let mut i = self.i.get(m) + (params.ki * e);
         if reset {
-            i = fixpt!(0);
+            i = q7p8!(const 0);
         }
         i = i.min(ilim.pos);
         i = i.max(ilim.neg);

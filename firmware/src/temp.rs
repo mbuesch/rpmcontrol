@@ -1,64 +1,64 @@
 use crate::{
     debug::Debug,
     filter::Filter,
-    fixpt::{Fixpt, fixpt},
     mutex::{MainCtx, MainCtxCell},
     shutoff::Shutoff,
 };
+use avr_q::{Q7p8, q7p8};
 use curveipo::Curve;
 
 macro_rules! celsius {
     ($cel:literal) => {
-        const { fixpt!($cel / 2) }
+        const { q7p8!(const $cel / 2) }
     };
 }
 
-const R1: Fixpt = fixpt!(10); // kOhms
-const ADC_UREF: Fixpt = fixpt!(5); // volts
+const R1: Q7p8 = q7p8!(const 10); // kOhms
+const ADC_UREF: Q7p8 = q7p8!(const 5); // volts
 const ADC_MAX: u16 = 0x3FF;
-const TEMP_LIMIT_HI: Fixpt = celsius!(100);
-const TEMP_LIMIT_LO: Fixpt = celsius!(80);
-const TEMP_FILTER_DIV: Fixpt = fixpt!(16);
+const TEMP_LIMIT_HI: Q7p8 = celsius!(100);
+const TEMP_LIMIT_LO: Q7p8 = celsius!(80);
+const TEMP_FILTER_DIV: Q7p8 = q7p8!(const 16);
 
-const NTC_CURVE: Curve<Fixpt, (Fixpt, Fixpt), 7> = Curve::new([
+const NTC_CURVE: Curve<Q7p8, (Q7p8, Q7p8), 7> = Curve::new([
     // (kOhms, double deg Celsius)
-    (fixpt!(3321 / 10000), celsius!(145)),
-    (fixpt!(5174 / 10000), celsius!(125)),
-    (fixpt!(8400 / 10000), celsius!(105)),
-    (fixpt!(1429 / 1000), celsius!(85)),
-    (fixpt!(2565 / 1000), celsius!(65)),
-    (fixpt!(4891 / 1000), celsius!(45)),
-    (fixpt!(1000 / 100), celsius!(25)),
+    (q7p8!(const 3321 / 10000), celsius!(145)),
+    (q7p8!(const 5174 / 10000), celsius!(125)),
+    (q7p8!(const 8400 / 10000), celsius!(105)),
+    (q7p8!(const 1429 / 1000), celsius!(85)),
+    (q7p8!(const 2565 / 1000), celsius!(65)),
+    (q7p8!(const 4891 / 1000), celsius!(45)),
+    (q7p8!(const 1000 / 100), celsius!(25)),
 ]);
 
-const UC_CURVE: Curve<Fixpt, (Fixpt, Fixpt), 3> = Curve::new([
+const UC_CURVE: Curve<Q7p8, (Q7p8, Q7p8), 3> = Curve::new([
     // (adc / 8, double deg Celsius)
-    (fixpt!(300 / 8), celsius!(25)),
-    (fixpt!(370 / 8), celsius!(85)),
-    (fixpt!(440 / 8), celsius!(145)),
+    (q7p8!(const 300 / 8), celsius!(25)),
+    (q7p8!(const 370 / 8), celsius!(85)),
+    (q7p8!(const 440 / 8), celsius!(145)),
 ]);
 
 /// Convert motor temperature ADC to volts at ADC pin.
-fn mot_adc_to_volts(adc: u16) -> Fixpt {
+fn mot_adc_to_volts(adc: u16) -> Q7p8 {
     let num = adc as i16 * ADC_UREF.to_int();
     let den = ADC_MAX as i16;
-    Fixpt::from_fraction(num, den)
+    Q7p8::from_fraction(num, den)
 }
 
 /// Convert motor temperature voltage to resistance of temperature sensor.
-fn mot_volts_to_kohms(u2: Fixpt) -> Fixpt {
+fn mot_volts_to_kohms(u2: Q7p8) -> Q7p8 {
     (R1 * u2) / (ADC_UREF - u2)
 }
 
 /// Convert kOhms to degree double-Celsius.
-fn mot_kohms_to_celsius_double(r2: Fixpt) -> Fixpt {
+fn mot_kohms_to_celsius_double(r2: Q7p8) -> Q7p8 {
     NTC_CURVE.lin_inter(r2)
 }
 
 /// Convert microcontroller temp ADC to degree double-Celsius.
-fn uc_adc_to_celsius_double(adc: u16) -> Fixpt {
+fn uc_adc_to_celsius_double(adc: u16) -> Q7p8 {
     let adc = adc as i16;
-    UC_CURVE.lin_inter(Fixpt::from_fraction(adc, 8))
+    UC_CURVE.lin_inter(Q7p8::from_fraction(adc, 8))
 }
 
 pub struct TempAdc {

@@ -1,5 +1,4 @@
 use crate::{
-    fixpt::{Fixpt, fixpt},
     mains::MAINS_HALFWAVE_DUR_MS,
     mutex::{MainCtx, MainCtxCell},
     shutoff::Shutoff,
@@ -7,6 +6,7 @@ use crate::{
     system::{debug_toggle, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
+use avr_q::{Q7p8, q7p8};
 
 /// Duration of the `PoStatePart::Pre` part.
 const DUR_PRE: RelLargeTimestamp = RelLargeTimestamp::from_millis(50);
@@ -15,10 +15,10 @@ const DUR_PRE: RelLargeTimestamp = RelLargeTimestamp::from_millis(50);
 const DUR_CHECK: RelLargeTimestamp = RelLargeTimestamp::from_millis(400);
 
 /// RPM below or equal to this limit are considered to be zero RPM.
-const RPM_ZERO_LIMIT: Fixpt = rpm!(5);
+const RPM_ZERO_LIMIT: Q7p8 = rpm!(5);
 
 /// Triac offset for the enabled-check.
-const TRIAC_TRIG_OFFS_ENABLED_MS: Fixpt = MAINS_HALFWAVE_DUR_MS.const_div(fixpt!(10));
+const TRIAC_TRIG_OFFS_ENABLED_MS: Q7p8 = MAINS_HALFWAVE_DUR_MS.const_div(q7p8!(const 10));
 
 /// Show state transitions on the debug pin?
 const DEBUG_PIN_ENA: bool = false;
@@ -144,7 +144,7 @@ impl PoCheck {
         }
     }
 
-    pub fn get_triac_phi_offs_ms(&self, m: &MainCtx<'_>) -> Option<Fixpt> {
+    pub fn get_triac_phi_offs_ms(&self, m: &MainCtx<'_>) -> Option<Q7p8> {
         match self.state.get(m) {
             PoState::CheckIdle => None,
             PoState::CheckSecondaryShutoff => Some(TRIAC_TRIG_OFFS_ENABLED_MS),

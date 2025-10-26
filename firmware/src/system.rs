@@ -2,7 +2,6 @@ use crate::{
     analog::{Ac, Adc, AdcChannel},
     debug::Debug,
     filter::Filter,
-    fixpt::{Fixpt, fixpt},
     hw::mcu,
     mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
     mon::Mon,
@@ -16,40 +15,41 @@ use crate::{
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
     triac::Triac,
 };
+use avr_q::{Q7p8, q7p8};
 use curveipo::Curve;
 
 const STARTUP_DELAY: RelLargeTimestamp = RelLargeTimestamp::from_millis(300);
 
 const RPMPI_PARAMS: PidParams = PidParams {
-    kp: fixpt!(5 / 1),
-    ki: fixpt!(1 / 4),
-    kd: fixpt!(0),
-    //kd: fixpt!(1 / 16),
+    kp: q7p8!(const 5 / 1),
+    ki: q7p8!(const 1 / 4),
+    kd: q7p8!(const 0),
+    //kd: q7p8!(const 1 / 16),
 };
 
 const RPMPI_PARAMS_SYNCING: PidParams = PidParams {
-    kp: fixpt!(5 / 1),
-    ki: fixpt!(0),
-    kd: fixpt!(0),
+    kp: q7p8!(const 5 / 1),
+    ki: q7p8!(const 0),
+    kd: q7p8!(const 0),
 };
 
-const RPMPI_ILIM_NEG: Curve<Fixpt, (Fixpt, Fixpt), 4> = Curve::new([
+const RPMPI_ILIM_NEG: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
     // (speedo, I-limit)
-    (rpm!(0), fixpt!(0)),
-    (rpm!(1000), fixpt!(0)),
-    (rpm!(1001), fixpt!(-2)),
-    (rpm!(MAX_RPM), fixpt!(-6)),
+    (rpm!(0), q7p8!(const 0)),
+    (rpm!(1000), q7p8!(const 0)),
+    (rpm!(1001), q7p8!(const -2)),
+    (rpm!(MAX_RPM), q7p8!(const -6)),
 ]);
 
-const RPMPI_ILIM_POS: Curve<Fixpt, (Fixpt, Fixpt), 4> = Curve::new([
+const RPMPI_ILIM_POS: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
     // (speedo, I-limit)
-    (rpm!(0), fixpt!(0)),
-    (rpm!(1000), fixpt!(0)),
-    (rpm!(1001), fixpt!(12)),
-    (rpm!(MAX_RPM), fixpt!(24)),
+    (rpm!(0), q7p8!(const 0)),
+    (rpm!(1000), q7p8!(const 0)),
+    (rpm!(1001), q7p8!(const 12)),
+    (rpm!(MAX_RPM), q7p8!(const 24)),
 ]);
 
-const SYNC_SPEEDO_SUBSTITUTE: Curve<Fixpt, (Fixpt, Fixpt), 2> = Curve::new([
+const SYNC_SPEEDO_SUBSTITUTE: Curve<Q7p8, (Q7p8, Q7p8), 2> = Curve::new([
     // (setpoint, speedo-substitute)
     (rpm!(0), rpm!(0)),
     (rpm!(1000), rpm!(800)),
@@ -62,48 +62,48 @@ const MAX_RPM: i16 = 24000;
 const MAX_16HZ: i16 = rpm!(MAX_RPM).to_int(); // 24000/min, 400 Hz, 25 16-Hz
 
 /// Maximum motor RPM that will trigger a hard triac inhibit.
-const MOT_SOFT_LIMIT: Fixpt = rpm!(MAX_RPM + 500);
+const MOT_SOFT_LIMIT: Q7p8 = rpm!(MAX_RPM + 500);
 
 /// Maximum motor RPM that will trigger a monitoring fault.
-pub const MOT_HARD_LIMIT: Fixpt = rpm!(MAX_RPM + 1500);
+pub const MOT_HARD_LIMIT: Q7p8 = rpm!(MAX_RPM + 1500);
 
 /// Motor speed below this threshold will trigger speedometer re-syncing.
-const RPM_SYNC_THRES: Fixpt = rpm!(1000);
+const RPM_SYNC_THRES: Q7p8 = rpm!(1000);
 
 /// Speedometer filter divider.
-const SPEED_FILTER_DIV: Fixpt = fixpt!(2 / 1);
+const SPEED_FILTER_DIV: Q7p8 = q7p8!(const 2 / 1);
 
 /// Setpoint filter divider.
-const SETPOINT_FILTER_DIV: Fixpt = fixpt!(5 / 1);
+const SETPOINT_FILTER_DIV: Q7p8 = q7p8!(const 5 / 1);
 
 /// Convert RPM to fixpt-16Hz
 macro_rules! rpm {
     ($rpm: expr) => {
         // rpm / 60 / 16
         const {
-            use $crate::fixpt::{BigFixpt, big_fixpt};
-            let rps = BigFixpt::const_from_fraction($rpm, 60);
-            let hz16 = rps.const_div(big_fixpt!(16));
-            hz16.downgrade()
+            use avr_q::{Q15p8, q15p8};
+            let rps = Q15p8::const_from_fraction($rpm, 60);
+            let hz16 = rps.const_div(q15p8!(const 16));
+            hz16.to_q7p8()
         }
     };
 }
 pub(crate) use rpm;
 
 /// Convert 0..0x3FF to 0..400 Hz to 0..25 16Hz
-fn setpoint_to_f(adc: u16) -> Fixpt {
-    Fixpt::from_fraction(adc as i16, 8) / fixpt!(128 / 25)
+fn setpoint_to_f(adc: u16) -> Q7p8 {
+    Q7p8::from_fraction(adc as i16, 8) / q7p8!(const 128 / 25)
 }
 
 /// Clamp negative frequency to 0.
 /// Convert 0..25 16Hz into pi..0 radians.
 /// Convert pi..0 radians into 10..0 ms.
-fn f_to_trig_offs(f: Fixpt) -> Fixpt {
-    let fmin = Fixpt::from_int(0);
-    let fmax = Fixpt::from_int(MAX_16HZ);
+fn f_to_trig_offs(f: Q7p8) -> Q7p8 {
+    let fmin = Q7p8::from_int(0);
+    let fmax = Q7p8::from_int(MAX_16HZ);
     let f = f.max(fmin);
     let f = f.min(fmax);
-    ((fmax - f) * fixpt!(2)) / fixpt!(5) // *10/25
+    ((fmax - f) * q7p8!(const 2)) / q7p8!(const 5) // *10/25
 }
 
 #[allow(non_snake_case)]
@@ -268,7 +268,7 @@ impl System {
             // No new speed from speedometer and not in running system state.
             // Assume zero.
             self.speed_filter.reset(m);
-            fixpt!(0)
+            q7p8!(const 0)
         };
 
         // If the motor is too fast, turn the triac off.

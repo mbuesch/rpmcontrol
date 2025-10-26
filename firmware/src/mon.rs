@@ -1,7 +1,6 @@
 use crate::{
     debounce::Debounce,
     debug::Debug,
-    fixpt::{Fixpt, fixpt},
     history::History,
     mon_stack::estimate_unused_stack_space,
     mutex::{AvrAtomic, MainCtx, MainCtxCell},
@@ -9,6 +8,7 @@ use crate::{
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
+use avr_q::{Q7p8, q7p8};
 
 /// Distance between monitoring checks.
 const CHECK_DIST: RelLargeTimestamp = RelLargeTimestamp::from_millis(20);
@@ -29,7 +29,7 @@ const SP_HIST_DIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(333333);
 const SP_HIST_COUNT: usize = 9;
 
 /// Don't run monitoring, if the setpoint gradient in history is bigger than this.
-const SP_GRADIENT_THRES: Fixpt = rpm!(1000);
+const SP_GRADIENT_THRES: Q7p8 = rpm!(1000);
 
 /// Step size for one error event.
 const ERROR_DEBOUNCE_ERRSTEP: u8 = 3;
@@ -39,10 +39,10 @@ const ERROR_DEBOUNCE_LIMIT: u8 = 120;
 const ERROR_DEBOUNCE_STICKY: bool = true;
 
 /// Setpoint vs. speedometer deviation threshold that is considered to be an unexpected mismatch.
-const SPEEDO_TOLERANCE: Fixpt = rpm!(1000);
+const SPEEDO_TOLERANCE: Q7p8 = rpm!(1000);
 /// Monitoring activation threshold for speedometer input.
 /// Monitoring is not active below this threshold.
-const MON_ACTIVE_THRES: Fixpt = rpm!(7500);
+const MON_ACTIVE_THRES: Q7p8 = rpm!(7500);
 
 static ANALOG_FAILURE: AvrAtomic = AvrAtomic::new_bool(false);
 
@@ -50,7 +50,7 @@ pub struct Mon {
     prev_check: MainCtxCell<LargeTimestamp>,
     prev_mains_90deg: MainCtxCell<LargeTimestamp>,
     error_deb: Debounce<ERROR_DEBOUNCE_ERRSTEP, ERROR_DEBOUNCE_LIMIT, ERROR_DEBOUNCE_STICKY>,
-    sp_hist: History<Fixpt, SP_HIST_COUNT>,
+    sp_hist: History<Q7p8, SP_HIST_COUNT>,
     prev_sp: MainCtxCell<LargeTimestamp>,
 }
 
@@ -61,15 +61,15 @@ impl Mon {
             prev_mains_90deg: MainCtxCell::new(LargeTimestamp::new()),
             error_deb: Debounce::new(),
             sp_hist: History::new([
-                MainCtxCell::new(fixpt!(0)),
-                MainCtxCell::new(fixpt!(0)),
-                MainCtxCell::new(fixpt!(0)),
-                MainCtxCell::new(fixpt!(0)),
-                MainCtxCell::new(fixpt!(0)),
-                MainCtxCell::new(fixpt!(0)),
-                MainCtxCell::new(fixpt!(0)),
-                MainCtxCell::new(fixpt!(0)),
-                MainCtxCell::new(fixpt!(0)),
+                MainCtxCell::new(q7p8!(const 0)),
+                MainCtxCell::new(q7p8!(const 0)),
+                MainCtxCell::new(q7p8!(const 0)),
+                MainCtxCell::new(q7p8!(const 0)),
+                MainCtxCell::new(q7p8!(const 0)),
+                MainCtxCell::new(q7p8!(const 0)),
+                MainCtxCell::new(q7p8!(const 0)),
+                MainCtxCell::new(q7p8!(const 0)),
+                MainCtxCell::new(q7p8!(const 0)),
             ]),
             prev_sp: MainCtxCell::new(LargeTimestamp::new()),
         }
@@ -78,8 +78,8 @@ impl Mon {
     pub fn check(
         &self,
         m: &MainCtx<'_>,
-        setpoint: Fixpt,
-        speedo_hz: Fixpt,
+        setpoint: Q7p8,
+        speedo_hz: Q7p8,
         mains_90deg: bool,
     ) -> Shutoff {
         let now = timer_get_large();
