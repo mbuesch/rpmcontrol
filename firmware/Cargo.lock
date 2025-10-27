@@ -74,7 +74,7 @@ source = "git+https://github.com/mbuesch/avr-int24.git?branch=main#aab0891de6a4b
 [[package]]
 name = "avr-q"
 version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-q.git?branch=main#2f6d90de731632b5ef535bf5d31d85bccd764e51"
+source = "git+https://github.com/mbuesch/avr-q.git?branch=main#ec9bec4f12d7b8c23dfc6184c6989c270ac169a8"
 dependencies = [
  "avr-int24",
  "curveipo",
@@ -88,9 +88,9 @@ checksum = "f8fe8f5a8a398345e52358e18ff07cc17a568fbca5c6f73873d3a62056309603"
 
 [[package]]
 name = "bstr"
-version = "1.12.0"
+version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "234113d19d0d7d613b40e86fb654acf958910802bcceab913a4f9e7cda03b1a4"
+checksum = "63044e1ae8e69f3b5a92c736ca6269b8d12fa7efe39bf34ddb06d102cf0e2cab"
 dependencies = [
  "memchr",
  "serde",
@@ -803,9 +803,9 @@ checksum = "ea2f10b9bb0928dfb1b42b65e1f9e36f7f54dbdf08457afefb38afcdec4fa2bb"
 
 [[package]]
 name = "xml-rs"
-version = "0.8.27"
+version = "0.8.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fd8403733700263c6eb89f192880191f1b83e332f7a20371ddcf421c4a337c7"
+checksum = "3ae8337f8a065cfc972643663ea4279e04e7256de865aa66fe25cec5fb912d3f"
 
 [[package]]
 name = "xmltree"

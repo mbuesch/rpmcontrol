@@ -24,7 +24,6 @@ const RPMPI_PARAMS: PidParams = PidParams {
     kp: q7p8!(const 5 / 1),
     ki: q7p8!(const 1 / 4),
     kd: q7p8!(const 0),
-    //kd: q7p8!(const 1 / 16),
 };
 
 const RPMPI_PARAMS_SYNCING: PidParams = PidParams {
@@ -59,7 +58,7 @@ const SYNC_SPEEDO_SUBSTITUTE: Curve<Q7p8, (Q7p8, Q7p8), 2> = Curve::new([
 const MAX_RPM: i16 = 24000;
 
 /// Nominal maximum motor speed in 16-Hz units.
-const MAX_16HZ: i16 = rpm!(MAX_RPM).to_int(); // 24000/min, 400 Hz, 25 16-Hz
+const MAX_16HZ: i8 = rpm!(MAX_RPM).to_int(); // 24000/min, 400 Hz, 25 16-Hz
 
 /// Maximum motor RPM that will trigger a hard triac inhibit.
 const MOT_SOFT_LIMIT: Q7p8 = rpm!(MAX_RPM + 500);

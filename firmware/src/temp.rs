@@ -40,7 +40,7 @@ const UC_CURVE: Curve<Q7p8, (Q7p8, Q7p8), 3> = Curve::new([
 
 /// Convert motor temperature ADC to volts at ADC pin.
 fn mot_adc_to_volts(adc: u16) -> Q7p8 {
-    let num = adc as i16 * ADC_UREF.to_int();
+    let num = adc as i16 * ADC_UREF.to_int() as i16;
     let den = ADC_MAX as i16;
     Q7p8::from_fraction(num, den)
 }
