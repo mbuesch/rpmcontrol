@@ -5,7 +5,7 @@ use crate::{
     timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
 use avr_int24::Int24;
-use avr_q::Q7p8;
+use avr_q::{Q7p8, q7p8};
 
 /// 4 speedometer edges per motor revolution
 const SPEEDO_FACT: u32 = 4;
@@ -35,7 +35,7 @@ impl MotorSpeed {
         let num = (1_000_000 / (TIMER_TICK_US as u32 * (SPEEDO_FACT / 2))) as i16;
         let denom = dur * Self::FACT_16HZ * 2;
 
-        Self::from_16hz(Q7p8::from_fraction(num, denom))
+        Self::from_16hz(q7p8!(num / denom))
     }
 }
 

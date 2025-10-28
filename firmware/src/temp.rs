@@ -42,7 +42,7 @@ const UC_CURVE: Curve<Q7p8, (Q7p8, Q7p8), 3> = Curve::new([
 fn mot_adc_to_volts(adc: u16) -> Q7p8 {
     let num = adc as i16 * ADC_UREF.to_int() as i16;
     let den = ADC_MAX as i16;
-    Q7p8::from_fraction(num, den)
+    q7p8!(num / den)
 }
 
 /// Convert motor temperature voltage to resistance of temperature sensor.
@@ -58,7 +58,7 @@ fn mot_kohms_to_celsius_double(r2: Q7p8) -> Q7p8 {
 /// Convert microcontroller temp ADC to degree double-Celsius.
 fn uc_adc_to_celsius_double(adc: u16) -> Q7p8 {
     let adc = adc as i16;
-    UC_CURVE.lin_inter(Q7p8::from_fraction(adc, 8))
+    UC_CURVE.lin_inter(q7p8!(adc / 8))
 }
 
 pub struct TempAdc {

@@ -80,8 +80,9 @@ macro_rules! rpm {
     ($rpm: expr) => {
         // rpm / 60 / 16
         const {
-            use avr_q::{Q15p8, q15p8};
-            let rps = Q15p8::const_from_fraction($rpm, 60);
+            use avr_q::q15p8;
+            const RPM: i16 = $rpm;
+            let rps = q15p8!(const RPM / 60);
             let hz16 = rps.const_div(q15p8!(const 16));
             hz16.to_q7p8()
         }
@@ -91,7 +92,8 @@ pub(crate) use rpm;
 
 /// Convert 0..0x3FF to 0..400 Hz to 0..25 16Hz
 fn setpoint_to_f(adc: u16) -> Q7p8 {
-    Q7p8::from_fraction(adc as i16, 8) / q7p8!(const 128 / 25)
+    let adc = adc as i16;
+    q7p8!(adc / 8) / q7p8!(const 128 / 25)
 }
 
 /// Clamp negative frequency to 0.
