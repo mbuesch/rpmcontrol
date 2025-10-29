@@ -4,7 +4,7 @@ use crate::{
     mutex::{MainCtx, MainCtxCell},
     timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
-use avr_int24::Int24;
+use avr_int24::I24;
 use avr_q::{Q7p8, q7p8};
 
 /// 4 speedometer edges per motor revolution
@@ -68,10 +68,10 @@ impl Speedo {
     }
 
     fn get_dur(&self, m: &MainCtx<'_>) -> RelLargeTimestamp {
-        let a = Int24::from_i16(self.dur[0].get(m));
-        let b = Int24::from_i16(self.dur[1].get(m));
-        let c = Int24::from_i16(self.dur[2].get(m));
-        let d = Int24::from_i16(self.dur[3].get(m));
+        let a = I24::from_i16(self.dur[0].get(m));
+        let b = I24::from_i16(self.dur[1].get(m));
+        let c = I24::from_i16(self.dur[2].get(m));
+        let d = I24::from_i16(self.dur[3].get(m));
         let dur = ((a + b + c + d) >> 2).to_i16();
         dur.into()
     }
