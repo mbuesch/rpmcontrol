@@ -4,9 +4,9 @@ version = 4
 
 [[package]]
 name = "aho-corasick"
-version = "1.1.3"
+version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e60d3430d3a69478ad0993f19238d2df97c507009a52b3c10addcd7f6bcb916"
+checksum = "ddd31a130427c27518df266943a5308ed92d4b226cc639f5a8f1002816174301"
 dependencies = [
  "memchr",
 ]
@@ -68,13 +68,15 @@ dependencies = [
 
 [[package]]
 name = "avr-int24"
-version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-int24.git?branch=main#aab0891de6a4bf5e5f9ecb0b8d1a53a1cee2c7a0"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "145b1e799c70d1303e5a51d8c2d7b94e80f19e4162c95adf05eccdfcd66cc342"
 
 [[package]]
 name = "avr-q"
 version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-q.git?branch=main#fd7f2e68efd65ac060cb0bae09ba6c86eed8aa45"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b40d22020e33c6523b9c9eac06556a3cd58a7a1a5cd43765d7be429a72e2c9a"
 dependencies = [
  "avr-int24",
  "curveipo",
