@@ -39,7 +39,7 @@ dependencies = [
 [[package]]
 name = "avr-atomic"
 version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-atomic.git?branch=main#5cf5b3d34ff9254385bab6a88f9c2d9bd8ad1263"
+source = "git+https://github.com/mbuesch/avr-atomic.git?branch=main#ba7ce95dc3fe64e218227b3c6a674d0711d58488"
 
 [[package]]
 name = "avr-device"
