@@ -3,11 +3,12 @@ use crate::{
     debug::Debug,
     history::History,
     mon_stack::estimate_unused_stack_space,
-    mutex::{AvrAtomic, MainCtx, MainCtxCell},
+    mutex::{MainCtx, MainCtxCell},
     shutoff::Shutoff,
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
+use avr_atomic::AvrAtomic;
 use avr_q::{Q7p8, q7p8};
 
 /// Distance between monitoring checks.
@@ -44,7 +45,7 @@ const SPEEDO_TOLERANCE: Q7p8 = rpm!(1000);
 /// Monitoring is not active below this threshold.
 const MON_ACTIVE_THRES: Q7p8 = rpm!(7500);
 
-static ANALOG_FAILURE: AvrAtomic = AvrAtomic::new_bool(false);
+static ANALOG_FAILURE: AvrAtomic<bool> = AvrAtomic::new();
 
 pub struct Mon {
     prev_check: MainCtxCell<LargeTimestamp>,
@@ -128,7 +129,7 @@ impl Mon {
         let mon_check_dist_failure = now > self.prev_check.get(m) + CHECK_TIMEOUT;
 
         // Analog value processing failed.
-        let analog_failure = ANALOG_FAILURE.get_bool();
+        let analog_failure = ANALOG_FAILURE.get();
 
         // Distance between mains zero crossings is too big.
         let mains_zero_crossing_dist_failure =
@@ -155,7 +156,7 @@ impl Mon {
 }
 
 pub fn mon_report_analog_failure() {
-    ANALOG_FAILURE.set_bool(true);
+    ANALOG_FAILURE.set(true);
 }
 
 // vim: ts=4 sw=4 expandtab

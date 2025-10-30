@@ -37,6 +37,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "avr-atomic"
+version = "1.0.0"
+source = "git+https://github.com/mbuesch/avr-atomic.git?branch=main#e052763fe445c93e1f503338bda84b338ae26a3e"
+
+[[package]]
 name = "avr-device"
 version = "0.7.0"
 source = "git+https://github.com/Rahix/avr-device.git?rev=7619231fd51826c484708d1e89269d5dfe56fdd4#7619231fd51826c484708d1e89269d5dfe56fdd4"
@@ -524,6 +529,7 @@ checksum = "6c20b6793b5c2fa6553b250154b78d6d0db37e72700ae35fad9387a46f487c97"
 name = "rpmcontrol"
 version = "0.1.0"
 dependencies = [
+ "avr-atomic",
  "avr-device",
  "avr-int24",
  "avr-q",
