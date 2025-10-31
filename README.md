@@ -1,64 +1,77 @@
-# AC motor speed controller
+# Motor RPM controller - For AVR - In Rust
 
-This is a closed-loop AC motor speed controller.
-It uses phase-angle control with a triac to regulate the motor's speed.
-The firmware is written in Rust and runs on an ATtiny861A microcontroller.
+This project contains the firmware for a motor speed RPM controller based on phase angle control.
 
-Note that currently only 50 Hz mains is supported, but adding support for other mains frequencies is possible.
+It is written in Rust for AVR.
 
-## Components
+## Features
 
-- `firmware`: The main controller firmware that runs on the ATtiny861A.
-- `schematic`: The hardware design files in KiCad format.
-- `debugtool`: A GTK4-based GUI application for debugging and monitoring the controller over a serial connection.
-- `motmock`: A motor simulator for testing the controller. It runs on an ATmega8 and simulates the behavior of a motor.
+- PID controller for motor RPM regulation.
+- Triac control for AC motor speed adjustment.
+- Speed measurement from a magnet based speedometer generator.
+- Temperature sensing for motor and microcontroller.
+- Safety monitoring and safety shutoff.
 
 ## Hardware
 
-The controller is based on the ATtiny861A microcontroller.
-It uses a triac for phase-angle control of the AC motor.
-The schematic directory contains the full hardware design.
-
-## Software
-
-The firmware and debugging tools are written in Rust.
-
-The firmware implements a closed-loop PID controller to maintain the desired motor speed. It includes modules for:
-
-- PID control
-- Triac control
-- Motor speed measurement
-- Mains zero crossing detection and synchronization
-- Temperature monitoring
-- Safety monitoring and secondary shutoff path
-- Serial communication for debugging
-
-### Debug Tool
-
-The debug tool is a GTK4 application that visualizes the controller's internal state.
-It communicates with the firmware over a serial port and can display information such as:
-
-- PID controller state
-- Actual motor speed and setpoint
-- Temperatures
-- Safety monitoring state
+- **Microcontroller:** Atmel ATTiny861A
+- Open Source PCB
 
 ## Building the Firmware
 
-To build the firmware, you will need a `nightly` Rust toolchain.
-Once the toolchain is set up, you can build the firmware by running `make` in the `firmware` directory:
+To build the firmware, you need the following tools:
 
-```sh
+- Rust AVR compiler: A `nightly` compiler is required.
+- `avr-gcc` toolchain (for linking and binary processing: `avr-ld`, `avr-objcopy`, `avr-size`, etc.)
+- [dwdebug](https://github.com/mbuesch/dwire-debug) or `avrdude` for flashing.
+
+Once the toolchains are installed, you can build the firmware by running `make`:
+
+```bash
 cd firmware
 make
 ```
 
-## Running the Debug Tool
+This will build the project and create the firmware files in the
+`firmware/target/avr-attiny861a/release/`
+directory.
+The final hex file for flashing is
+`firmware/target/avr-attiny861a/release/rpmcontrol.post.hex`.
 
-The debug tool can be run from the `debugtool` directory.
-It takes an optional command-line argument to specify the serial port to use.
+## Flashing the Firmware
 
-```sh
-cd debugtool
-cargo run -- /dev/ttyUSB0
+The `Makefile` provides targets for flashing the firmware using `avrdude` (for ISP) or `dwdebug` (for debugWire).
+
+### ISP Flashing
+
+First, set the fuses (this only needs to be done once):
+
+```bash
+cd firmware
+make isp-fuses
 ```
+
+Then, flash the firmware:
+
+```bash
+cd firmware
+make isp-flash
+```
+
+### debugWire Flashing
+
+To flash the firmware using debugWire:
+
+```bash
+cd firmware
+make dw-flash
+```
+
+## License
+
+This project is dual-licensed under either of the following:
+
+*   Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+*   MIT license ([LICENSE-MIT](LICENSE-MIT))
+
+at your option.
