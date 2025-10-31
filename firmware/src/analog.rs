@@ -3,11 +3,10 @@
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
 use crate::{
-    hw::interrupt,
+    hw::{interrupt, mcu},
     mon::mon_report_analog_failure,
     ports::setup_didr,
     ring::Ring,
-    system::SysPeriph,
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large_cs},
 };
 use avr_context::{IrqCtx, MainCtx, MainCtxCell, Mutex};
@@ -59,31 +58,32 @@ impl Adc {
     }
 
     #[rustfmt::skip]
-    fn update_mux(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+    #[allow(non_snake_case)]
+    fn update_mux(&self, m: &MainCtx<'_>, ADC: &mcu::ADC) {
         match self.chan.get(m) {
             AdcChannel::Setpoint => {
-                sp.ADC.adcsrb().modify(|_, w| {
+                ADC.adcsrb().modify(|_, w| {
                     w.mux5().clear_bit()
                 });
-                sp.ADC.admux().write(|w| {
+                ADC.admux().write(|w| {
                     w.refs().vcc()
                      .mux().adc0()
                 });
             }
             AdcChannel::MotTemp => {
-                sp.ADC.adcsrb().modify(|_, w| {
+                ADC.adcsrb().modify(|_, w| {
                     w.mux5().clear_bit()
                 });
-                sp.ADC.admux().write(|w| {
+                ADC.admux().write(|w| {
                     w.refs().vcc()
                      .mux().adc4()
                 });
             }
             AdcChannel::UcTemp => {
-                sp.ADC.adcsrb().modify(|_, w| {
+                ADC.adcsrb().modify(|_, w| {
                     w.mux5().set_bit()
                 });
-                sp.ADC.admux().write(|w| {
+                ADC.admux().write(|w| {
                     w.refs().internal()
                      .mux().set(0x1F)
                 });
@@ -93,24 +93,27 @@ impl Adc {
     }
 
     #[rustfmt::skip]
+    #[allow(non_snake_case)]
     #[inline]
-    fn start_conversion(&self, _m: &MainCtx<'_>, sp: &SysPeriph) {
-        sp.ADC.adcsra().modify(|_, w| {
+    fn start_conversion(&self, _m: &MainCtx<'_>, ADC: &mcu::ADC) {
+        ADC.adcsra().modify(|_, w| {
             w.adif().set_bit()
              .adsc().set_bit()
         });
     }
 
+    #[allow(non_snake_case)]
     #[inline]
-    fn conversion_done(&self, _m: &MainCtx<'_>, sp: &SysPeriph) -> bool {
-        sp.ADC.adcsra().read().adif().bit_is_set()
+    fn conversion_done(&self, _m: &MainCtx<'_>, ADC: &mcu::ADC) -> bool {
+        ADC.adcsra().read().adif().bit_is_set()
     }
 
+    #[allow(non_snake_case)]
     #[rustfmt::skip]
-    pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
-        setup_didr(sp);
+    pub fn init(&self, m: &MainCtx<'_>, ADC: &mcu::ADC) {
+        setup_didr(ADC);
 
-        sp.ADC.adcsra().write(|w| {
+        ADC.adcsra().write(|w| {
             w.adps().prescaler_128()
              .adie().clear_bit()
              .adif().set_bit()
@@ -118,28 +121,29 @@ impl Adc {
              .aden().set_bit()
         });
 
-        self.update_mux(m, sp);
-        self.start_conversion(m, sp);
-        while !self.conversion_done(m, sp) {}
+        self.update_mux(m, ADC);
+        self.start_conversion(m, ADC);
+        while !self.conversion_done(m, ADC) {}
     }
 
-    pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
-        if self.is_running(m) && self.conversion_done(m, sp) {
+    #[allow(non_snake_case)]
+    pub fn run(&self, m: &MainCtx<'_>, ADC: &mcu::ADC) {
+        if self.is_running(m) && self.conversion_done(m, ADC) {
             if self.is_settled(m) {
                 let chan = self.chan.get(m);
-                self.result[chan as usize].set(m, sp.ADC.adc().read().bits());
+                self.result[chan as usize].set(m, ADC.adc().read().bits());
                 self.set_ok(m, chan, true);
                 self.select_next_chan(m);
                 self.set_running(m, false);
             } else {
                 self.set_settled(m, true);
-                self.start_conversion(m, sp);
+                self.start_conversion(m, ADC);
             }
         }
 
         if !self.is_running(m) {
-            self.update_mux(m, sp);
-            self.start_conversion(m, sp);
+            self.update_mux(m, ADC);
+            self.start_conversion(m, ADC);
             self.set_running(m, true);
         }
     }
@@ -190,8 +194,9 @@ impl Ac {
     }
 
     #[rustfmt::skip]
-    pub fn init(&self, sp: &SysPeriph) {
-        sp.AC.acsra().write(|w| {
+    #[allow(non_snake_case)]
+    pub fn init(&self, AC: &mcu::AC) {
+        AC.acsra().write(|w| {
             w.acie().set_bit() // Enable interrupt
              .aci().set_bit() // Clear interrupt flag
              .acis().on_rising_edge() // Interrupt on comparator output rising edge
@@ -199,7 +204,7 @@ impl Ac {
              .acbg().clear_bit() // no BG voltage
              .acd().clear_bit() // Enable AC
         });
-        sp.AC.acsrb().write(|w| {
+        AC.acsrb().write(|w| {
             w.hsel().set_bit() // Hysteresis select: on
              .hlev().set_bit() // Hysteresis level: 50 mV
              .acm().set(0) // Mux: Pos=AIN0, Neg=AIN1

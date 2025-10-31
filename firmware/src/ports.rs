@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
-use crate::{hw::mcu, system::SysPeriph};
+use crate::hw::mcu;
 use avr_context::{InitCtx, InitCtxCell};
 
 pub trait PortOps {
@@ -213,8 +213,9 @@ impl PortB {
 }
 
 #[rustfmt::skip]
-pub fn setup_didr(sp: &SysPeriph) {
-    sp.ADC.didr0().write(|w| {
+#[allow(non_snake_case)]
+pub fn setup_didr(ADC: &mcu::ADC) {
+    ADC.didr0().write(|w| {
         w.adc0d().set_bit() // PA0: setpoint ADC
          .adc1d().clear_bit()
          .adc2d().clear_bit()
@@ -224,7 +225,7 @@ pub fn setup_didr(sp: &SysPeriph) {
          .adc5d().set_bit() // PA6: speedo positive
          .adc6d().set_bit() // PA7: speedo positive
     });
-    sp.ADC.didr1().write(|w| {
+    ADC.didr1().write(|w| {
         w.adc7d().clear_bit()
          .adc8d().clear_bit()
          .adc9d().clear_bit()

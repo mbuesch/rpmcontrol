@@ -32,7 +32,7 @@ mod usi_uart;
 use crate::{
     debug::debug_init,
     hw::{Peripherals, interrupt},
-    system::{SysPeriph, System},
+    system::System,
 };
 use avr_context::MainCtx;
 
@@ -77,11 +77,6 @@ fn main() -> ! {
     // SAFETY: We only call Peripherals::steal() once.
     let dp = unsafe { Peripherals::steal() };
 
-    let sp = SysPeriph {
-        AC: dp.AC,
-        ADC: dp.ADC,
-    };
-
     let porta_dp = ports::PortA { PORTA: dp.PORTA };
     let portb_dp = ports::PortB { PORTB: dp.PORTB };
     let exint_dp = exint::ExInt { EXINT: dp.EXINT };
@@ -112,14 +107,14 @@ fn main() -> ! {
     // is running in main() context.
     let m = unsafe { MainCtx::new_with_init(init_static_vars) };
 
-    SYSTEM.init(&m, &sp);
+    SYSTEM.init(&m, &dp.ADC, &dp.AC);
 
     // SAFETY: This must be after construction of MainCtx
     //         and after initialization of static MainInit variables.
     unsafe { interrupt::enable() };
 
     loop {
-        SYSTEM.run(&m, &sp);
+        SYSTEM.run(&m, &dp.ADC);
         wdt_poke();
     }
 }

@@ -111,12 +111,6 @@ fn f_to_trig_offs(f: Q7p8) -> Q7p8 {
     ((fmax - f) * q7p8!(const 2)) / q7p8!(const 5) // *10/25
 }
 
-#[allow(non_snake_case)]
-pub struct SysPeriph {
-    pub AC: mcu::AC,
-    pub ADC: mcu::ADC,
-}
-
 /// Toggle the debug pin.
 pub fn debug_toggle() {
     PORTB.toggle(6);
@@ -176,14 +170,15 @@ impl System {
     }
 
     /// System initialization.
-    pub fn init(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+    #[allow(non_snake_case)]
+    pub fn init(&self, m: &MainCtx<'_>, ADC: &mcu::ADC, AC: &mcu::AC) {
         // Set all shutoff paths.
         set_secondary_shutoff(Shutoff::MachineShutoff);
         self.triac.set_phi_offs_shutoff(m);
 
         self.mon_pocheck.init(m);
-        self.adc.init(m, sp);
-        self.ac.init(sp);
+        self.adc.init(m, ADC);
+        self.ac.init(AC);
 
         self.startup_delay_timeout
             .set(m, timer_get_large() + STARTUP_DELAY);
@@ -374,7 +369,8 @@ impl System {
     }
 
     /// Main loop.
-    pub fn run(&self, m: &MainCtx<'_>, sp: &SysPeriph) {
+    #[allow(non_snake_case)]
+    pub fn run(&self, m: &MainCtx<'_>, ADC: &mcu::ADC) {
         self.meas_runtime(m);
 
         let state = self.state.get(m);
@@ -386,7 +382,7 @@ impl System {
             let phase_update = self.mains.run(m);
 
             // Run the ADC measurements.
-            self.adc.run(m, sp);
+            self.adc.run(m, ADC);
 
             // Evaluate the speedo signal.
             let speed = self.speedo.run(m);
