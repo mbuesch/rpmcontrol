@@ -1,3 +1,7 @@
+// -*- coding: utf-8 -*-
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Copyright (C) 2025 Michael Büsch <m@bues.ch>
+
 use crate::{debug::Debug, filter::Filter, shutoff::Shutoff};
 use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8};

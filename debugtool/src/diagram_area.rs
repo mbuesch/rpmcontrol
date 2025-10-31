@@ -1,4 +1,6 @@
 // -*- coding: utf-8 -*-
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
 use gtk4::{self as gtk, prelude::*};
 use plotters_cairo::CairoBackend;

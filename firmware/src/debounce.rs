@@ -1,3 +1,7 @@
+// -*- coding: utf-8 -*-
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Copyright (C) 2025 Michael Büsch <m@bues.ch>
+
 use avr_context::{MainCtx, MainCtxCell};
 
 pub struct Debounce<const ERRSTEP: u8, const LIMIT: u8, const STICKY: bool> {

@@ -1,6 +1,6 @@
 // -*- coding: utf-8 -*-
-// Copyright (C) 2025 Michael Büsch <m@bues.ch>
 // SPDX-License-Identifier: Apache-2.0 OR MIT
+// Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
 use crate::{hw::interrupt, timer::RelLargeTimestamp, usi_uart::uart_tx_cs};
 use avr_context::{InitCtx, IrqCtx, Mutex};

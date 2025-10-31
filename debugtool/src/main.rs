@@ -1,4 +1,6 @@
 // -*- coding: utf-8 -*-
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+// Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
 #![forbid(unsafe_code)]
 
