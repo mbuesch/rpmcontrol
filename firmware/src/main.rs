@@ -34,7 +34,8 @@ use crate::{
     hw::{Peripherals, interrupt},
     system::System,
 };
-use avr_context::MainCtx;
+use avr_context::{InitCtx, MainCtx};
+use avr_device::asm::wdr;
 
 static SYSTEM: System = System::new();
 
@@ -68,8 +69,27 @@ pub unsafe extern "C" fn wdt_init() {
     );
 }
 
-fn wdt_poke() {
-    avr_device::asm::wdr();
+struct Init {
+    porta: ports::PortA,
+    portb: ports::PortB,
+    exint: exint::ExInt,
+    timer: timer::Dp,
+    usi: usi_uart::Dp,
+}
+
+fn initialize(c: &InitCtx, init: Init) {
+    let porta = ports::PORTA.init(c, init.porta);
+    let portb = ports::PORTB.init(c, init.portb);
+    let exint = exint::EXINT.init(c, init.exint);
+    let timer = timer::DP.init(c, init.timer);
+    let usi_uart = usi_uart::DP.init(c, init.usi);
+
+    timer.setup(c);
+    porta.setup(c);
+    portb.setup(c);
+    exint.setup(c);
+    usi_uart.setup(c);
+    debug_init(c);
 }
 
 #[avr_device::entry]
@@ -77,45 +97,33 @@ fn main() -> ! {
     // SAFETY: We only call Peripherals::steal() once.
     let dp = unsafe { Peripherals::steal() };
 
-    let porta_dp = ports::PortA { PORTA: dp.PORTA };
-    let portb_dp = ports::PortB { PORTB: dp.PORTB };
-    let exint_dp = exint::ExInt { EXINT: dp.EXINT };
-    let timer_dp = timer::Dp { TC1: dp.TC1 };
-    let usi_dp = usi_uart::Dp {
-        USI: dp.USI,
-        TC0: dp.TC0,
-    };
-
-    let init_static_vars = |ctx| {
-        let porta = ports::PORTA.init(ctx, porta_dp);
-        let portb = ports::PORTB.init(ctx, portb_dp);
-        let exint = exint::EXINT.init(ctx, exint_dp);
-        let timer = timer::DP.init(ctx, timer_dp);
-        let usi_uart = usi_uart::DP.init(ctx, usi_dp);
-
-        timer.setup(ctx);
-        porta.setup(ctx);
-        portb.setup(ctx);
-        exint.setup(ctx);
-        usi_uart.setup(ctx);
-        debug_init(ctx);
+    let init = Init {
+        porta: ports::PortA { PORTA: dp.PORTA },
+        portb: ports::PortB { PORTB: dp.PORTB },
+        exint: exint::ExInt { EXINT: dp.EXINT },
+        timer: timer::Dp { TC1: dp.TC1 },
+        usi: usi_uart::Dp {
+            USI: dp.USI,
+            TC0: dp.TC0,
+        },
     };
 
     // SAFETY:
     // This is the context handle for the main() function.
     // Holding a reference to this object proves that the holder
     // is running in main() context.
-    let m = unsafe { MainCtx::new_with_init(init_static_vars) };
+    let m = unsafe { MainCtx::new_with_init(initialize, init) };
 
     SYSTEM.init(&m, &dp.ADC, &dp.AC);
 
-    // SAFETY: This must be after construction of MainCtx
-    //         and after initialization of static MainInit variables.
+    // SAFETY:
+    // This must be after construction of MainCtx
+    // and after initialization of static InitCtx variables.
     unsafe { interrupt::enable() };
 
     loop {
         SYSTEM.run(&m, &dp.ADC);
-        wdt_poke();
+        wdr();
     }
 }
 
