@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
-#![allow(unused_unsafe)]
-
 use crate::{hw::mcu, system::SysPeriph};
 use avr_context::{InitCtx, InitCtxCell};
 
