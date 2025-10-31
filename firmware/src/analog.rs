@@ -1,12 +1,12 @@
 use crate::{
     hw::interrupt,
     mon::mon_report_analog_failure,
-    mutex::{IrqCtx, MainCtx, MainCtxCell, Mutex},
     ports::setup_didr,
     ring::Ring,
     system::SysPeriph,
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large_cs},
 };
+use avr_context::{IrqCtx, MainCtx, MainCtxCell, Mutex};
 use core::cell::Cell;
 
 #[derive(Clone, Copy)]

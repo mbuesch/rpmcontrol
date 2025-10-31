@@ -1,11 +1,11 @@
 use crate::{
     mains::MAINS_HALFWAVE_DUR_MS,
-    mutex::{MainCtx, MainCtxCell},
     shutoff::Shutoff,
     speedo::MotorSpeed,
     system::{debug_toggle, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
+use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8};
 
 /// Duration of the `PoStatePart::Pre` part.

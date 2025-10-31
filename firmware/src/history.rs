@@ -1,4 +1,4 @@
-use crate::mutex::{MainCtx, MainCtxCell};
+use avr_context::{MainCtx, MainCtxCell};
 
 pub struct History<T, const SIZE: usize> {
     hist: [MainCtxCell<T>; SIZE],

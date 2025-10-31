@@ -1,4 +1,4 @@
-use crate::mutex::{MainCtx, MainCtxCell};
+use avr_context::{MainCtx, MainCtxCell};
 
 pub struct Debounce<const ERRSTEP: u8, const LIMIT: u8, const STICKY: bool> {
     count: MainCtxCell<u8>,

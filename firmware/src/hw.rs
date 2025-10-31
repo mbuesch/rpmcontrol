@@ -1,8 +1,8 @@
+use avr_context::IrqCtx;
+
 pub use attiny::{self as mcu, Peripherals};
 pub use avr_device::attiny861a as attiny;
-pub use avr_device::interrupt::{self, Mutex};
-
-use crate::mutex::IrqCtx;
+pub use avr_device::interrupt;
 
 macro_rules! define_isr {
     ($name:ident, $handler:path) => {

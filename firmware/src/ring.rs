@@ -1,4 +1,4 @@
-use crate::mutex::{CriticalSection, Mutex};
+use avr_context::{CriticalSection, Mutex};
 use core::cell::Cell;
 
 pub struct Ring<T, const SIZE: usize> {

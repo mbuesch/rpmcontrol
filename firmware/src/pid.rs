@@ -1,4 +1,4 @@
-use crate::mutex::{MainCtx, MainCtxCell};
+use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8};
 
 #[derive(Clone)]

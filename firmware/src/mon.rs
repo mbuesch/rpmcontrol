@@ -3,12 +3,12 @@ use crate::{
     debug::Debug,
     history::History,
     mon_stack::estimate_unused_stack_space,
-    mutex::{MainCtx, MainCtxCell},
     shutoff::Shutoff,
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
 use avr_atomic::AvrAtomic;
+use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8};
 
 /// Distance between monitoring checks.

@@ -4,11 +4,16 @@
 
 #![allow(unused_unsafe)]
 
-use crate::{
-    hw::mcu,
-    mutex::{LazyMainInit, MainInitCtx},
-    system::SysPeriph,
-};
+use crate::{hw::mcu, system::SysPeriph};
+use avr_context::{InitCtx, InitCtxCell};
+
+pub trait PortOps {
+    fn get(&self, bit: usize) -> bool;
+    fn set(&self, bit: usize, value: bool);
+    fn toggle(&self, bit: usize);
+    fn output(&self, bit: usize);
+    fn input(&self, bit: usize);
+}
 
 #[rustfmt::skip]
 macro_rules! impl_port {
@@ -33,12 +38,12 @@ macro_rules! impl_port {
         }
 
         // SAFETY: Is initialized when constructing the MainCtx.
-        pub static $name: LazyMainInit<$struct> = unsafe { LazyMainInit::uninit() };
+        pub static $name: InitCtxCell<$struct> = unsafe { InitCtxCell::uninit() };
 
-        impl LazyMainInit<$struct> {
+        impl PortOps for InitCtxCell<$struct> {
             #[inline(always)]
             #[allow(dead_code)]
-            pub fn get(&self, bit: usize) -> bool {
+            fn get(&self, bit: usize) -> bool {
                 match bit {
                     0 => $name.$name.$pin().read().$bit0().bit(),
                     1 => $name.$name.$pin().read().$bit1().bit(),
@@ -54,7 +59,7 @@ macro_rules! impl_port {
 
             #[inline(always)]
             #[allow(dead_code)]
-            pub fn set(&self, bit: usize, value: bool) {
+            fn set(&self, bit: usize, value: bool) {
                 match bit {
                     0 => $name.$name.$port().modify(|_, w| w.$bit0().bit(value)),
                     1 => $name.$name.$port().modify(|_, w| w.$bit1().bit(value)),
@@ -70,7 +75,7 @@ macro_rules! impl_port {
 
             #[inline(always)]
             #[allow(dead_code)]
-            pub fn toggle(&self, bit: usize) {
+            fn toggle(&self, bit: usize) {
                 match bit {
                     0 => $name.$name.$pin().modify(|_, w| w.$bit0().set_bit()),
                     1 => $name.$name.$pin().modify(|_, w| w.$bit1().set_bit()),
@@ -86,7 +91,7 @@ macro_rules! impl_port {
 
             #[inline(always)]
             #[allow(dead_code)]
-            pub fn output(&self, bit: usize) {
+            fn output(&self, bit: usize) {
                 match bit {
                     0 => $name.$name.$ddr().modify(|_, w| w.$bit0().set_bit()),
                     1 => $name.$name.$ddr().modify(|_, w| w.$bit1().set_bit()),
@@ -102,7 +107,7 @@ macro_rules! impl_port {
 
             #[inline(always)]
             #[allow(dead_code)]
-            pub fn input(&self, bit: usize) {
+            fn input(&self, bit: usize) {
                 match bit {
                     0 => $name.$name.$ddr().modify(|_, w| w.$bit0().clear_bit()),
                     1 => $name.$name.$ddr().modify(|_, w| w.$bit1().clear_bit()),
@@ -146,8 +151,8 @@ fn pin_pullup(bit: usize) -> u8 {
 }
 
 impl PortA {
-    pub fn setup(&self, _: &MainInitCtx) {
-        // SAFETY: Called with interrupts disabled. Ensured by &MainInitCtx.
+    pub fn setup(&self, _: &InitCtx) {
+        // SAFETY: Called with interrupts disabled. Ensured by &InitCtx.
         unsafe {
             self.PORTA.porta().write(|w| {
                 w.bits(
@@ -178,8 +183,8 @@ impl PortA {
 }
 
 impl PortB {
-    pub fn setup(&self, _: &MainInitCtx) {
-        // SAFETY: Called with interrupts disabled. Ensured by &MainInitCtx.
+    pub fn setup(&self, _: &InitCtx) {
+        // SAFETY: Called with interrupts disabled. Ensured by &InitCtx.
         unsafe {
             self.PORTB.portb().write(|w| {
                 w.bits(

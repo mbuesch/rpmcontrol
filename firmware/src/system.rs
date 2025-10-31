@@ -6,15 +6,15 @@ use crate::{
     mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
     mon::Mon,
     mon_pocheck::{PoCheck, PoState},
-    mutex::{MainCtx, MainCtxCell},
     pid::{Pid, PidIlim, PidParams},
-    ports::PORTB,
+    ports::{PORTB, PortOps as _},
     shutoff::{Shutoff, set_secondary_shutoff},
     speedo::{MotorSpeed, Speedo},
     temp::{Temp, TempAdc},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
     triac::Triac,
 };
+use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8};
 use curveipo::Curve;
 

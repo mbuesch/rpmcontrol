@@ -20,6 +20,9 @@ avr-int24 = "1"
 avr-q = "1"
 #avr-q = { git = "https://github.com/mbuesch/avr-q.git", branch = "main" }
 avr-atomic = { git = "https://github.com/mbuesch/avr-atomic.git", branch = "main" }
+#avr-context = { path = "../../avr-context" }
+#avr-context = "1"
+avr-context = { git = "https://github.com/mbuesch/avr-context.git", branch = "main" }
 
 [profile.dev]
 panic = "abort"

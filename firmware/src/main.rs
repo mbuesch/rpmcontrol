@@ -14,7 +14,6 @@ mod mains;
 mod mon;
 mod mon_pocheck;
 mod mon_stack;
-mod mutex;
 mod pid;
 mod ports;
 mod ring;
@@ -29,9 +28,9 @@ mod usi_uart;
 use crate::{
     debug::debug_init,
     hw::{Peripherals, interrupt},
-    mutex::MainCtx,
     system::{SysPeriph, System},
 };
+use avr_context::MainCtx;
 
 static SYSTEM: System = System::new();
 

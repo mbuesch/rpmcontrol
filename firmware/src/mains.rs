@@ -1,9 +1,9 @@
 use crate::{
     hw::interrupt,
-    mutex::{IrqCtx, MainCtx, MainCtxCell, Mutex},
-    ports::PORTA,
+    ports::{PORTA, PortOps as _},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large, timer_get_large_cs},
 };
+use avr_context::{IrqCtx, MainCtx, MainCtxCell, Mutex};
 use avr_q::{Q7p8, q7p8};
 use core::cell::Cell;
 

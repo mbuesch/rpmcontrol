@@ -5,9 +5,9 @@
 use crate::{
     debug,
     hw::{interrupt, mcu},
-    mutex::{CriticalSection, IrqCtx, LazyMainInit, MainInitCtx, Mutex},
-    ports::PORTB,
+    ports::{PORTB, PortOps as _},
 };
+use avr_context::{CriticalSection, InitCtx, InitCtxCell, IrqCtx, Mutex};
 use core::cell::Cell;
 
 const FCPU: u32 = 16_000_000;
@@ -23,7 +23,7 @@ pub struct Dp {
 }
 
 // SAFETY: Is initialized when constructing the MainCtx.
-pub static DP: LazyMainInit<Dp> = unsafe { LazyMainInit::uninit() };
+pub static DP: InitCtxCell<Dp> = unsafe { InitCtxCell::uninit() };
 
 fn bit_rev(mut data: u8) -> u8 {
     data = (data & 0xF0) >> 4 | (data & 0x0F) << 4;
@@ -43,7 +43,7 @@ static MODE: Mutex<Cell<Mode>> = Mutex::new(Cell::new(Mode::Rx));
 static TXDATA: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
 impl Dp {
-    pub fn setup(&self, _c: &MainInitCtx) {
+    pub fn setup(&self, _c: &InitCtx) {
         self.USI.usidr().write(|w| w.set(0xFF));
         //TODO enable PCINT
     }

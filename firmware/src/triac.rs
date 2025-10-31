@@ -1,14 +1,14 @@
 use crate::{
     hw::interrupt,
     mains::{MAINS_HALFWAVE_DUR, Phase, PhaseUpdate},
-    mutex::{IrqCtx, MainCtx, MainCtxCell, Mutex},
-    ports::PORTB,
+    ports::{PORTB, PortOps as _},
     shutoff::Shutoff,
     timer::{
         LargeTimestamp, RelLargeTimestamp, RelTimestamp, Timestamp, timer_get_large,
         timer_interrupt_a_arm, timer_interrupt_a_cancel,
     },
 };
+use avr_context::{IrqCtx, MainCtx, MainCtxCell, Mutex};
 use avr_q::Q7p8;
 use core::{
     cell::Cell,

@@ -2,12 +2,8 @@
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-use crate::{
-    hw::interrupt,
-    mutex::{IrqCtx, MainInitCtx, Mutex},
-    timer::RelLargeTimestamp,
-    usi_uart::uart_tx_cs,
-};
+use crate::{hw::interrupt, timer::RelLargeTimestamp, usi_uart::uart_tx_cs};
+use avr_context::{InitCtx, IrqCtx, Mutex};
 use avr_q::Q7p8;
 use core::cell::Cell;
 
@@ -109,7 +105,7 @@ impl Debug {
     }
 }
 
-pub fn debug_init(c: &MainInitCtx) {
+pub fn debug_init(c: &InitCtx) {
     uart_tx_cs(c.cs(), 0);
 }
 

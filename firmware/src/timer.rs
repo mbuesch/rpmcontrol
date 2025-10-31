@@ -1,8 +1,8 @@
 use crate::{
-    hw::{Mutex, interrupt, mcu, nop3},
-    mutex::{CriticalSection, IrqCtx, LazyMainInit, MainInitCtx},
+    hw::{interrupt, mcu, nop3},
     triac::triac_timer_interrupt,
 };
+use avr_context::{CriticalSection, InitCtx, InitCtxCell, IrqCtx, Mutex};
 use avr_q::{Q7p8, q7p8};
 use core::cell::Cell;
 
@@ -12,7 +12,7 @@ pub struct Dp {
 }
 
 // SAFETY: Is initialized when constructing the MainCtx.
-pub static DP: LazyMainInit<Dp> = unsafe { LazyMainInit::uninit() };
+pub static DP: InitCtxCell<Dp> = unsafe { InitCtxCell::uninit() };
 
 static TIMER_UPPER: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
@@ -20,7 +20,7 @@ pub const TIMER_TICK_US: u8 = 16; // 16 us per tick.
 
 impl Dp {
     #[rustfmt::skip]
-    pub fn setup(&self, _c: &MainInitCtx) {
+    pub fn setup(&self, _c: &InitCtx) {
         // Timer 1 configuration:
         // CS: 256 -> 16 us per timer tick.
         DP.TC1.tc1h().write(|w| w.set(0));

@@ -1,4 +1,4 @@
-use crate::ports::PORTA;
+use crate::ports::{PORTA, PortOps as _};
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum Shutoff {

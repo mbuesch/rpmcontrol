@@ -1,9 +1,5 @@
-use crate::{
-    debug::Debug,
-    filter::Filter,
-    mutex::{MainCtx, MainCtxCell},
-    shutoff::Shutoff,
-};
+use crate::{debug::Debug, filter::Filter, shutoff::Shutoff};
+use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8};
 use curveipo::Curve;
 

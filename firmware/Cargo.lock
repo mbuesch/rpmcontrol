@@ -39,7 +39,15 @@ dependencies = [
 [[package]]
 name = "avr-atomic"
 version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-atomic.git?branch=main#ba7ce95dc3fe64e218227b3c6a674d0711d58488"
+source = "git+https://github.com/mbuesch/avr-atomic.git?branch=main#4fecca66fa4621c15c1481cc3acdba48110b14ea"
+
+[[package]]
+name = "avr-context"
+version = "1.0.0"
+source = "git+https://github.com/mbuesch/avr-context.git?branch=main#42920f974969451e49bf60df9d8e1e861de8dc3d"
+dependencies = [
+ "bare-metal",
+]
 
 [[package]]
 name = "avr-device"
@@ -530,6 +538,7 @@ name = "rpmcontrol"
 version = "0.1.0"
 dependencies = [
  "avr-atomic",
+ "avr-context",
  "avr-device",
  "avr-int24",
  "avr-q",

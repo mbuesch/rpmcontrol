@@ -1,7 +1,5 @@
-use crate::{
-    hw::mcu,
-    mutex::{IrqCtx, LazyMainInit, MainInitCtx},
-};
+use crate::hw::mcu;
+use avr_context::{InitCtx, InitCtxCell, IrqCtx};
 
 #[allow(non_snake_case)]
 pub struct ExInt {
@@ -9,7 +7,7 @@ pub struct ExInt {
 }
 
 // SAFETY: Is initialized when constructing the MainCtx.
-pub static EXINT: LazyMainInit<ExInt> = unsafe { LazyMainInit::uninit() };
+pub static EXINT: InitCtxCell<ExInt> = unsafe { InitCtxCell::uninit() };
 
 const PCINT_ENA_0: bool = false;
 const PCINT_ENA_1: bool = true; // PA1: Mains vsense.
@@ -30,7 +28,7 @@ const PCINT_ENA_15: bool = false;
 
 impl ExInt {
     #[allow(clippy::identity_op)]
-    pub fn setup(&self, _: &MainInitCtx) {
+    pub fn setup(&self, _: &InitCtx) {
         self.EXINT.pcmsk0().write(|w| {
             w.set(
                 ((PCINT_ENA_0 as u8) << 0)

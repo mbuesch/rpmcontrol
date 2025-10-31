@@ -1,9 +1,9 @@
 use crate::{
     analog::ac_capture_get,
     debug::Debug,
-    mutex::{MainCtx, MainCtxCell},
     timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
+use avr_context::{MainCtx, MainCtxCell};
 use avr_int24::I24;
 use avr_q::{Q7p8, q7p8};
 
