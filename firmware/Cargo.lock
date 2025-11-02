@@ -44,7 +44,7 @@ source = "git+https://github.com/mbuesch/avr-atomic.git?branch=main#4fecca66fa46
 [[package]]
 name = "avr-context"
 version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-context.git?branch=main#affa5f352980791654244c9ab26fa63314911418"
+source = "git+https://github.com/mbuesch/avr-context.git?branch=main#7e53a54dae3bcdde7d63ccbb6fcc6e946a882612"
 dependencies = [
  "bare-metal",
 ]
