@@ -13,10 +13,26 @@ use crate::{
     usi_uart::irq_handler_usi_ovf,
 };
 
-define_isr!(attiny861a, PCINT, irq_handler_pcint);
-define_isr!(attiny861a, TIMER1_COMPA, irq_handler_timer1_compa);
-define_isr!(attiny861a, USI_OVF, irq_handler_usi_ovf);
-define_isr!(attiny861a, ANA_COMP, irq_handler_ana_comp);
+define_isr! {
+    device: attiny861a,
+    interrupt: PCINT,
+    isr: irq_handler_pcint,
+}
+define_isr! {
+    device: attiny861a,
+    interrupt: TIMER1_COMPA,
+    isr: irq_handler_timer1_compa,
+}
+define_isr! {
+    device: attiny861a,
+    interrupt: USI_OVF,
+    isr: irq_handler_usi_ovf,
+}
+define_isr! {
+    device: attiny861a,
+    interrupt: ANA_COMP,
+    isr: irq_handler_ana_comp,
+}
 
 /// Do nothing for the duration of 3 CPU cycles.
 #[inline(always)]

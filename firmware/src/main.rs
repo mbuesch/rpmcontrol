@@ -31,10 +31,10 @@ mod usi_uart;
 
 use crate::{
     debug::debug_init,
-    hw::{Peripherals, interrupt},
+    hw::{Peripherals, mcu},
     system::System,
 };
-use avr_context::{InitCtx, MainCtx};
+use avr_context::{InitCtx, MainCtx, define_main};
 use avr_device::asm::wdr;
 
 static SYSTEM: System = System::new();
@@ -69,20 +69,24 @@ pub unsafe extern "C" fn wdt_init() {
     );
 }
 
-struct Init {
-    porta: ports::PortA,
-    portb: ports::PortB,
-    exint: exint::ExInt,
-    timer: timer::Dp,
-    usi: usi_uart::Dp,
+#[allow(non_snake_case)]
+struct Dp {
+    ADC: mcu::ADC,
 }
 
-fn initialize(c: &InitCtx, init: Init) {
-    let porta = ports::PORTA.init(c, init.porta);
-    let portb = ports::PORTB.init(c, init.portb);
-    let exint = exint::EXINT.init(c, init.exint);
-    let timer = timer::DP.init(c, init.timer);
-    let usi_uart = usi_uart::DP.init(c, init.usi);
+#[inline(always)]
+fn init(c: &InitCtx<'_>, dp: Peripherals) -> Dp {
+    let porta = ports::PORTA.init(c, ports::PortA { PORTA: dp.PORTA });
+    let portb = ports::PORTB.init(c, ports::PortB { PORTB: dp.PORTB });
+    let exint = exint::EXINT.init(c, exint::ExInt { EXINT: dp.EXINT });
+    let timer = timer::DP.init(c, timer::Dp { TC1: dp.TC1 });
+    let usi_uart = usi_uart::DP.init(
+        c,
+        usi_uart::Dp {
+            USI: dp.USI,
+            TC0: dp.TC0,
+        },
+    );
 
     timer.setup(c);
     porta.setup(c);
@@ -90,41 +94,25 @@ fn initialize(c: &InitCtx, init: Init) {
     exint.setup(c);
     usi_uart.setup(c);
     debug_init(c);
+
+    SYSTEM.init(c.main_ctx(), &dp.ADC, &dp.AC);
+
+    Dp { ADC: dp.ADC }
 }
 
-#[avr_device::entry]
-fn main() -> ! {
-    // SAFETY: We only call Peripherals::steal() once.
-    let dp = unsafe { Peripherals::steal() };
-
-    let init = Init {
-        porta: ports::PortA { PORTA: dp.PORTA },
-        portb: ports::PortB { PORTB: dp.PORTB },
-        exint: exint::ExInt { EXINT: dp.EXINT },
-        timer: timer::Dp { TC1: dp.TC1 },
-        usi: usi_uart::Dp {
-            USI: dp.USI,
-            TC0: dp.TC0,
-        },
-    };
-
-    // SAFETY:
-    // This is the context handle for the main() function.
-    // Holding a reference to this object proves that the holder
-    // is running in main() context.
-    let m = unsafe { MainCtx::new_with_init(initialize, init) };
-
-    SYSTEM.init(&m, &dp.ADC, &dp.AC);
-
-    // SAFETY:
-    // This must be after construction of MainCtx
-    // and after initialization of static InitCtx variables.
-    unsafe { interrupt::enable() };
-
+#[inline(always)]
+fn main(c: &MainCtx<'_>, dp: Dp) -> ! {
     loop {
-        SYSTEM.run(&m, &dp.ADC);
+        SYSTEM.run(c, &dp.ADC);
         wdr();
     }
+}
+
+define_main! {
+    device: attiny861a,
+    init: init,
+    main: main,
+    enable_interrupts: true,
 }
 
 #[panic_handler]
