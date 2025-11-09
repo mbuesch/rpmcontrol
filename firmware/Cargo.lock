@@ -39,7 +39,8 @@ dependencies = [
 [[package]]
 name = "avr-atomic"
 version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-atomic.git?branch=main#58d1fb2d73bc3cf7afdde87ff5fbb0f6b0665b9e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f9565bb26618301cbf6fda364c206dbb8314e5b3d8fb070308201b3de0f0316"
 
 [[package]]
 name = "avr-context"

@@ -16,16 +16,19 @@ bench = false
 avr-device = { git = "https://github.com/Rahix/avr-device.git", rev = "7619231fd51826c484708d1e89269d5dfe56fdd4", features = [ "attiny861a", "rt" ] }
 
 avr-int24 = "1"
+#avr-int24 = { path = "../../avr-int24" }
 #avr-int24 = { git = "https://github.com/mbuesch/avr-int24.git", branch = "main" }
 
 avr-q = "1"
+#avr-q = { path = "../../avr-q" }
 #avr-q = { git = "https://github.com/mbuesch/avr-q.git", branch = "main" }
 
+avr-atomic = "1"
 #avr-atomic = { path = "../../avr-atomic" }
-avr-atomic = { git = "https://github.com/mbuesch/avr-atomic.git", branch = "main" }
+#avr-atomic = { git = "https://github.com/mbuesch/avr-atomic.git", branch = "main" }
 
-#avr-context = { path = "../../avr-context" }
 #avr-context = "1"
+#avr-context = { path = "../../avr-context" }
 avr-context = { git = "https://github.com/mbuesch/avr-context.git", branch = "main" }
 
 curveipo = "1"
