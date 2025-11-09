@@ -133,7 +133,7 @@ impl Mon {
         let mon_check_dist_failure = now > self.prev_check.get(m) + CHECK_TIMEOUT;
 
         // Analog value processing failed.
-        let analog_failure = ANALOG_FAILURE.get();
+        let analog_failure = ANALOG_FAILURE.load();
 
         // Distance between mains zero crossings is too big.
         let mains_zero_crossing_dist_failure =
@@ -160,7 +160,7 @@ impl Mon {
 }
 
 pub fn mon_report_analog_failure() {
-    ANALOG_FAILURE.set(true);
+    ANALOG_FAILURE.store(true);
 }
 
 // vim: ts=4 sw=4 expandtab

@@ -19,6 +19,7 @@ avr-int24 = "1"
 #avr-int24 = { git = "https://github.com/mbuesch/avr-int24.git", branch = "main" }
 avr-q = "1"
 #avr-q = { git = "https://github.com/mbuesch/avr-q.git", branch = "main" }
+#avr-atomic = { path = "../../avr-atomic" }
 avr-atomic = { git = "https://github.com/mbuesch/avr-atomic.git", branch = "main" }
 #avr-context = { path = "../../avr-context" }
 #avr-context = "1"
