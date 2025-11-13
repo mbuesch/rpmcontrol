@@ -12,7 +12,7 @@ use crate::{
         timer_interrupt_a_arm, timer_interrupt_a_cancel,
     },
 };
-use avr_context::{IrqCtx, MainCtx, MainCtxCell, Mutex};
+use avr_context::{CriticalSection, IrqCtx, MainCtx, MainCtxCell, Mutex};
 use avr_q::Q7p8;
 use core::{
     cell::Cell,
@@ -61,12 +61,12 @@ pub fn triac_timer_interrupt(c: &IrqCtx<'_>, now: Timestamp) {
         let arm;
         match state {
             TriacTimerState::TrigSet => {
-                set_trigger(true);
+                set_trigger(cs, true);
                 arm = true;
                 state = TriacTimerState::TrigClr;
             }
             TriacTimerState::TrigClr => {
-                set_trigger(false);
+                set_trigger(cs, false);
                 count -= 1;
                 arm = count != 0;
                 state = TriacTimerState::TrigSet;
@@ -98,7 +98,7 @@ fn triac_timer_cancel() {
     interrupt::free(|cs| {
         TRIAC_TIMER_COUNT.borrow(cs).set(0);
         triac_timer_do_cancel();
-        set_trigger(false);
+        set_trigger(cs, false);
     });
 }
 
@@ -133,9 +133,9 @@ fn calc_trig_count(trig_offs: RelLargeTimestamp) -> u8 {
 
 /// Trigger the triac now.
 /// true -> trigger now.
-fn set_trigger(trigger: bool) {
+fn set_trigger(cs: CriticalSection<'_>, trigger: bool) {
     let trigger = !trigger; // negative logic at triac gate.
-    PORTB.set(3, trigger);
+    PORTB.set(cs, 3, trigger);
 }
 
 pub struct Triac {
@@ -206,7 +206,7 @@ impl Triac {
             } else {
                 // The trigger offset is in shutoff state.
                 // Reset trigger and don't arm a timer.
-                set_trigger(false);
+                interrupt::free(|cs| set_trigger(cs, false));
                 self.trigger_pending.set(m, false);
             }
         }

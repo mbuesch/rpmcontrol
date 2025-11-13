@@ -6,7 +6,7 @@ use crate::{
     analog::{Ac, Adc, AdcChannel},
     debug::Debug,
     filter::Filter,
-    hw::mcu,
+    hw::{interrupt, mcu},
     mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
     mon::Mon,
     mon_pocheck::{PoCheck, PoState},
@@ -113,7 +113,7 @@ fn f_to_trig_offs(f: Q7p8) -> Q7p8 {
 
 /// Toggle the debug pin.
 pub fn debug_toggle() {
-    PORTB.toggle(6);
+    interrupt::free(|cs| PORTB.toggle(cs, 6));
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]

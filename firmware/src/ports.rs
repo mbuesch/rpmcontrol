@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
-use crate::hw::{interrupt, mcu};
-use avr_context::{InitCtx, InitCtxCell};
+use crate::hw::mcu;
+use avr_context::{CriticalSection, InitCtx, InitCtxCell};
 
 pub trait PortOps {
-    fn get(&self, bit: usize) -> bool;
-    fn set(&self, bit: usize, value: bool);
-    fn toggle(&self, bit: usize);
-    fn output(&self, bit: usize);
-    fn input(&self, bit: usize);
+    fn get(&self, cs: CriticalSection<'_>, bit: usize) -> bool;
+    fn set(&self, cs: CriticalSection<'_>, bit: usize, value: bool);
+    fn toggle(&self, cs: CriticalSection<'_>, bit: usize);
+    fn output(&self, cs: CriticalSection<'_>, bit: usize);
+    fn input(&self, cs: CriticalSection<'_>, bit: usize);
 }
 
 #[rustfmt::skip]
@@ -32,92 +32,82 @@ macro_rules! impl_port {
         impl PortOps for InitCtxCell<mcu::$name> {
             #[inline(always)]
             #[allow(dead_code)]
-            fn get(&self, bit: usize) -> bool {
-                interrupt::free(|cs| {
-                    match bit {
-                        0 => self.cs(cs).$pin().read().$bit0().bit(),
-                        1 => self.cs(cs).$pin().read().$bit1().bit(),
-                        2 => self.cs(cs).$pin().read().$bit2().bit(),
-                        3 => self.cs(cs).$pin().read().$bit3().bit(),
-                        4 => self.cs(cs).$pin().read().$bit4().bit(),
-                        5 => self.cs(cs).$pin().read().$bit5().bit(),
-                        6 => self.cs(cs).$pin().read().$bit6().bit(),
-                        7 => self.cs(cs).$pin().read().$bit7().bit(),
-                        _ => unreachable!(),
-                    }
-                })
+            fn get(&self, cs: CriticalSection<'_>, bit: usize) -> bool {
+                match bit {
+                    0 => self.cs(cs).$pin().read().$bit0().bit(),
+                    1 => self.cs(cs).$pin().read().$bit1().bit(),
+                    2 => self.cs(cs).$pin().read().$bit2().bit(),
+                    3 => self.cs(cs).$pin().read().$bit3().bit(),
+                    4 => self.cs(cs).$pin().read().$bit4().bit(),
+                    5 => self.cs(cs).$pin().read().$bit5().bit(),
+                    6 => self.cs(cs).$pin().read().$bit6().bit(),
+                    7 => self.cs(cs).$pin().read().$bit7().bit(),
+                    _ => unreachable!(),
+                }
             }
 
             #[inline(always)]
             #[allow(dead_code)]
-            fn set(&self, bit: usize, value: bool) {
-                interrupt::free(|cs| {
-                    match bit {
-                        0 => self.cs(cs).$port().modify(|_, w| w.$bit0().bit(value)),
-                        1 => self.cs(cs).$port().modify(|_, w| w.$bit1().bit(value)),
-                        2 => self.cs(cs).$port().modify(|_, w| w.$bit2().bit(value)),
-                        3 => self.cs(cs).$port().modify(|_, w| w.$bit3().bit(value)),
-                        4 => self.cs(cs).$port().modify(|_, w| w.$bit4().bit(value)),
-                        5 => self.cs(cs).$port().modify(|_, w| w.$bit5().bit(value)),
-                        6 => self.cs(cs).$port().modify(|_, w| w.$bit6().bit(value)),
-                        7 => self.cs(cs).$port().modify(|_, w| w.$bit7().bit(value)),
-                        _ => unreachable!(),
-                    }
-                });
+            fn set(&self, cs: CriticalSection<'_>, bit: usize, value: bool) {
+                match bit {
+                    0 => self.cs(cs).$port().modify(|_, w| w.$bit0().bit(value)),
+                    1 => self.cs(cs).$port().modify(|_, w| w.$bit1().bit(value)),
+                    2 => self.cs(cs).$port().modify(|_, w| w.$bit2().bit(value)),
+                    3 => self.cs(cs).$port().modify(|_, w| w.$bit3().bit(value)),
+                    4 => self.cs(cs).$port().modify(|_, w| w.$bit4().bit(value)),
+                    5 => self.cs(cs).$port().modify(|_, w| w.$bit5().bit(value)),
+                    6 => self.cs(cs).$port().modify(|_, w| w.$bit6().bit(value)),
+                    7 => self.cs(cs).$port().modify(|_, w| w.$bit7().bit(value)),
+                    _ => unreachable!(),
+                };
             }
 
             #[inline(always)]
             #[allow(dead_code)]
-            fn toggle(&self, bit: usize) {
-                interrupt::free(|cs| {
-                    match bit {
-                        0 => self.cs(cs).$pin().modify(|_, w| w.$bit0().set_bit()),
-                        1 => self.cs(cs).$pin().modify(|_, w| w.$bit1().set_bit()),
-                        2 => self.cs(cs).$pin().modify(|_, w| w.$bit2().set_bit()),
-                        3 => self.cs(cs).$pin().modify(|_, w| w.$bit3().set_bit()),
-                        4 => self.cs(cs).$pin().modify(|_, w| w.$bit4().set_bit()),
-                        5 => self.cs(cs).$pin().modify(|_, w| w.$bit5().set_bit()),
-                        6 => self.cs(cs).$pin().modify(|_, w| w.$bit6().set_bit()),
-                        7 => self.cs(cs).$pin().modify(|_, w| w.$bit7().set_bit()),
-                        _ => unreachable!(),
-                    }
-                });
+            fn toggle(&self, cs: CriticalSection<'_>, bit: usize) {
+                match bit {
+                    0 => self.cs(cs).$pin().modify(|_, w| w.$bit0().set_bit()),
+                    1 => self.cs(cs).$pin().modify(|_, w| w.$bit1().set_bit()),
+                    2 => self.cs(cs).$pin().modify(|_, w| w.$bit2().set_bit()),
+                    3 => self.cs(cs).$pin().modify(|_, w| w.$bit3().set_bit()),
+                    4 => self.cs(cs).$pin().modify(|_, w| w.$bit4().set_bit()),
+                    5 => self.cs(cs).$pin().modify(|_, w| w.$bit5().set_bit()),
+                    6 => self.cs(cs).$pin().modify(|_, w| w.$bit6().set_bit()),
+                    7 => self.cs(cs).$pin().modify(|_, w| w.$bit7().set_bit()),
+                    _ => unreachable!(),
+                };
             }
 
             #[inline(always)]
             #[allow(dead_code)]
-            fn output(&self, bit: usize) {
-                interrupt::free(|cs| {
-                    match bit {
-                        0 => self.cs(cs).$ddr().modify(|_, w| w.$bit0().set_bit()),
-                        1 => self.cs(cs).$ddr().modify(|_, w| w.$bit1().set_bit()),
-                        2 => self.cs(cs).$ddr().modify(|_, w| w.$bit2().set_bit()),
-                        3 => self.cs(cs).$ddr().modify(|_, w| w.$bit3().set_bit()),
-                        4 => self.cs(cs).$ddr().modify(|_, w| w.$bit4().set_bit()),
-                        5 => self.cs(cs).$ddr().modify(|_, w| w.$bit5().set_bit()),
-                        6 => self.cs(cs).$ddr().modify(|_, w| w.$bit6().set_bit()),
-                        7 => self.cs(cs).$ddr().modify(|_, w| w.$bit7().set_bit()),
-                        _ => unreachable!(),
-                    }
-                });
+            fn output(&self, cs: CriticalSection<'_>, bit: usize) {
+                match bit {
+                    0 => self.cs(cs).$ddr().modify(|_, w| w.$bit0().set_bit()),
+                    1 => self.cs(cs).$ddr().modify(|_, w| w.$bit1().set_bit()),
+                    2 => self.cs(cs).$ddr().modify(|_, w| w.$bit2().set_bit()),
+                    3 => self.cs(cs).$ddr().modify(|_, w| w.$bit3().set_bit()),
+                    4 => self.cs(cs).$ddr().modify(|_, w| w.$bit4().set_bit()),
+                    5 => self.cs(cs).$ddr().modify(|_, w| w.$bit5().set_bit()),
+                    6 => self.cs(cs).$ddr().modify(|_, w| w.$bit6().set_bit()),
+                    7 => self.cs(cs).$ddr().modify(|_, w| w.$bit7().set_bit()),
+                    _ => unreachable!(),
+                };
             }
 
             #[inline(always)]
             #[allow(dead_code)]
-            fn input(&self, bit: usize) {
-                interrupt::free(|cs| {
-                    match bit {
-                        0 => self.cs(cs).$ddr().modify(|_, w| w.$bit0().clear_bit()),
-                        1 => self.cs(cs).$ddr().modify(|_, w| w.$bit1().clear_bit()),
-                        2 => self.cs(cs).$ddr().modify(|_, w| w.$bit2().clear_bit()),
-                        3 => self.cs(cs).$ddr().modify(|_, w| w.$bit3().clear_bit()),
-                        4 => self.cs(cs).$ddr().modify(|_, w| w.$bit4().clear_bit()),
-                        5 => self.cs(cs).$ddr().modify(|_, w| w.$bit5().clear_bit()),
-                        6 => self.cs(cs).$ddr().modify(|_, w| w.$bit6().clear_bit()),
-                        7 => self.cs(cs).$ddr().modify(|_, w| w.$bit7().clear_bit()),
-                        _ => unreachable!(),
-                    }
-                });
+            fn input(&self, cs: CriticalSection<'_>, bit: usize) {
+                match bit {
+                    0 => self.cs(cs).$ddr().modify(|_, w| w.$bit0().clear_bit()),
+                    1 => self.cs(cs).$ddr().modify(|_, w| w.$bit1().clear_bit()),
+                    2 => self.cs(cs).$ddr().modify(|_, w| w.$bit2().clear_bit()),
+                    3 => self.cs(cs).$ddr().modify(|_, w| w.$bit3().clear_bit()),
+                    4 => self.cs(cs).$ddr().modify(|_, w| w.$bit4().clear_bit()),
+                    5 => self.cs(cs).$ddr().modify(|_, w| w.$bit5().clear_bit()),
+                    6 => self.cs(cs).$ddr().modify(|_, w| w.$bit6().clear_bit()),
+                    7 => self.cs(cs).$ddr().modify(|_, w| w.$bit7().clear_bit()),
+                    _ => unreachable!(),
+                };
             }
         }
     };

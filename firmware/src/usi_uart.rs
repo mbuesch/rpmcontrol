@@ -83,8 +83,8 @@ pub fn irq_handler_usi_ovf(c: &IrqCtx) {
 
             DP_TC0.irqctx(c).tccr0b().write(|w| w);
 
-            PORTB.set(PORTB_BIT, true);
-            PORTB.input(PORTB_BIT);
+            PORTB.set(c.cs(), PORTB_BIT, true);
+            PORTB.input(c.cs(), PORTB_BIT);
 
             //TODO enable PCINT
 
@@ -104,8 +104,8 @@ pub fn uart_tx_cs(cs: CriticalSection<'_>, mut data: u8) -> bool {
 
             DP_TC0.cs(cs).tccr0b().write(|w| w);
 
-            PORTB.set(PORTB_BIT, true);
-            PORTB.output(PORTB_BIT);
+            PORTB.set(cs, PORTB_BIT, true);
+            PORTB.output(cs, PORTB_BIT);
 
             DP_USI.cs(cs).usidr().write(|w| w.set((data >> 2) | 0x80));
             DP_USI.cs(cs).usisr().write(|w| {

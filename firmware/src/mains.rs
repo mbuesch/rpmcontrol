@@ -7,7 +7,7 @@ use crate::{
     ports::{PORTA, PortOps as _},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large, timer_get_large_cs},
 };
-use avr_context::{IrqCtx, MainCtx, MainCtxCell, Mutex};
+use avr_context::{CriticalSection, IrqCtx, MainCtx, MainCtxCell, Mutex};
 use avr_q::{Q7p8, q7p8};
 use core::cell::Cell;
 
@@ -24,8 +24,8 @@ pub const MAINS_HALFWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(2);
 /// Mains sine wave quarter-wave length.
 pub const MAINS_QUARTERWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(4);
 
-fn read_vsense() -> bool {
-    PORTA.get(1)
+fn read_vsense(cs: CriticalSection<'_>) -> bool {
+    PORTA.get(cs, 1)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -110,7 +110,7 @@ pub fn irq_handler_pcint(c: &IrqCtx) {
     let cs = c.cs();
 
     let now = timer_get_large_cs(cs);
-    let vsense = read_vsense();
+    let vsense = read_vsense(cs);
 
     let prev_vsense = VSENSE.borrow(cs).get();
     let prev_stamp = VSENSE_STAMP.borrow(cs).get();
