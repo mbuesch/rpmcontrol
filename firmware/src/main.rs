@@ -29,11 +29,7 @@ mod timer;
 mod triac;
 mod usi_uart;
 
-use crate::{
-    debug::debug_init,
-    hw::{Peripherals, mcu},
-    system::System,
-};
+use crate::{hw::mcu, system::System};
 use avr_context::{InitCtx, MainCtx, define_main};
 use avr_device::asm::wdr;
 
@@ -70,49 +66,50 @@ pub unsafe extern "C" fn wdt_init() {
 }
 
 #[allow(non_snake_case)]
-struct Dp {
+struct InitDp {
+    ADC: mcu::ADC,
+    AC: mcu::AC,
+}
+
+#[allow(non_snake_case)]
+struct MainDp {
     ADC: mcu::ADC,
 }
 
 #[inline(always)]
-fn init(c: &InitCtx<'_>, dp: Peripherals) -> Dp {
-    let porta = ports::PORTA.init(c, ports::PortA { PORTA: dp.PORTA });
-    let portb = ports::PORTB.init(c, ports::PortB { PORTB: dp.PORTB });
-    let exint = exint::EXINT.init(c, exint::ExInt { EXINT: dp.EXINT });
-    let timer = timer::DP.init(c, timer::Dp { TC1: dp.TC1 });
-    let usi_uart = usi_uart::DP.init(
-        c,
-        usi_uart::Dp {
-            USI: dp.USI,
-            TC0: dp.TC0,
-        },
-    );
-
-    timer.setup(c);
-    porta.setup(c);
-    portb.setup(c);
-    exint.setup(c);
-    usi_uart.setup(c);
-    debug_init(c);
-
-    SYSTEM.init(c.main_ctx(), &dp.ADC, &dp.AC);
-
-    Dp { ADC: dp.ADC }
-}
-
-#[inline(always)]
-fn main(c: &MainCtx<'_>, dp: Dp) -> ! {
+fn main_loop(c: &MainCtx<'_>, dp: MainDp) -> ! {
     loop {
         SYSTEM.run(c, &dp.ADC);
         wdr();
     }
 }
 
+#[inline(always)]
+fn init(c: &InitCtx<'_>, dp: InitDp) -> MainDp {
+    timer::setup(c);
+    ports::setup(c);
+    exint::setup(c);
+    usi_uart::setup(c);
+    debug::setup(c);
+
+    SYSTEM.init(c.main_ctx(), &dp.ADC, &dp.AC);
+
+    MainDp { ADC: dp.ADC }
+}
+
 define_main! {
     device: attiny861a,
-    init: init,
-    main: main,
+    main: main_loop,
     enable_interrupts: true,
+    init: init(ctx, InitDp { ADC, AC }) -> MainDp,
+    static_peripherals: {
+        static DP_EXINT: EXINT,
+        static DP_PORTA: PORTA,
+        static DP_PORTB: PORTB,
+        static DP_TC0: TC0,
+        static DP_TC1: TC1,
+        static DP_USI: USI,
+    },
 }
 
 #[panic_handler]

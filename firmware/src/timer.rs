@@ -3,61 +3,52 @@
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
 use crate::{
-    hw::{interrupt, mcu, nop3},
+    DP_TC1,
+    hw::{interrupt, nop3},
     triac::triac_timer_interrupt,
 };
-use avr_context::{CriticalSection, InitCtx, InitCtxCell, IrqCtx, Mutex};
+use avr_context::{CriticalSection, InitCtx, IrqCtx, Mutex};
 use avr_q::{Q7p8, q7p8};
 use core::cell::Cell;
-
-#[allow(non_snake_case)]
-pub struct Dp {
-    pub TC1: mcu::TC1,
-}
-
-// SAFETY: Is initialized when constructing the MainCtx.
-pub static DP: InitCtxCell<Dp> = unsafe { InitCtxCell::uninit() };
 
 static TIMER_UPPER: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
 pub const TIMER_TICK_US: u8 = 16; // 16 us per tick.
 
-impl Dp {
-    #[rustfmt::skip]
-    pub fn setup(&self, _c: &InitCtx) {
-        // Timer 1 configuration:
-        // CS: 256 -> 16 us per timer tick.
-        DP.TC1.tc1h().write(|w| w.set(0));
-        DP.TC1.tcnt1().write(|w| w.set(0));
-        DP.TC1.tccr1a().write(|w| w);
-        DP.TC1.tccr1c().write(|w| w);
-        DP.TC1.tccr1d().write(|w| w);
-        DP.TC1.tccr1e().write(|w| w);
-        DP.TC1.ocr1a().write(|w| w.set(0xFF));
-        DP.TC1.ocr1b().write(|w| w.set(0xFF));
-        DP.TC1.ocr1c().write(|w| w.set(0xFF)); // TOP value
-        DP.TC1.ocr1d().write(|w| w.set(0xFF));
-        DP.TC1.dt1().write(|w| w);
-        DP.TC1.tccr1b().write(|w| w.cs1().prescale_256());
-    }
+#[rustfmt::skip]
+pub fn setup(c: &InitCtx) {
+    // Timer 1 configuration:
+    // CS: 256 -> 16 us per timer tick.
+    DP_TC1.initctx(c).tc1h().write(|w| w.set(0));
+    DP_TC1.initctx(c).tcnt1().write(|w| w.set(0));
+    DP_TC1.initctx(c).tccr1a().write(|w| w);
+    DP_TC1.initctx(c).tccr1c().write(|w| w);
+    DP_TC1.initctx(c).tccr1d().write(|w| w);
+    DP_TC1.initctx(c).tccr1e().write(|w| w);
+    DP_TC1.initctx(c).ocr1a().write(|w| w.set(0xFF));
+    DP_TC1.initctx(c).ocr1b().write(|w| w.set(0xFF));
+    DP_TC1.initctx(c).ocr1c().write(|w| w.set(0xFF)); // TOP value
+    DP_TC1.initctx(c).ocr1d().write(|w| w.set(0xFF));
+    DP_TC1.initctx(c).dt1().write(|w| w);
+    DP_TC1.initctx(c).tccr1b().write(|w| w.cs1().prescale_256());
 }
 
 // SAFETY: This function may only do atomic-read-only accesses, because it's
 //         called from all contexts, including interrupt context.
 #[inline(always)]
 pub fn timer_get() -> Timestamp {
-    DP.TC1.tcnt1().read().bits().into()
+    interrupt::free(|cs| DP_TC1.cs(cs).tcnt1().read().bits().into())
 }
 
 #[inline(never)]
 pub fn timer_get_large_cs(cs: CriticalSection<'_>) -> LargeTimestamp {
     let mut upper = TIMER_UPPER.borrow(cs).get();
-    let mut lower = DP.TC1.tcnt1().read().bits();
+    let mut lower = DP_TC1.cs(cs).tcnt1().read().bits();
 
     // Increment the upper part, if the lower part had an overflow.
-    if DP.TC1.tifr().read().tov1().bit() {
-        DP.TC1.tifr().write(|w| w.tov1().set_bit());
-        lower = DP.TC1.tcnt1().read().bits();
+    if DP_TC1.cs(cs).tifr().read().tov1().bit() {
+        DP_TC1.cs(cs).tifr().write(|w| w.tov1().set_bit());
+        lower = DP_TC1.cs(cs).tcnt1().read().bits();
         upper = upper.wrapping_add(1);
         TIMER_UPPER.borrow(cs).set(upper);
     }
@@ -79,35 +70,38 @@ fn timer_sync_wait() {
 macro_rules! define_timer_interrupt {
     ($arm_fn:ident, $cancel_fn:ident, $irq_fn:ident, $handler_fn:path, $ocr:ident, $ocie:ident, $ocf:ident) => {
         pub fn $arm_fn(trigger_time: Timestamp) {
-            interrupt::free(|_| {
+            interrupt::free(|cs| {
                 // Ensure it doesn't trigger right away by pushing OCR into the future.
                 let now_ticks: u8 = timer_get().into();
-                DP.TC1.tc1h().write(|w| w.set(0));
-                DP.TC1.$ocr().write(|w| w.set(now_ticks.wrapping_add(0x7F)));
+                DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
+                DP_TC1
+                    .cs(cs)
+                    .$ocr()
+                    .write(|w| w.set(now_ticks.wrapping_add(0x7F)));
                 timer_sync_wait();
 
                 // Clear trigger flag and enable interrupt.
-                DP.TC1.tifr().write(|w| w.$ocf().set_bit());
-                DP.TC1.timsk().modify(|_, w| w.$ocie().set_bit());
+                DP_TC1.cs(cs).tifr().write(|w| w.$ocf().set_bit());
+                DP_TC1.cs(cs).timsk().modify(|_, w| w.$ocie().set_bit());
 
                 // Program the compare register.
-                DP.TC1.tc1h().write(|w| w.set(0));
-                DP.TC1.$ocr().write(|w| w.set(trigger_time.into()));
+                DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
+                DP_TC1.cs(cs).$ocr().write(|w| w.set(trigger_time.into()));
                 timer_sync_wait();
                 let now = timer_get();
 
                 // Trigger is in the past and has not triggered, yet?
-                if trigger_time <= now && !DP.TC1.tifr().read().$ocf().bit() {
+                if trigger_time <= now && !DP_TC1.cs(cs).tifr().read().$ocf().bit() {
                     loop {
                         // Enforce trigger now.
                         let trigger_time = timer_get() + RelTimestamp::from_ticks(1);
-                        DP.TC1.tc1h().write(|w| w.set(0));
-                        DP.TC1.$ocr().write(|w| w.set(trigger_time.into()));
+                        DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
+                        DP_TC1.cs(cs).$ocr().write(|w| w.set(trigger_time.into()));
                         timer_sync_wait();
                         let now = timer_get();
 
                         /* Is it going to trigger or did it trigger already? */
-                        if trigger_time > now || DP.TC1.tifr().read().$ocf().bit() {
+                        if trigger_time > now || DP_TC1.cs(cs).tifr().read().$ocf().bit() {
                             break; /* Done. IRQ is pending. */
                         }
                     }
@@ -116,16 +110,19 @@ macro_rules! define_timer_interrupt {
         }
 
         pub fn $cancel_fn() {
-            interrupt::free(|_| {
-                DP.TC1.timsk().modify(|_, w| w.$ocie().clear_bit());
-                DP.TC1.tifr().write(|w| w.$ocf().set_bit());
+            interrupt::free(|cs| {
+                DP_TC1.cs(cs).timsk().modify(|_, w| w.$ocie().clear_bit());
+                DP_TC1.cs(cs).tifr().write(|w| w.$ocf().set_bit());
             });
         }
 
         pub fn $irq_fn(c: &IrqCtx<'_>) {
-            DP.TC1.timsk().modify(|_, w| w.$ocie().clear_bit());
-            DP.TC1.tifr().write(|w| w.$ocf().set_bit());
-            let trig_time: Timestamp = DP.TC1.$ocr().read().bits().into();
+            DP_TC1
+                .irqctx(c)
+                .timsk()
+                .modify(|_, w| w.$ocie().clear_bit());
+            DP_TC1.irqctx(c).tifr().write(|w| w.$ocf().set_bit());
+            let trig_time: Timestamp = DP_TC1.irqctx(c).$ocr().read().bits().into();
             $handler_fn(c, trig_time);
         }
     };

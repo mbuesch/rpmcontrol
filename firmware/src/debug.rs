@@ -105,7 +105,7 @@ impl Debug {
     }
 }
 
-pub fn debug_init(c: &InitCtx) {
+pub fn setup(c: &InitCtx) {
     uart_tx_cs(c.cs(), 0);
 }
 
