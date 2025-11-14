@@ -45,7 +45,7 @@ checksum = "8f9565bb26618301cbf6fda364c206dbb8314e5b3d8fb070308201b3de0f0316"
 [[package]]
 name = "avr-context"
 version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-context.git?branch=main#9f30048ba778488dfbbae8a28f34e0e2a8160d41"
+source = "git+https://github.com/mbuesch/avr-context.git?branch=main#4ca9c44f247ef58339cea15a329089be29f8a89d"
 dependencies = [
  "bare-metal",
 ]
