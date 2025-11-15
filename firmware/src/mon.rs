@@ -95,38 +95,64 @@ impl Mon {
     ) -> Shutoff {
         let now = timer_get_large();
 
+        // If we just had a mains 90deg crossing, remember the time stamp.
         if mains_90deg {
             self.prev_mains_90deg.set(m, now);
         }
+        // Check if the distance between mains 90deg crossings is too big.
+        let mains_90deg_dist_failure =
+            now > self.prev_mains_90deg.get(m) + MAINS_ZERO_CROSSING_TIMEOUT;
 
+        // Put the next setpoint sample into the history buffer.
         let next_sp = self.prev_sp.get(m) + SP_HIST_DIST;
         if now >= next_sp {
             self.prev_sp.set(m, next_sp);
-
             self.sp_hist.push_back(m, setpoint);
         }
 
-        let next_check = self.prev_check.get(m) + CHECK_DIST;
+        // Check if the distance between monitoring checks is too big.
+        let prev_check = self.prev_check.get(m);
+        let mon_check_dist_failure = now > prev_check + CHECK_TIMEOUT;
+
+        // Check if we need to do the monitoring checks now.
+        let next_check = prev_check + CHECK_DIST;
         if now >= next_check {
             self.prev_check.set(m, next_check);
 
+            // If the motor speed is above the hard limit, then we have a problem.
             if speedo_hz >= MOT_HARD_LIMIT {
                 self.error_deb.error(m);
             } else {
+                // The motor speed is inside of the allowed range.
+
+                // Get the setpoint gradient between
+                // current setpoint and oldest setpoint from history buffer.
                 let sp_grad = (setpoint - self.sp_hist.oldest(m)).abs();
 
+                // Only do the monitoring checks,
+                // if the setpoint didn't change much recently.
                 if sp_grad <= SP_GRADIENT_THRES {
+                    // Check if we are above the monitoring activation RPM threshold.
                     if speedo_hz >= MON_ACTIVE_THRES {
+                        // Get the difference between measured speed and speed setpoint.
                         let diff = (speedo_hz - setpoint).abs();
 
+                        // If the speed difference is above a threshold,
+                        // we might have an error.
+                        // Debounce the error.
                         if diff > SPEEDO_TOLERANCE {
                             self.error_deb.error(m);
                         } else {
                             self.error_deb.ok(m);
                         }
                     } else {
+                        // We are below the monitoring activation threshold.
+                        // The machine is running with slow speed.
+                        // Assume everything is fine.
                         self.error_deb.ok(m);
                     }
+                } else {
+                    // We just wait until the user stopped changing the setpoint.
                 }
             }
         }
@@ -135,22 +161,11 @@ impl Mon {
         let unused_stack_bytes = estimate_unused_stack_space();
         let stack_failure = unused_stack_bytes < MIN_STACK_SPACE;
 
-        // Distance between monitoring checks is too big.
-        let mon_check_dist_failure = now > self.prev_check.get(m) + CHECK_TIMEOUT;
-
         // Analog value processing failed.
         let analog_failure = ANALOG_FAILURE.load();
 
-        // Distance between mains zero crossings is too big.
-        let mains_zero_crossing_dist_failure =
-            now > self.prev_mains_90deg.get(m) + MAINS_ZERO_CROSSING_TIMEOUT;
-
-        // Immediate error without debouncing on mon-dist, analog or zero crossing failure.
-        if stack_failure
-            || mon_check_dist_failure
-            || analog_failure
-            || mains_zero_crossing_dist_failure
-        {
+        // Raise an immediate error without debouncing on certain hard failures.
+        if stack_failure || mon_check_dist_failure || analog_failure || mains_90deg_dist_failure {
             self.error_deb.error_no_debounce(m);
         }
 
