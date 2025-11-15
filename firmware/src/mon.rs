@@ -54,9 +54,9 @@ static ANALOG_FAILURE: AvrAtomic<bool> = AvrAtomic::new();
 pub struct Mon {
     prev_check: MainCtxCell<LargeTimestamp>,
     prev_mains_90deg: MainCtxCell<LargeTimestamp>,
+    prev_sp: MainCtxCell<LargeTimestamp>,
     error_deb: Debounce<ERROR_DEBOUNCE_ERRSTEP, ERROR_DEBOUNCE_LIMIT, ERROR_DEBOUNCE_STICKY>,
     sp_hist: History<Q7p8, SP_HIST_COUNT>,
-    prev_sp: MainCtxCell<LargeTimestamp>,
 }
 
 impl Mon {
@@ -64,6 +64,7 @@ impl Mon {
         Self {
             prev_check: MainCtxCell::new(LargeTimestamp::new()),
             prev_mains_90deg: MainCtxCell::new(LargeTimestamp::new()),
+            prev_sp: MainCtxCell::new(LargeTimestamp::new()),
             error_deb: Debounce::new(),
             sp_hist: History::new([
                 MainCtxCell::new(q7p8!(const 0)),
@@ -76,8 +77,13 @@ impl Mon {
                 MainCtxCell::new(q7p8!(const 0)),
                 MainCtxCell::new(q7p8!(const 0)),
             ]),
-            prev_sp: MainCtxCell::new(LargeTimestamp::new()),
         }
+    }
+
+    pub fn init(&self, m: &MainCtx<'_>, now: LargeTimestamp) {
+        self.prev_check.set(m, now);
+        self.prev_mains_90deg.set(m, now);
+        self.prev_sp.set(m, now);
     }
 
     pub fn check(

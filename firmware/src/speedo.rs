@@ -63,6 +63,10 @@ impl Speedo {
         }
     }
 
+    pub fn init(&self, m: &MainCtx<'_>, now: LargeTimestamp) {
+        self.prev_stamp.set(m, now);
+    }
+
     fn get_speed(&self, m: &MainCtx<'_>) -> Option<MotorSpeed> {
         if self.ok_count.get(m) >= OK_THRES {
             Some(MotorSpeed::from_period_dur(self.get_dur(m)))

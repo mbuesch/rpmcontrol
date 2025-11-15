@@ -56,6 +56,10 @@ impl Mains {
         }
     }
 
+    pub fn init(&self, _m: &MainCtx<'_>, _now: LargeTimestamp) {
+        // Nothing do to.
+    }
+
     /// Run mains vsense pin reading and evaluation.
     pub fn run(&self, m: &MainCtx<'_>) -> PhaseUpdate {
         let mut ret = PhaseUpdate::NotChanged;

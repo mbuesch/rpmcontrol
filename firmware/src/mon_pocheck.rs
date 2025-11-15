@@ -83,8 +83,8 @@ impl PoCheck {
         }
     }
 
-    pub fn init(&self, m: &MainCtx<'_>) {
-        self.next_transition.set(m, timer_get_large() + DUR_PRE);
+    pub fn init(&self, m: &MainCtx<'_>, now: LargeTimestamp) {
+        self.next_transition.set(m, now + DUR_PRE);
     }
 
     pub fn run(&self, m: &MainCtx<'_>, speedo_hz: Option<MotorSpeed>) -> PoState {

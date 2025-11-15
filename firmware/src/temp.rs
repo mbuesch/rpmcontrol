@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
-use crate::{debug::Debug, filter::Filter, shutoff::Shutoff};
+use crate::{debug::Debug, filter::Filter, shutoff::Shutoff, timer::LargeTimestamp};
 use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8};
 use curveipo::Curve;
@@ -81,6 +81,10 @@ impl Temp {
             filter_uc: Filter::new(),
             filter_mot: Filter::new(),
         }
+    }
+
+    pub fn init(&self, _m: &MainCtx<'_>, _now: LargeTimestamp) {
+        // Nothing to do.
     }
 
     pub fn run(&self, m: &MainCtx<'_>, temp_adc: TempAdc) {

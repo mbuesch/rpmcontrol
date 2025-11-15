@@ -176,12 +176,28 @@ impl System {
         set_secondary_shutoff(Shutoff::MachineShutoff);
         self.triac.set_phi_offs_shutoff(m);
 
-        self.mon_pocheck.init(m);
         self.adc.init(m, ADC);
         self.ac.init(AC);
 
         self.startup_delay_timeout
             .set(m, timer_get_large() + STARTUP_DELAY);
+    }
+
+    /// Enter `SysState::PoCheck` for the first time.
+    fn init_pocheck(&self, m: &MainCtx<'_>) {
+        let now = timer_get_large();
+
+        self.mains.init(m, now);
+        self.mon_pocheck.init(m, now);
+        self.speedo.init(m, now);
+    }
+
+    /// Enter `SysState::Syncing` for the first time.
+    fn init_syncing(&self, m: &MainCtx<'_>) {
+        let now = timer_get_large();
+
+        self.mon.init(m, now);
+        self.temp.init(m, now);
     }
 
     /// Measure the main loop runtime.
@@ -204,6 +220,7 @@ impl System {
         // On startup delay timeout, continue to power-on-check.
         if now > self.startup_delay_timeout.get(m) {
             self.state.set(m, SysState::PoCheck);
+            self.init_pocheck(m);
         }
     }
 
@@ -230,11 +247,13 @@ impl System {
             PoState::DoneOk => {
                 // Power-on-check finished successfully.
 
-                // Go to next system state.
-                self.state.set(m, SysState::Syncing);
-
                 // Ensure triac is turned off.
                 self.triac.set_phi_offs_shutoff(m);
+
+                // Go to next system state.
+                self.state.set(m, SysState::Syncing);
+                // Enter syncing for the first time.
+                self.init_syncing(m);
             }
         }
 
