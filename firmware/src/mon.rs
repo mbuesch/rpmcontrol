@@ -6,7 +6,6 @@ use crate::{
     debounce::Debounce,
     debug::Debug,
     history::History,
-    mon_stack::estimate_unused_stack_space,
     shutoff::Shutoff,
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
@@ -14,6 +13,7 @@ use crate::{
 use avr_atomic::AvrAtomic;
 use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8};
+use avr_stack::estimate_unused_stack_space;
 
 /// Distance between monitoring checks.
 const CHECK_DIST: RelLargeTimestamp = RelLargeTimestamp::from_millis(20);

@@ -32,6 +32,10 @@ avr-atomic = "1"
 #avr-context = { path = "../../avr-context" }
 avr-context = { git = "https://github.com/mbuesch/avr-context.git", branch = "main" }
 
+#avr-stack = "1"
+#avr-stack = { path = "../../avr-stack" }
+avr-stack = { git = "https://github.com/mbuesch/avr-stack.git", branch = "main" }
+
 curveipo = "1"
 
 [profile.dev]

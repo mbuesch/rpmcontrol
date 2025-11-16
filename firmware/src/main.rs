@@ -17,7 +17,6 @@ mod hw;
 mod mains;
 mod mon;
 mod mon_pocheck;
-mod mon_stack;
 mod pid;
 mod ports;
 mod ring;
@@ -116,5 +115,7 @@ define_main! {
 fn panic(_: &core::panic::PanicInfo) -> ! {
     reset_system();
 }
+
+avr_stack::init_stack_pattern!();
 
 // vim: ts=4 sw=4 expandtab
