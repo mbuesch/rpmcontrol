@@ -88,6 +88,11 @@ isp-flash: $(HEXPOST)
 		-B $(AVRDUDE_SPEED) -p $(AVRDUDE_MCU) \
 		-U flash:w:$(HEXPOST)
 
+isp-reset:
+	$(AVRDUDE) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROG) \
+		-B $(AVRDUDE_SPEED_SLOW) -p $(AVRDUDE_MCU) \
+		-U signature:r:/dev/null:i -q -q
+
 dw:
 	$(DWDEBUG) 'device $(DWDEBUG_PORT), te'
 
@@ -96,6 +101,9 @@ dw-flash: $(BINPOST)
 
 dw-gdbserver:
 	$(DWDEBUG) 'device $(DWDEBUG_PORT), reset, te, gdbserver, qr'
+
+dw-reset:
+	$(DWDEBUG) 'device $(DWDEBUG_PORT), reset, qr'
 
 gdb:
 	$(GDB) -ex 'target remote :4444' $(ELF)
