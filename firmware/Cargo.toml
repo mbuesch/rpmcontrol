@@ -12,6 +12,7 @@ test = false
 bench = false
 
 [dependencies]
+#avr-device = { path = "../../avr-device", features = [ "attiny861a", "rt" ] }
 #avr-device = { version = "0.7", features = [ "attiny861a", "rt" ] }
 avr-device = { git = "https://github.com/Rahix/avr-device.git", rev = "7818a35f63f221e7fa59c9f0b4cf284198f3436e", features = [ "attiny861a", "rt" ] }
 

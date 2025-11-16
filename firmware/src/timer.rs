@@ -2,12 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
-use crate::{
-    DP_TC1,
-    hw::{interrupt, nop3},
-    triac::triac_timer_interrupt,
-};
+use crate::{DP_TC1, hw::interrupt, triac::triac_timer_interrupt};
 use avr_context::{CriticalSection, InitCtx, IrqCtx, Mutex};
+use avr_device::asm::nop3;
 use avr_q::{Q7p8, q7p8};
 use core::cell::Cell;
 

@@ -32,18 +32,4 @@ define_isr! {
     isr: irq_handler_ana_comp,
 }
 
-/// Do nothing for the duration of 3 CPU cycles.
-#[inline(always)]
-#[rustfmt::skip]
-pub fn nop3() {
-    // SAFETY: Asm block doesn't access anything.
-    unsafe {
-        core::arch::asm!(
-            "rjmp 1",
-            "1: nop",
-            options(preserves_flags)
-        )
-    }
-}
-
 // vim: ts=4 sw=4 expandtab
