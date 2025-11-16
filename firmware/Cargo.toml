@@ -13,7 +13,7 @@ bench = false
 
 [dependencies]
 #avr-device = { version = "0.7", features = [ "attiny861a", "rt" ] }
-avr-device = { git = "https://github.com/Rahix/avr-device.git", rev = "7619231fd51826c484708d1e89269d5dfe56fdd4", features = [ "attiny861a", "rt" ] }
+avr-device = { git = "https://github.com/Rahix/avr-device.git", rev = "7818a35f63f221e7fa59c9f0b4cf284198f3436e", features = [ "attiny861a", "rt" ] }
 
 avr-int24 = "1"
 #avr-int24 = { path = "../../avr-int24" }
