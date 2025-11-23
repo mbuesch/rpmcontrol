@@ -3045,6 +3045,16 @@
 			(embedded_fonts no)
 		)
 	)
+	(text "TVS"
+		(exclude_from_sim no)
+		(at 210.058 55.118 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "258a5b44-9c97-466b-ba9d-4bd9feb4af99")
+	)
 	(text "snubber"
 		(exclude_from_sim no)
 		(at 245.364 52.832 0)
