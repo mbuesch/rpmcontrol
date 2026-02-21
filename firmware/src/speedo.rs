@@ -16,7 +16,10 @@ use derive_more as dm;
 const SPEEDO_FACT: u32 = 4;
 
 /// Need at least this many valid speedometer edges in a row to consider the speed valid.
-const OK_THRES: u8 = 4;
+const OK_THRES: u8 = 5;
+
+/// If no speedometer edge is detected for this long, consider the speed invalid.
+const TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(50);
 
 #[derive(Copy, Clone)]
 pub struct MotorSpeed(Freq);
@@ -94,23 +97,34 @@ impl Speedo {
     }
 
     pub fn run(&self, m: &MainCtx<'_>) -> Option<MotorSpeed> {
+        let mut prev_stamp = self.prev_stamp.get(m);
+
+        // Process all new AC captures.
+        while let Some(ac) = ac_capture_get() {
+            // prev_stamp is valid?
+            if self.ok_count.get(m) > 0 {
+                // ac stamp is valid?
+                if ac >= prev_stamp {
+                    let dur = ac - prev_stamp;
+                    self.new_duration(m, dur);
+                } else {
+                    // invalid stamp.
+                    self.ok_count.set(m, 0);
+                }
+            } else {
+                // first edge, just store prev_stamp and increment ok_count.
+                self.new_duration(m, RelLargeTimestamp::from_millis(0));
+            }
+            prev_stamp = ac;
+        }
+
+        // Check if prev_stamp is too old.
         let now = timer_get_large();
-        let prev_stamp = self.prev_stamp.get(m);
-        if now < prev_stamp {
-            // prev_stamp wrapped. Drop it.
+        if now - prev_stamp >= TIMEOUT {
             self.ok_count.set(m, 0);
         }
 
-        while let Some(ac) = ac_capture_get() {
-            if ac >= prev_stamp {
-                let dur = ac - prev_stamp;
-                self.new_duration(m, dur);
-            } else {
-                // prev_stamp wrapped.
-                self.ok_count.set(m, 0);
-            }
-            self.prev_stamp.set(m, ac);
-        }
+        self.prev_stamp.set(m, prev_stamp);
 
         Debug::SpeedoStatus.log_u16(self.ok_count.get(m) as u16);
 
