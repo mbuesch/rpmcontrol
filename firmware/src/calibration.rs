@@ -68,4 +68,38 @@ pub const SPEED_FILTER_DIV: Q7p8 = q7p8!(const 2 / 1);
 /// Minimum setpoint below which the triac will be shut off.
 pub const SP_MIN_CUTOFF: Freq = rpm!(300);
 
+/// Temperature calibration constants and tables.
+pub mod temp {
+    use super::*;
+    use crate::temp::celsius;
+
+    /// High temperature limit for the motor, above which a shutoff will be triggered.
+    pub const TEMP_LIMIT_HI: Q7p8 = celsius!(100);
+
+    /// Low temperature limit for the motor, below which a shutoff will be released.
+    pub const TEMP_LIMIT_LO: Q7p8 = celsius!(80);
+
+    /// Temperature filter divider.
+    pub const TEMP_FILTER_DIV: Q7p8 = q7p8!(const 16);
+
+    /// Motor NTC temperature curve.
+    pub const NTC_CURVE: Curve<Q7p8, (Q7p8, Q7p8), 7> = Curve::new([
+        // (kOhms, double deg Celsius)
+        (q7p8!(const 3321 / 10000), celsius!(145)),
+        (q7p8!(const 5174 / 10000), celsius!(125)),
+        (q7p8!(const 8400 / 10000), celsius!(105)),
+        (q7p8!(const 1429 / 1000), celsius!(85)),
+        (q7p8!(const 2565 / 1000), celsius!(65)),
+        (q7p8!(const 4891 / 1000), celsius!(45)),
+        (q7p8!(const 1000 / 100), celsius!(25)),
+    ]);
+
+    /// Microcontroller temperature curve.
+    pub const UC_CURVE: Curve<Q7p8, (Q7p8, Q7p8), 3> = Curve::new([
+        // (adc / 8, double deg Celsius)
+        (q7p8!(const 300 / 8), celsius!(25)),
+        (q7p8!(const 370 / 8), celsius!(85)),
+        (q7p8!(const 440 / 8), celsius!(145)),
+    ]);
+}
 // vim: ts=4 sw=4 expandtab

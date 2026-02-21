@@ -2,41 +2,26 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
-use crate::{debug::Debug, filter::Filter, shutoff::Shutoff, timer::LargeTimestamp};
+use crate::{
+    calibration::temp::{NTC_CURVE, TEMP_FILTER_DIV, TEMP_LIMIT_HI, TEMP_LIMIT_LO, UC_CURVE},
+    debug::Debug,
+    filter::Filter,
+    shutoff::Shutoff,
+    timer::LargeTimestamp,
+};
 use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8};
-use curveipo::Curve;
 
 macro_rules! celsius {
     ($cel:literal) => {
 const { q7p8!(const $cel / 2) }
     };
 }
+pub(crate) use celsius;
 
 const R1: Q7p8 = q7p8!(const 10); // kOhms
 const ADC_UREF: Q7p8 = q7p8!(const 5); // volts
 const ADC_MAX: u16 = 0x3FF;
-const TEMP_LIMIT_HI: Q7p8 = celsius!(100);
-const TEMP_LIMIT_LO: Q7p8 = celsius!(80);
-const TEMP_FILTER_DIV: Q7p8 = q7p8!(const 16);
-
-const NTC_CURVE: Curve<Q7p8, (Q7p8, Q7p8), 7> = Curve::new([
-    // (kOhms, double deg Celsius)
-    (q7p8!(const 3321 / 10000), celsius!(145)),
-    (q7p8!(const 5174 / 10000), celsius!(125)),
-    (q7p8!(const 8400 / 10000), celsius!(105)),
-    (q7p8!(const 1429 / 1000), celsius!(85)),
-    (q7p8!(const 2565 / 1000), celsius!(65)),
-    (q7p8!(const 4891 / 1000), celsius!(45)),
-    (q7p8!(const 1000 / 100), celsius!(25)),
-]);
-
-const UC_CURVE: Curve<Q7p8, (Q7p8, Q7p8), 3> = Curve::new([
-    // (adc / 8, double deg Celsius)
-    (q7p8!(const 300 / 8), celsius!(25)),
-    (q7p8!(const 370 / 8), celsius!(85)),
-    (q7p8!(const 440 / 8), celsius!(145)),
-]);
 
 /// Convert motor temperature ADC to volts at ADC pin.
 fn mot_adc_to_volts(adc: u16) -> Q7p8 {
