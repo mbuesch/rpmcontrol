@@ -32,11 +32,9 @@ pub fn setup(c: &InitCtx) {
     DP_TC1.initctx(c).tccr1b().write(|w| w.cs1().prescale_256());
 }
 
-// SAFETY: This function may only do atomic-read-only accesses, because it's
-//         called from all contexts, including interrupt context.
 #[inline(always)]
-pub fn timer_get() -> Timestamp {
-    interrupt::free(|cs| DP_TC1.cs(cs).tcnt1().read().bits().into())
+pub fn timer_get_cs(cs: CriticalSection<'_>) -> Timestamp {
+    DP_TC1.cs(cs).tcnt1().read().bits().into()
 }
 
 #[inline(never)]
@@ -71,7 +69,7 @@ macro_rules! define_timer_interrupt {
         pub fn $arm_fn(trigger_time: Timestamp) {
             interrupt::free(|cs| {
                 // Ensure it doesn't trigger right away by pushing OCR into the future.
-                let now_ticks: u8 = timer_get().into();
+                let now_ticks: u8 = timer_get_cs(cs).into();
                 DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
                 DP_TC1
                     .cs(cs)
@@ -87,17 +85,17 @@ macro_rules! define_timer_interrupt {
                 DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
                 DP_TC1.cs(cs).$ocr().write(|w| w.set(trigger_time.into()));
                 timer_sync_wait();
-                let now = timer_get();
+                let now = timer_get_cs(cs);
 
                 // Trigger is in the past and has not triggered, yet?
                 if trigger_time <= now && !DP_TC1.cs(cs).tifr().read().$ocf().bit() {
                     loop {
                         // Enforce trigger now.
-                        let trigger_time = timer_get() + RelTimestamp::from_ticks(1);
+                        let trigger_time = timer_get_cs(cs) + RelTimestamp::from_ticks(1);
                         DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
                         DP_TC1.cs(cs).$ocr().write(|w| w.set(trigger_time.into()));
                         timer_sync_wait();
-                        let now = timer_get();
+                        let now = timer_get_cs(cs);
 
                         /* Is it going to trigger or did it trigger already? */
                         if trigger_time > now || DP_TC1.cs(cs).tifr().read().$ocf().bit() {
