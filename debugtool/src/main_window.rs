@@ -360,8 +360,10 @@ fn draw(backend: CairoBackend, diagram_data: Rc<RefCell<DiagramData>>) {
 
     chart
         .configure_series_labels()
-        .background_style(WHITE)
+        .margin(15)
+        .background_style(WHITE.mix(0.2))
         .border_style(BLACK)
+        .position(SeriesLabelPosition::UpperMiddle)
         .draw()
         .unwrap();
 }
