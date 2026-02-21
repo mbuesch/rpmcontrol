@@ -77,6 +77,9 @@ const RPM_SYNC_THRES: Freq = rpm!(1000);
 /// Speedometer filter divider.
 const SPEED_FILTER_DIV: Q7p8 = q7p8!(const 2 / 1);
 
+/// Minimum setpoint below which the triac will be shut off.
+const SP_MIN_CUTOFF: Freq = rpm!(300);
+
 /// Convert RPM to Freq (4-Hz units).
 macro_rules! rpm {
     ($rpm: expr) => {
@@ -317,6 +320,11 @@ impl System {
             rpm!(0)
         };
 
+        // If the setpoint is below the minimum cutoff, turn the triac off.
+        if setpoint < SP_MIN_CUTOFF {
+            triac_shutoff = Shutoff::MachineShutoff;
+        }
+
         // Check if we are at mains zero crossing + 90 degrees.
         let mut mains_90deg_trigger = false;
         if phase_update == PhaseUpdate::Changed {
@@ -346,38 +354,38 @@ impl System {
             }
 
             // Run the RPM controller.
-            let rpmpid_speed;
-            let rpmpid_params;
-            let rpmpid_reset_i;
+            let pid_speed;
+            let pid_params;
+            let pid_reset_i;
             match self.state.get(m) {
                 SysState::Startup | SysState::PoCheck | SysState::Syncing => {
-                    rpmpid_speed = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint);
-                    rpmpid_params = &RPMPI_PARAMS_SYNCING;
-                    rpmpid_reset_i = true;
+                    pid_speed = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint);
+                    pid_params = &RPMPI_PARAMS_SYNCING;
+                    pid_reset_i = true;
                 }
                 SysState::Running => {
-                    rpmpid_speed = speed_filt;
-                    rpmpid_params = &RPMPI_PARAMS;
-                    rpmpid_reset_i = false;
+                    pid_speed = speed_filt;
+                    pid_params = &RPMPI_PARAMS;
+                    pid_reset_i = false;
                 }
             }
-            let y = Freq(self.rpm_pid.run(
+            let pid_y = Freq(self.rpm_pid.run(
                 m,
-                rpmpid_params,
+                pid_params,
                 &PidIlim {
                     pos: RPMPI_ILIM_POS.lin_inter(speed_filt.0),
                     neg: RPMPI_ILIM_NEG.lin_inter(speed_filt.0),
                 },
                 setpoint.0,
-                rpmpid_speed.0,
-                rpmpid_reset_i,
+                pid_speed.0,
+                pid_reset_i,
             ));
 
             Debug::Setpoint.log_fixpt(setpoint.0);
             Debug::Speedo.log_fixpt(speed_filt.0);
-            Debug::PidY.log_fixpt(y.0);
+            Debug::PidY.log_fixpt(pid_y.0);
 
-            let phi_offs_ms = f_to_trig_offs(y);
+            let phi_offs_ms = f_to_trig_offs(pid_y);
             self.triac.set_phi_offs_ms(m, phi_offs_ms);
         }
 
