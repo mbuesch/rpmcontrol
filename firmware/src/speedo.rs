@@ -10,36 +10,36 @@ use crate::{
 use avr_context::{MainCtx, MainCtxCell};
 use avr_int24::I24;
 use avr_q::{Q7p8, q7p8};
+use derive_more as dm;
 
 /// 4 speedometer edges per motor revolution
 const SPEEDO_FACT: u32 = 4;
 
+/// Need at least this many valid speedometer edges in a row to consider the speed valid.
 const OK_THRES: u8 = 4;
 
 #[derive(Copy, Clone)]
-pub struct MotorSpeed(Q7p8);
+pub struct MotorSpeed(Freq);
 
 impl MotorSpeed {
-    const FACT_16HZ: i16 = 16;
-
-    pub const fn as_16hz(&self) -> Q7p8 {
+    pub const fn as_freq(&self) -> Freq {
         self.0
     }
 
-    pub fn from_16hz(value: Q7p8) -> Self {
+    pub fn from_freq(value: Freq) -> Self {
         Self(value)
     }
 
     pub fn from_period_dur(dur: RelLargeTimestamp) -> Self {
         let dur: i16 = dur.into();
-        let dur = dur.min(i16::MAX / (Self::FACT_16HZ * 2)); // avoid mul overflow.
+        let dur = dur.min(i16::MAX / (Freq::FACT_HZ4 * 2)); // avoid mul overflow.
         let dur = dur.max(1); // avoid div by zero.
 
         // fact 2 to avoid rounding error.
         let num = (1_000_000 / (TIMER_TICK_US as u32 * (SPEEDO_FACT / 2))) as i16;
-        let denom = dur * Self::FACT_16HZ * 2;
+        let denom = dur * Freq::FACT_HZ4 * 2;
 
-        Self::from_16hz(q7p8!(num / denom))
+        Self::from_freq(Freq(q7p8!(num / denom)))
     }
 }
 
@@ -115,6 +115,44 @@ impl Speedo {
         Debug::SpeedoStatus.log_u16(self.ok_count.get(m) as u16);
 
         self.get_speed(m)
+    }
+}
+
+/// Frequency in 4-Hz. (Hz divided by 4)
+#[repr(transparent)]
+#[derive(
+    Copy, Clone, PartialEq, Eq, PartialOrd, Ord, dm::Add, dm::AddAssign, dm::Sub, dm::SubAssign,
+)]
+pub struct Freq(pub Q7p8);
+
+impl Freq {
+    pub const FACT_HZ4: i16 = 4;
+}
+
+// Project to inner.
+impl curveipo::CurvePoint<Freq> for (Freq, Freq) {
+    #[inline(always)]
+    fn x(&self) -> Freq {
+        self.0
+    }
+
+    #[inline(always)]
+    fn y(&self) -> Freq {
+        self.1
+    }
+}
+
+// Project to inner.
+impl curveipo::CurveIpo for Freq {
+    #[inline(always)]
+    fn lin_inter(
+        &self,
+        left: &impl curveipo::CurvePoint<Self>,
+        right: &impl curveipo::CurvePoint<Self>,
+    ) -> Self {
+        let left = (left.x().0, left.y().0);
+        let right = (right.x().0, right.y().0);
+        Self(self.0.lin_inter(&left, &right))
     }
 }
 

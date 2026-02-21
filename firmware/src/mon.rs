@@ -7,12 +7,13 @@ use crate::{
     debug::Debug,
     history::History,
     shutoff::Shutoff,
+    speedo::Freq,
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
 use avr_atomic::AvrAtomic;
 use avr_context::{MainCtx, MainCtxCell};
-use avr_q::{Q7p8, q7p8};
+use avr_q::q7p8;
 use avr_stack::estimate_unused_stack_space;
 
 /// Distance between monitoring checks.
@@ -34,7 +35,7 @@ const SP_HIST_DIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(333333);
 const SP_HIST_COUNT: usize = 9;
 
 /// Don't run monitoring, if the setpoint gradient in history is bigger than this.
-const SP_GRADIENT_THRES: Q7p8 = rpm!(1000);
+const SP_GRADIENT_THRES: Freq = rpm!(1000);
 
 /// Step size for one error event.
 const ERROR_DEBOUNCE_ERRSTEP: u8 = 3;
@@ -44,10 +45,10 @@ const ERROR_DEBOUNCE_LIMIT: u8 = 120;
 const ERROR_DEBOUNCE_STICKY: bool = true;
 
 /// Setpoint vs. speedometer deviation threshold that is considered to be an unexpected mismatch.
-const SPEEDO_TOLERANCE: Q7p8 = rpm!(1000);
+const SPEEDO_TOLERANCE: Freq = rpm!(1000);
 /// Monitoring activation threshold for speedometer input.
 /// Monitoring is not active below this threshold.
-const MON_ACTIVE_THRES: Q7p8 = rpm!(7500);
+const MON_ACTIVE_THRES: Freq = rpm!(7500);
 
 static ANALOG_FAILURE: AvrAtomic<bool> = AvrAtomic::new();
 
@@ -56,7 +57,7 @@ pub struct Mon {
     prev_mains_90deg: MainCtxCell<LargeTimestamp>,
     prev_sp: MainCtxCell<LargeTimestamp>,
     error_deb: Debounce<ERROR_DEBOUNCE_ERRSTEP, ERROR_DEBOUNCE_LIMIT, ERROR_DEBOUNCE_STICKY>,
-    sp_hist: History<Q7p8, SP_HIST_COUNT>,
+    sp_hist: History<Freq, SP_HIST_COUNT>,
 }
 
 impl Mon {
@@ -67,15 +68,15 @@ impl Mon {
             prev_sp: MainCtxCell::new(LargeTimestamp::new()),
             error_deb: Debounce::new(),
             sp_hist: History::new([
-                MainCtxCell::new(q7p8!(const 0)),
-                MainCtxCell::new(q7p8!(const 0)),
-                MainCtxCell::new(q7p8!(const 0)),
-                MainCtxCell::new(q7p8!(const 0)),
-                MainCtxCell::new(q7p8!(const 0)),
-                MainCtxCell::new(q7p8!(const 0)),
-                MainCtxCell::new(q7p8!(const 0)),
-                MainCtxCell::new(q7p8!(const 0)),
-                MainCtxCell::new(q7p8!(const 0)),
+                MainCtxCell::new(Freq(q7p8!(const 0))),
+                MainCtxCell::new(Freq(q7p8!(const 0))),
+                MainCtxCell::new(Freq(q7p8!(const 0))),
+                MainCtxCell::new(Freq(q7p8!(const 0))),
+                MainCtxCell::new(Freq(q7p8!(const 0))),
+                MainCtxCell::new(Freq(q7p8!(const 0))),
+                MainCtxCell::new(Freq(q7p8!(const 0))),
+                MainCtxCell::new(Freq(q7p8!(const 0))),
+                MainCtxCell::new(Freq(q7p8!(const 0))),
             ]),
         }
     }
@@ -89,8 +90,8 @@ impl Mon {
     pub fn check(
         &self,
         m: &MainCtx<'_>,
-        setpoint: Q7p8,
-        speedo_hz: Q7p8,
+        setpoint: Freq,
+        speedo_hz: Freq,
         mains_90deg: bool,
     ) -> Shutoff {
         let now = timer_get_large();
@@ -127,7 +128,7 @@ impl Mon {
 
                 // Get the setpoint gradient between
                 // current setpoint and oldest setpoint from history buffer.
-                let sp_grad = (setpoint - self.sp_hist.oldest(m)).abs();
+                let sp_grad = Freq((setpoint - self.sp_hist.oldest(m)).0.abs());
 
                 // Only do the monitoring checks,
                 // if the setpoint didn't change much recently.
@@ -135,7 +136,7 @@ impl Mon {
                     // Check if we are above the monitoring activation RPM threshold.
                     if speedo_hz >= MON_ACTIVE_THRES {
                         // Get the difference between measured speed and speed setpoint.
-                        let diff = (speedo_hz - setpoint).abs();
+                        let diff = Freq((speedo_hz - setpoint).0.abs());
 
                         // If the speed difference is above a threshold,
                         // we might have an error.

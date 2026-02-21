@@ -33,8 +33,8 @@ fn hz_to_rpm(val: f64) -> f64 {
     val * 60.0
 }
 
-fn hz16_to_hz(val: f64) -> f64 {
-    val * 16.0
+fn hz4_to_hz(val: f64) -> f64 {
+    val * 4.0
 }
 
 fn double_celsius_to_celsius(val: f64) -> f64 {
@@ -46,7 +46,7 @@ fn fixpt_to_f64(val: u16) -> f64 {
 }
 
 fn fixpt_to_rpm(val: u16) -> f64 {
-    hz_to_rpm(hz16_to_hz(fixpt_to_f64(val)))
+    hz_to_rpm(hz4_to_hz(fixpt_to_f64(val)))
 }
 
 fn fixpt_to_celsius(val: u16) -> f64 {

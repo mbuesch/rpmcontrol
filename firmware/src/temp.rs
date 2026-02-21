@@ -9,7 +9,7 @@ use curveipo::Curve;
 
 macro_rules! celsius {
     ($cel:literal) => {
-        const { q7p8!(const $cel / 2) }
+const { q7p8!(const $cel / 2) }
     };
 }
 

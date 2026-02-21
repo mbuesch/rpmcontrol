@@ -5,7 +5,7 @@
 use crate::{
     mains::MAINS_HALFWAVE_DUR_MS,
     shutoff::Shutoff,
-    speedo::MotorSpeed,
+    speedo::{Freq, MotorSpeed},
     system::{debug_toggle, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
@@ -19,7 +19,7 @@ const DUR_PRE: RelLargeTimestamp = RelLargeTimestamp::from_millis(50);
 const DUR_CHECK: RelLargeTimestamp = RelLargeTimestamp::from_millis(400);
 
 /// RPM below or equal to this limit are considered to be zero RPM.
-const RPM_ZERO_LIMIT: Q7p8 = rpm!(5);
+const RPM_ZERO_LIMIT: Freq = rpm!(5);
 
 /// Triac offset for the enabled-check.
 const TRIAC_TRIG_OFFS_ENABLED_MS: Q7p8 = MAINS_HALFWAVE_DUR_MS.const_div(q7p8!(const 10));
@@ -140,7 +140,7 @@ impl PoCheck {
             | PoState::Error
             | PoState::DoneOk => {
                 let rpm_is_zero = speedo_hz
-                    .map(|s| s.as_16hz() <= RPM_ZERO_LIMIT)
+                    .map(|s| s.as_freq() <= RPM_ZERO_LIMIT)
                     .unwrap_or(true);
                 // RPM must always be zero throughout the whole test.
                 !rpm_is_zero

@@ -13,13 +13,14 @@ use crate::{
     pid::{Pid, PidIlim, PidParams},
     ports::{PORTB, PortOps as _},
     shutoff::{Shutoff, set_secondary_shutoff},
-    speedo::{MotorSpeed, Speedo},
+    snap::Snap,
+    speedo::{Freq, MotorSpeed, Speedo},
     temp::{Temp, TempAdc},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
     triac::Triac,
 };
 use avr_context::{MainCtx, MainCtxCell};
-use avr_q::{Q7p8, q7p8};
+use avr_q::{Q7p8, q7p8, q15p8};
 use curveipo::Curve;
 
 const STARTUP_DELAY: RelLargeTimestamp = RelLargeTimestamp::from_millis(300);
@@ -38,21 +39,21 @@ const RPMPI_PARAMS_SYNCING: PidParams = PidParams {
 
 const RPMPI_ILIM_NEG: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
     // (speedo, I-limit)
-    (rpm!(0), q7p8!(const 0)),
-    (rpm!(1000), q7p8!(const 0)),
-    (rpm!(1001), q7p8!(const -2)),
-    (rpm!(MAX_RPM), q7p8!(const -6)),
+    (rpm!(0).0, q7p8!(const 0)),
+    (rpm!(1000).0, q7p8!(const 0)),
+    (rpm!(1001).0, q7p8!(const -99)),
+    (rpm!(MAX_RPM).0, q7p8!(const -99)),
 ]);
 
 const RPMPI_ILIM_POS: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
     // (speedo, I-limit)
-    (rpm!(0), q7p8!(const 0)),
-    (rpm!(1000), q7p8!(const 0)),
-    (rpm!(1001), q7p8!(const 12)),
-    (rpm!(MAX_RPM), q7p8!(const 24)),
+    (rpm!(0).0, q7p8!(const 0)),
+    (rpm!(1000).0, q7p8!(const 0)),
+    (rpm!(1001).0, q7p8!(const 99)),
+    (rpm!(MAX_RPM).0, q7p8!(const 99)),
 ]);
 
-const SYNC_SPEEDO_SUBSTITUTE: Curve<Q7p8, (Q7p8, Q7p8), 2> = Curve::new([
+const SYNC_SPEEDO_SUBSTITUTE: Curve<Freq, (Freq, Freq), 2> = Curve::new([
     // (setpoint, speedo-substitute)
     (rpm!(0), rpm!(0)),
     (rpm!(1000), rpm!(800)),
@@ -61,54 +62,58 @@ const SYNC_SPEEDO_SUBSTITUTE: Curve<Q7p8, (Q7p8, Q7p8), 2> = Curve::new([
 /// Nominal maximum motor RPM.
 const MAX_RPM: i16 = 24000;
 
-/// Nominal maximum motor speed in 16-Hz units.
-const MAX_16HZ: i8 = rpm!(MAX_RPM).to_int(); // 24000/min, 400 Hz, 25 16-Hz
+/// Nominal maximum motor speed in 4-Hz units.
+const MAX_HZ4: i8 = rpm!(MAX_RPM).0.to_int(); // 24000/min, 400 Hz, 100 4-Hz
 
 /// Maximum motor RPM that will trigger a hard triac inhibit.
-const MOT_SOFT_LIMIT: Q7p8 = rpm!(MAX_RPM + 500);
+const MOT_SOFT_LIMIT: Freq = rpm!(MAX_RPM + 500);
 
 /// Maximum motor RPM that will trigger a monitoring fault.
-pub const MOT_HARD_LIMIT: Q7p8 = rpm!(MAX_RPM + 1500);
+pub const MOT_HARD_LIMIT: Freq = rpm!(MAX_RPM + 1500);
 
 /// Motor speed below this threshold will trigger speedometer re-syncing.
-const RPM_SYNC_THRES: Q7p8 = rpm!(1000);
+const RPM_SYNC_THRES: Freq = rpm!(1000);
 
 /// Speedometer filter divider.
 const SPEED_FILTER_DIV: Q7p8 = q7p8!(const 2 / 1);
 
-/// Setpoint filter divider.
-const SETPOINT_FILTER_DIV: Q7p8 = q7p8!(const 5 / 1);
-
-/// Convert RPM to fixpt-16Hz
+/// Convert RPM to Freq (4-Hz units).
 macro_rules! rpm {
     ($rpm: expr) => {
-        // rpm / 60 / 16
+        // rpm / 60 / 4
         const {
             use avr_q::q15p8;
+            use $crate::speedo::Freq;
+
             const RPM: i16 = $rpm;
-            let rps = q15p8!(const RPM / 60);
-            let hz16 = rps.const_div(q15p8!(const 16));
-            hz16.to_q7p8()
+            const FACT: i16 = Freq::FACT_HZ4;
+
+    let rps = q15p8!(const RPM / 60);
+    let freq = rps.const_div(q15p8!(const FACT));
+
+            Freq(freq.to_q7p8())
         }
     };
 }
 pub(crate) use rpm;
 
-/// Convert 0..0x3FF to 0..400 Hz to 0..25 16Hz
-fn setpoint_to_f(adc: u16) -> Q7p8 {
+/// Convert 0..0x3FF to 0..400 Hz to 0..100 4-Hz
+fn setpoint_to_f(adc: u16) -> Freq {
     let adc = adc as i16;
-    q7p8!(adc / 8) / q7p8!(const 128 / 25)
+    let freq = q15p8!(adc) / q15p8!(const 256 / 25);
+    Freq(freq.to_q7p8())
 }
 
 /// Clamp negative frequency to 0.
-/// Convert 0..25 16Hz into pi..0 radians.
+/// Convert 0..100 4-Hz into pi..0 radians.
 /// Convert pi..0 radians into 10..0 ms.
-fn f_to_trig_offs(f: Q7p8) -> Q7p8 {
+fn f_to_trig_offs(f: Freq) -> Q7p8 {
     let fmin = Q7p8::from_int(0);
-    let fmax = Q7p8::from_int(MAX_16HZ);
+    let fmax = Q7p8::from_int(MAX_HZ4);
+    let f = f.0;
     let f = f.max(fmin);
     let f = f.min(fmax);
-    ((fmax - f) * q7p8!(const 2)) / q7p8!(const 5) // *10/25
+    (fmax - f) * q7p8!(const 10 / 100)
 }
 
 /// Toggle the debug pin.
@@ -135,7 +140,7 @@ pub struct System {
     mon_pocheck: PoCheck,
     ac: Ac,
     adc: Adc,
-    setpoint_filter: Filter,
+    setpoint_snap: Snap<Freq>,
     speedo: Speedo,
     speed_filter: Filter,
     temp: Temp,
@@ -156,7 +161,7 @@ impl System {
             mon_pocheck: PoCheck::new(),
             ac: Ac::new(),
             adc: Adc::new(),
-            setpoint_filter: Filter::new(),
+            setpoint_snap: Snap::new(Freq(q7p8!(const 0))),
             speedo: Speedo::new(),
             speed_filter: Filter::new(),
             temp: Temp::new(),
@@ -278,16 +283,19 @@ impl System {
             // We are sync'd now. Leave sync state.
             self.state.set(m, SysState::Running);
             // Filter the speed.
-            self.speed_filter.run(m, speed.as_16hz(), SPEED_FILTER_DIV)
+            Freq(
+                self.speed_filter
+                    .run(m, speed.as_freq().0, SPEED_FILTER_DIV),
+            )
         } else if self.state.get(m) == SysState::Running {
             // No new speed from speedometer and system state is running.
             // Use the current filtered speed.
-            self.speed_filter.get(m)
+            Freq(self.speed_filter.get(m))
         } else {
             // No new speed from speedometer and not in running system state.
             // Assume zero.
             self.speed_filter.reset(m);
-            q7p8!(const 0)
+            Freq(q7p8!(const 0))
         };
 
         // If the motor is too fast, turn the triac off.
@@ -295,9 +303,15 @@ impl System {
             triac_shutoff = Shutoff::MachineShutoff;
         }
 
-        // Convert the setpoint to 16Hz
+        // Convert the setpoint to frequency.
         let setpoint = if let Some(setpoint) = self.adc.get_result(m, AdcChannel::Setpoint) {
-            setpoint_to_f(setpoint)
+            self.setpoint_snap.update(
+                m,
+                rpm!(0),             // min
+                rpm!(MAX_RPM),       // max
+                rpm!(MAX_RPM / 256), // hyst
+                setpoint_to_f(setpoint),
+            )
         } else {
             rpm!(0)
         };
@@ -326,9 +340,7 @@ impl System {
                 },
             );
 
-            let setpoint_filt = self.setpoint_filter.run(m, setpoint, SETPOINT_FILTER_DIV);
-
-            if setpoint_filt <= RPM_SYNC_THRES {
+            if setpoint <= RPM_SYNC_THRES {
                 self.state.set(m, SysState::Syncing);
             }
 
@@ -338,7 +350,7 @@ impl System {
             let rpmpid_reset_i;
             match self.state.get(m) {
                 SysState::Startup | SysState::PoCheck | SysState::Syncing => {
-                    rpmpid_speed = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint_filt);
+                    rpmpid_speed = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint);
                     rpmpid_params = &RPMPI_PARAMS_SYNCING;
                     rpmpid_reset_i = true;
                 }
@@ -348,21 +360,21 @@ impl System {
                     rpmpid_reset_i = false;
                 }
             }
-            let y = self.rpm_pid.run(
+            let y = Freq(self.rpm_pid.run(
                 m,
                 rpmpid_params,
                 &PidIlim {
-                    pos: RPMPI_ILIM_POS.lin_inter(speed_filt),
-                    neg: RPMPI_ILIM_NEG.lin_inter(speed_filt),
+                    pos: RPMPI_ILIM_POS.lin_inter(speed_filt.0),
+                    neg: RPMPI_ILIM_NEG.lin_inter(speed_filt.0),
                 },
-                setpoint_filt,
-                rpmpid_speed,
+                setpoint.0,
+                rpmpid_speed.0,
                 rpmpid_reset_i,
-            );
+            ));
 
-            Debug::Setpoint.log_fixpt(setpoint_filt);
-            Debug::Speedo.log_fixpt(speed_filt);
-            Debug::PidY.log_fixpt(y);
+            Debug::Setpoint.log_fixpt(setpoint.0);
+            Debug::Speedo.log_fixpt(speed_filt.0);
+            Debug::PidY.log_fixpt(y.0);
 
             let phi_offs_ms = f_to_trig_offs(y);
             self.triac.set_phi_offs_ms(m, phi_offs_ms);

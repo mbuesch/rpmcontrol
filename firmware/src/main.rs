@@ -21,6 +21,7 @@ mod pid;
 mod ports;
 mod ring;
 mod shutoff;
+mod snap;
 mod speedo;
 mod system;
 mod temp;
