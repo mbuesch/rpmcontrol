@@ -66,51 +66,47 @@ fn timer_sync_wait() {
 
 macro_rules! define_timer_interrupt {
     ($arm_fn:ident, $cancel_fn:ident, $irq_fn:ident, $handler_fn:path, $ocr:ident, $ocie:ident, $ocf:ident) => {
-        pub fn $arm_fn(trigger_time: Timestamp) {
-            interrupt::free(|cs| {
-                // Ensure it doesn't trigger right away by pushing OCR into the future.
-                let now_ticks: u8 = timer_get_cs(cs).into();
-                DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
-                DP_TC1
-                    .cs(cs)
-                    .$ocr()
-                    .write(|w| w.set(now_ticks.wrapping_add(0x7F)));
-                timer_sync_wait();
+        pub fn $arm_fn(cs: CriticalSection<'_>, trigger_time: Timestamp) {
+            // Ensure it doesn't trigger right away by pushing OCR into the future.
+            let now_ticks: u8 = timer_get_cs(cs).into();
+            DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
+            DP_TC1
+                .cs(cs)
+                .$ocr()
+                .write(|w| w.set(now_ticks.wrapping_add(0x7F)));
+            timer_sync_wait();
 
-                // Clear trigger flag and enable interrupt.
-                DP_TC1.cs(cs).tifr().write(|w| w.$ocf().set_bit());
-                DP_TC1.cs(cs).timsk().modify(|_, w| w.$ocie().set_bit());
+            // Clear trigger flag and enable interrupt.
+            DP_TC1.cs(cs).tifr().write(|w| w.$ocf().set_bit());
+            DP_TC1.cs(cs).timsk().modify(|_, w| w.$ocie().set_bit());
 
-                // Program the compare register.
-                DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
-                DP_TC1.cs(cs).$ocr().write(|w| w.set(trigger_time.into()));
-                timer_sync_wait();
-                let now = timer_get_cs(cs);
+            // Program the compare register.
+            DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
+            DP_TC1.cs(cs).$ocr().write(|w| w.set(trigger_time.into()));
+            timer_sync_wait();
+            let now = timer_get_cs(cs);
 
-                // Trigger is in the past and has not triggered, yet?
-                if trigger_time <= now && !DP_TC1.cs(cs).tifr().read().$ocf().bit() {
-                    loop {
-                        // Enforce trigger now.
-                        let trigger_time = timer_get_cs(cs) + RelTimestamp::from_ticks(1);
-                        DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
-                        DP_TC1.cs(cs).$ocr().write(|w| w.set(trigger_time.into()));
-                        timer_sync_wait();
-                        let now = timer_get_cs(cs);
+            // Trigger is in the past and has not triggered, yet?
+            if trigger_time <= now && !DP_TC1.cs(cs).tifr().read().$ocf().bit() {
+                loop {
+                    // Enforce trigger now.
+                    let trigger_time = timer_get_cs(cs) + RelTimestamp::from_ticks(1);
+                    DP_TC1.cs(cs).tc1h().write(|w| w.set(0));
+                    DP_TC1.cs(cs).$ocr().write(|w| w.set(trigger_time.into()));
+                    timer_sync_wait();
+                    let now = timer_get_cs(cs);
 
-                        /* Is it going to trigger or did it trigger already? */
-                        if trigger_time > now || DP_TC1.cs(cs).tifr().read().$ocf().bit() {
-                            break; /* Done. IRQ is pending. */
-                        }
+                    /* Is it going to trigger or did it trigger already? */
+                    if trigger_time > now || DP_TC1.cs(cs).tifr().read().$ocf().bit() {
+                        break; /* Done. IRQ is pending. */
                     }
                 }
-            });
+            }
         }
 
-        pub fn $cancel_fn() {
-            interrupt::free(|cs| {
-                DP_TC1.cs(cs).timsk().modify(|_, w| w.$ocie().clear_bit());
-                DP_TC1.cs(cs).tifr().write(|w| w.$ocf().set_bit());
-            });
+        pub fn $cancel_fn(cs: CriticalSection<'_>) {
+            DP_TC1.cs(cs).timsk().modify(|_, w| w.$ocie().clear_bit());
+            DP_TC1.cs(cs).tifr().write(|w| w.$ocf().set_bit());
         }
 
         pub fn $irq_fn(c: &IrqCtx<'_>) {

@@ -38,15 +38,15 @@ enum TriacTimerState {
 }
 
 /// Arm the triac timer to an absolute time stamp.
-fn triac_timer_do_arm(ts: Timestamp) {
+fn triac_timer_do_arm(cs: CriticalSection<'_>, ts: Timestamp) {
     fence(SeqCst);
-    timer_interrupt_a_arm(ts);
+    timer_interrupt_a_arm(cs, ts);
 }
 
 /// Cancel the possibly pending triac timer.
-fn triac_timer_do_cancel() {
+fn triac_timer_do_cancel(cs: CriticalSection<'_>) {
     fence(SeqCst);
-    timer_interrupt_a_cancel();
+    timer_interrupt_a_cancel(cs);
 }
 
 /// Triac timer interrupt service routine.
@@ -77,7 +77,7 @@ pub fn triac_timer_interrupt(c: &IrqCtx<'_>, now: Timestamp) {
         TRIAC_TIMER_COUNT.borrow(cs).set(count);
 
         if arm {
-            triac_timer_do_arm(now + HALF_PULSE_LEN);
+            triac_timer_do_arm(cs, now + HALF_PULSE_LEN);
         }
     }
 }
@@ -87,14 +87,14 @@ pub fn triac_timer_interrupt(c: &IrqCtx<'_>, now: Timestamp) {
 fn triac_timer_arm(cs: CriticalSection<'_>, begin_time: Timestamp, count: u8) {
     TRIAC_TIMER_STATE.borrow(cs).set(TriacTimerState::TrigSet);
     TRIAC_TIMER_COUNT.borrow(cs).set(count);
-    triac_timer_do_arm(begin_time);
+    triac_timer_do_arm(cs, begin_time);
 }
 
 /// Cancel the possibly pending triac timer
 /// and avoid any pending interrupt service routine.
 fn triac_timer_cancel(cs: CriticalSection<'_>) {
     TRIAC_TIMER_COUNT.borrow(cs).set(0);
-    triac_timer_do_cancel();
+    triac_timer_do_cancel(cs);
     set_trigger(cs, false);
 }
 
