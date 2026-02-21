@@ -25,6 +25,7 @@ AVR_POSTPROCESS_OPT:=\
 
 AVR_CPU_FREQUENCY_HZ:=16000000
 
+MONITORING:=1
 DEBUG:=1
 
 NAME:=rpmcontrol
@@ -59,7 +60,7 @@ $(HEXPOST) & $(DASMPOST): $(ELF)
 
 $(ELF):
 	AVR_CPU_FREQUENCY_HZ=$(AVR_CPU_FREQUENCY_HZ) \
-	cargo build --release --no-default-features $(if $(DEBUG),--features debug,)
+	cargo build --release --no-default-features $(if $(MONITORING),--features monitoring,) $(if $(DEBUG),--features debug,)
 
 .PHONY: $(ELF) # Always run cargo
 

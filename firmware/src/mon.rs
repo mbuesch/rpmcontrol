@@ -146,7 +146,7 @@ impl Mon {
         Debug::MinStack.log_u16(unused_stack_bytes);
         Debug::MonDebounce.log_u8(self.error_deb.count(m));
 
-        if self.error_deb.is_ok(m) {
+        if self.error_deb.is_ok(m) || cfg!(not(feature = "monitoring")) {
             Shutoff::MachineRunning
         } else {
             Shutoff::MachineShutoff

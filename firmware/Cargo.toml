@@ -40,7 +40,8 @@ curveipo = "1"
 derive_more = { version = "2", default-features = false, features = [ "add", "add_assign" ] }
 
 [features]
-default = [ "debug" ]
+default = [ "monitoring", "debug" ]
+monitoring = []
 debug = []
 
 [profile.dev]

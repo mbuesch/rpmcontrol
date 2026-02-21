@@ -45,6 +45,7 @@ enum PoStatePart {
 
 impl PoState {
     pub fn next(&self) -> Self {
+        #[cfg(feature = "monitoring")]
         match self {
             PoState::CheckIdle => PoState::CheckSecondaryShutoff,
             PoState::CheckSecondaryShutoff => PoState::CheckPrimaryShutoff,
@@ -52,6 +53,9 @@ impl PoState {
             PoState::Error => PoState::Error, // never leave error state.
             PoState::DoneOk => PoState::DoneOk, // never leave done state.
         }
+
+        #[cfg(not(feature = "monitoring"))]
+        PoState::DoneOk
     }
 }
 
