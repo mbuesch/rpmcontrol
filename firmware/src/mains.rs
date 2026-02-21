@@ -24,6 +24,10 @@ pub const MAINS_HALFWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(2);
 /// Mains sine wave quarter-wave length.
 pub const MAINS_QUARTERWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(4);
 
+/// Next mains capture.
+const MAINS_NEXT_CAPTURE: RelLargeTimestamp =
+    RelLargeTimestamp::from_micros(MAINS_HALFWAVE_DUR.to_micros() * 98 / 100);
+
 fn read_vsense(cs: CriticalSection<'_>) -> bool {
     PORTA.get(cs, 1)
 }
@@ -119,7 +123,7 @@ pub fn irq_handler_pcint(c: &IrqCtx) {
     let prev_vsense = VSENSE.borrow(cs).get();
     let prev_stamp = VSENSE_STAMP.borrow(cs).get();
 
-    if vsense != prev_vsense && now >= prev_stamp + MAINS_QUARTERWAVE_DUR {
+    if vsense != prev_vsense && now >= prev_stamp + MAINS_NEXT_CAPTURE {
         VSENSE.borrow(cs).set(vsense);
         VSENSE_STAMP.borrow(cs).set(now);
     }
