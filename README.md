@@ -12,6 +12,12 @@ It is written in Rust for AVR.
 - Temperature sensing for motor and microcontroller.
 - Safety monitoring and safety shutoff.
 
+## Restrictions
+
+- The system is currently restricted 50 Hz mains frequency.
+  This limit can be lifted, if needed.
+  Please open an issue if you need support for 60 Hz mains.
+
 ## Hardware
 
 - **Microcontroller:** Atmel ATTiny861A
