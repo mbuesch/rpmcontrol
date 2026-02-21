@@ -8,7 +8,7 @@ use crate::{
     ports::{PORTB, PortOps as _},
     shutoff::Shutoff,
     timer::{
-        LargeTimestamp, RelLargeTimestamp, RelTimestamp, Timestamp, timer_get_large,
+        LargeTimestamp, RelLargeTimestamp, RelTimestamp, Timestamp, timer_get_large_cs,
         timer_interrupt_a_arm, timer_interrupt_a_cancel,
     },
 };
@@ -84,22 +84,18 @@ pub fn triac_timer_interrupt(c: &IrqCtx<'_>, now: Timestamp) {
 
 /// Arm the triac timer beginning at the absolute time stamp
 /// for the specified number of times.
-fn triac_timer_arm(begin_time: Timestamp, count: u8) {
-    interrupt::free(|cs| {
-        TRIAC_TIMER_STATE.borrow(cs).set(TriacTimerState::TrigSet);
-        TRIAC_TIMER_COUNT.borrow(cs).set(count);
-        triac_timer_do_arm(begin_time);
-    });
+fn triac_timer_arm(cs: CriticalSection<'_>, begin_time: Timestamp, count: u8) {
+    TRIAC_TIMER_STATE.borrow(cs).set(TriacTimerState::TrigSet);
+    TRIAC_TIMER_COUNT.borrow(cs).set(count);
+    triac_timer_do_arm(begin_time);
 }
 
 /// Cancel the possibly pending triac timer
 /// and avoid any pending interrupt service routine.
-fn triac_timer_cancel() {
-    interrupt::free(|cs| {
-        TRIAC_TIMER_COUNT.borrow(cs).set(0);
-        triac_timer_do_cancel();
-        set_trigger(cs, false);
-    });
+fn triac_timer_cancel(cs: CriticalSection<'_>) {
+    TRIAC_TIMER_COUNT.borrow(cs).set(0);
+    triac_timer_do_cancel();
+    set_trigger(cs, false);
 }
 
 /// Calculate the number of triggers needed for a specified trigger offset time.
@@ -160,7 +156,7 @@ impl Triac {
     /// Set the next triac trigger offset to never trigger.
     #[inline(never)]
     pub fn set_phi_offs_shutoff(&self, m: &MainCtx<'_>) {
-        triac_timer_cancel();
+        interrupt::free(triac_timer_cancel);
         self.phi_offs.set(m, MAINS_HALFWAVE_DUR);
     }
 
@@ -173,43 +169,45 @@ impl Triac {
         phaseref: LargeTimestamp,
         shutoff: Shutoff,
     ) {
-        // Don't trigger if we're not sync'd to mains
-        // or if we have a shutoff request.
-        if phase == Phase::Notsync || shutoff == Shutoff::MachineShutoff {
-            triac_timer_cancel();
-            self.trigger_pending.set(m, false);
-            return;
-        }
+        interrupt::free(|cs| {
+            // Don't trigger if we're not sync'd to mains
+            // or if we have a shutoff request.
+            if phase == Phase::Notsync || shutoff == Shutoff::MachineShutoff {
+                triac_timer_cancel(cs);
+                self.trigger_pending.set(m, false);
+                return;
+            }
 
-        // Zero crossing detected?
-        // If so, then we need to arm the next trigger timer soon.
-        if phase_update == PhaseUpdate::Changed {
-            triac_timer_cancel();
-            self.trigger_pending.set(m, true);
-        }
+            // Zero crossing detected?
+            // If so, then we need to arm the next trigger timer soon.
+            if phase_update == PhaseUpdate::Changed {
+                triac_timer_cancel(cs);
+                self.trigger_pending.set(m, true);
+            }
 
-        // Check if we need to arm the next trigger timer.
-        if self.trigger_pending.get(m) {
-            let trig_offs = self.phi_offs.get(m);
-            if trig_offs <= MAX_TRIG_OFFS {
-                // Calculate the absolute trigger time.
-                let trig_time = phaseref + trig_offs;
+            // Check if we need to arm the next trigger timer.
+            if self.trigger_pending.get(m) {
+                let trig_offs = self.phi_offs.get(m);
+                if trig_offs <= MAX_TRIG_OFFS {
+                    // Calculate the absolute trigger time.
+                    let trig_time = phaseref + trig_offs;
 
-                // Does the trigger time fit into an 8 bit timestamp?
-                if trig_time - timer_get_large() <= RelLargeTimestamp::from_ticks(0x3F) {
-                    // Convert trigger time to 8 bit stamp.
-                    let trig_time: Timestamp = trig_time.into();
-                    // Arm the triac trigger timer at the calculated absolute time.
-                    triac_timer_arm(trig_time, calc_trig_count(trig_offs));
+                    // Does the trigger time fit into an 8 bit timestamp?
+                    if trig_time - timer_get_large_cs(cs) <= RelLargeTimestamp::from_ticks(0x3F) {
+                        // Convert trigger time to 8 bit stamp.
+                        let trig_time: Timestamp = trig_time.into();
+                        // Arm the triac trigger timer at the calculated absolute time.
+                        triac_timer_arm(cs, trig_time, calc_trig_count(trig_offs));
+                        self.trigger_pending.set(m, false);
+                    }
+                } else {
+                    // The trigger offset is in shutoff state.
+                    // Reset trigger and don't arm a timer.
+                    set_trigger(cs, false);
                     self.trigger_pending.set(m, false);
                 }
-            } else {
-                // The trigger offset is in shutoff state.
-                // Reset trigger and don't arm a timer.
-                interrupt::free(|cs| set_trigger(cs, false));
-                self.trigger_pending.set(m, false);
             }
-        }
+        });
     }
 }
 
