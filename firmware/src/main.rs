@@ -33,18 +33,16 @@ mod usi_uart;
 
 use crate::{hw::mcu, system::System};
 use avr_context::{InitCtx, MainCtx, define_main};
-use avr_device::asm::wdr;
+use avr_device::{asm::wdr, interrupt};
 
 static SYSTEM: System = System::new();
 
 /// Reset the system.
 #[inline(always)]
-#[allow(clippy::empty_loop)]
 pub fn reset_system() -> ! {
+    // Wait for the watchdog timer to trigger and reset the system.
     loop {
-        // Wait for the watchdog timer to trigger and reset the system.
-        // We don't need to disable interrupts here.
-        // No interrupt will reset the watchdog timer.
+        interrupt::disable();
     }
 }
 
