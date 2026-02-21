@@ -5,6 +5,7 @@
 use crate::hw::mcu;
 use avr_context::{CriticalSection, InitCtx, InitCtxCell};
 
+#[allow(dead_code)]
 pub trait PortOps {
     fn get(&self, cs: CriticalSection<'_>, bit: usize) -> bool;
     fn set(&self, cs: CriticalSection<'_>, bit: usize, value: bool);

@@ -39,6 +39,10 @@ avr-stack = { git = "https://github.com/mbuesch/avr-stack.git", branch = "main" 
 curveipo = "1"
 derive_more = { version = "2", default-features = false, features = [ "add", "add_assign" ] }
 
+[features]
+default = [ "debug" ]
+debug = []
+
 [profile.dev]
 panic = "abort"
 lto = "fat"

@@ -25,6 +25,8 @@ AVR_POSTPROCESS_OPT:=\
 
 AVR_CPU_FREQUENCY_HZ:=16000000
 
+DEBUG:=1
+
 NAME:=rpmcontrol
 TARGET:=avr-attiny861a
 RELEASEDIR:=target/$(TARGET)/release
@@ -57,7 +59,7 @@ $(HEXPOST) & $(DASMPOST): $(ELF)
 
 $(ELF):
 	AVR_CPU_FREQUENCY_HZ=$(AVR_CPU_FREQUENCY_HZ) \
-	cargo build --release
+	cargo build --release --no-default-features $(if $(DEBUG),--features debug,)
 
 .PHONY: $(ELF) # Always run cargo
 

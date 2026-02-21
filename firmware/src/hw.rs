@@ -16,16 +16,20 @@ define_isr! {
     interrupt: PCINT,
     isr: irq_handler_pcint,
 }
+
 define_isr! {
     device: attiny861a,
     interrupt: TIMER1_COMPA,
     isr: irq_handler_timer1_compa,
 }
+
+#[cfg(feature = "debug")]
 define_isr! {
     device: attiny861a,
     interrupt: USI_OVF,
     isr: irq_handler_usi_ovf,
 }
+
 define_isr! {
     device: attiny861a,
     interrupt: ANA_COMP,

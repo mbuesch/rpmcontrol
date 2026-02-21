@@ -118,6 +118,7 @@ fn f_to_trig_offs(f: Freq) -> Q7p8 {
 
 /// Toggle the debug pin.
 pub fn debug_toggle() {
+    #[cfg(feature = "debug")]
     interrupt::free(|cs| PORTB.toggle(cs, 6));
 }
 
