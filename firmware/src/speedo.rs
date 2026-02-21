@@ -5,12 +5,12 @@
 use crate::{
     analog::ac_capture_get,
     debug::Debug,
+    freq::Freq,
     timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
 use avr_context::{MainCtx, MainCtxCell};
 use avr_int24::I24;
-use avr_q::{Q7p8, q7p8};
-use derive_more as dm;
+use avr_q::q7p8;
 
 /// 4 speedometer edges per motor revolution
 const SPEEDO_FACT: u32 = 4;
@@ -129,44 +129,6 @@ impl Speedo {
         Debug::SpeedoStatus.log_u16(self.ok_count.get(m) as u16);
 
         self.get_speed(m)
-    }
-}
-
-/// Frequency in 4-Hz. (Hz divided by 4)
-#[repr(transparent)]
-#[derive(
-    Copy, Clone, PartialEq, Eq, PartialOrd, Ord, dm::Add, dm::AddAssign, dm::Sub, dm::SubAssign,
-)]
-pub struct Freq(pub Q7p8);
-
-impl Freq {
-    pub const FACT_HZ4: i16 = 4;
-}
-
-// Project to inner.
-impl curveipo::CurvePoint<Freq> for (Freq, Freq) {
-    #[inline(always)]
-    fn x(&self) -> Freq {
-        self.0
-    }
-
-    #[inline(always)]
-    fn y(&self) -> Freq {
-        self.1
-    }
-}
-
-// Project to inner.
-impl curveipo::CurveIpo for Freq {
-    #[inline(always)]
-    fn lin_inter(
-        &self,
-        left: &impl curveipo::CurvePoint<Self>,
-        right: &impl curveipo::CurvePoint<Self>,
-    ) -> Self {
-        let left = (left.x().0, left.y().0);
-        let right = (right.x().0, right.y().0);
-        Self(self.0.lin_inter(&left, &right))
     }
 }
 

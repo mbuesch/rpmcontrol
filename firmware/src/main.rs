@@ -12,6 +12,7 @@ mod debounce;
 mod debug;
 mod exint;
 mod filter;
+mod freq;
 mod history;
 mod hw;
 mod mains;

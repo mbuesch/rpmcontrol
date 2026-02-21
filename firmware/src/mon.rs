@@ -5,9 +5,9 @@
 use crate::{
     debounce::Debounce,
     debug::Debug,
+    freq::Freq,
     history::History,
     shutoff::Shutoff,
-    speedo::Freq,
     system::{MOT_HARD_LIMIT, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };

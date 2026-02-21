@@ -6,6 +6,7 @@ use crate::{
     analog::{Ac, Adc, AdcChannel},
     debug::Debug,
     filter::Filter,
+    freq::Freq,
     hw::{interrupt, mcu},
     mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
     mon::Mon,
@@ -14,7 +15,7 @@ use crate::{
     ports::{PORTB, PortOps as _},
     shutoff::{Shutoff, set_secondary_shutoff},
     snap::Snap,
-    speedo::{Freq, MotorSpeed, Speedo},
+    speedo::{MotorSpeed, Speedo},
     temp::{Temp, TempAdc},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
     triac::Triac,
@@ -86,7 +87,7 @@ macro_rules! rpm {
         // rpm / 60 / 4
         const {
             use avr_q::q15p8;
-            use $crate::speedo::Freq;
+            use $crate::freq::Freq;
 
             const RPM: i16 = $rpm;
             const FACT: i16 = Freq::FACT_HZ4;

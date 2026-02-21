@@ -3,9 +3,10 @@
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
 use crate::{
+    freq::Freq,
     mains::MAINS_HALFWAVE_DUR_MS,
     shutoff::Shutoff,
-    speedo::{Freq, MotorSpeed},
+    speedo::MotorSpeed,
     system::{debug_toggle, rpm},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
