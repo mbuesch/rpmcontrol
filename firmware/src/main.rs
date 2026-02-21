@@ -8,6 +8,7 @@
 #![feature(asm_experimental_arch)]
 
 mod analog;
+mod calibration;
 mod debounce;
 mod debug;
 mod exint;

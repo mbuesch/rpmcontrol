@@ -4,6 +4,11 @@
 
 use crate::{
     analog::{Ac, Adc, AdcChannel},
+    calibration::{
+        MAX_RPM, MOT_SOFT_LIMIT, RPM_SYNC_THRES, RPMPID_ILIM_NEG, RPMPID_ILIM_POS, RPMPID_PARAMS,
+        RPMPID_PARAMS_SYNCING, SP_MIN_CUTOFF, SPEED_FILTER_DIV, STARTUP_DELAY,
+        SYNC_SPEEDO_SUBSTITUTE,
+    },
     debug::Debug,
     filter::Filter,
     freq::Freq,
@@ -11,7 +16,7 @@ use crate::{
     mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
     mon::Mon,
     mon_pocheck::{PoCheck, PoState},
-    pid::{Pid, PidIlim, PidParams},
+    pid::{Pid, PidIlim},
     ports::{PORTB, PortOps as _},
     shutoff::{Shutoff, set_secondary_shutoff},
     snap::Snap,
@@ -22,66 +27,7 @@ use crate::{
 };
 use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8, q15p8};
-use curveipo::Curve;
 
-const STARTUP_DELAY: RelLargeTimestamp = RelLargeTimestamp::from_millis(300);
-
-const RPMPI_PARAMS: PidParams = PidParams {
-    kp: q7p8!(const 5 / 1),
-    ki: q7p8!(const 1 / 4),
-    kd: q7p8!(const 0),
-};
-
-const RPMPI_PARAMS_SYNCING: PidParams = PidParams {
-    kp: q7p8!(const 5 / 1),
-    ki: q7p8!(const 0),
-    kd: q7p8!(const 0),
-};
-
-const RPMPI_ILIM_NEG: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
-    // (speedo, I-limit)
-    (rpm!(0).0, q7p8!(const 0)),
-    (rpm!(1000).0, q7p8!(const 0)),
-    (rpm!(1001).0, q7p8!(const -99)),
-    (rpm!(MAX_RPM).0, q7p8!(const -99)),
-]);
-
-const RPMPI_ILIM_POS: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
-    // (speedo, I-limit)
-    (rpm!(0).0, q7p8!(const 0)),
-    (rpm!(1000).0, q7p8!(const 0)),
-    (rpm!(1001).0, q7p8!(const 99)),
-    (rpm!(MAX_RPM).0, q7p8!(const 99)),
-]);
-
-const SYNC_SPEEDO_SUBSTITUTE: Curve<Freq, (Freq, Freq), 2> = Curve::new([
-    // (setpoint, speedo-substitute)
-    (rpm!(0), rpm!(0)),
-    (rpm!(1000), rpm!(800)),
-]);
-
-/// Nominal maximum motor RPM.
-const MAX_RPM: i16 = 24000;
-
-/// Nominal maximum motor speed in 4-Hz units.
-const MAX_HZ4: i8 = rpm!(MAX_RPM).0.to_int(); // 24000/min, 400 Hz, 100 4-Hz
-
-/// Maximum motor RPM that will trigger a hard triac inhibit.
-const MOT_SOFT_LIMIT: Freq = rpm!(MAX_RPM + 500);
-
-/// Maximum motor RPM that will trigger a monitoring fault.
-pub const MOT_HARD_LIMIT: Freq = rpm!(MAX_RPM + 1500);
-
-/// Motor speed below this threshold will trigger speedometer re-syncing.
-const RPM_SYNC_THRES: Freq = rpm!(1000);
-
-/// Speedometer filter divider.
-const SPEED_FILTER_DIV: Q7p8 = q7p8!(const 2 / 1);
-
-/// Minimum setpoint below which the triac will be shut off.
-const SP_MIN_CUTOFF: Freq = rpm!(300);
-
-/// Convert RPM to Freq (4-Hz units).
 macro_rules! rpm {
     ($rpm: expr) => {
         // rpm / 60 / 4
@@ -113,7 +59,7 @@ fn setpoint_to_f(adc: u16) -> Freq {
 /// Convert pi..0 radians into 10..0 ms.
 fn f_to_trig_offs(f: Freq) -> Q7p8 {
     let fmin = Q7p8::from_int(0);
-    let fmax = Q7p8::from_int(MAX_HZ4);
+    let fmax = rpm!(MAX_RPM).0;
     let f = f.0;
     let f = f.max(fmin);
     let f = f.min(fmax);
@@ -361,12 +307,12 @@ impl System {
             match self.state.get(m) {
                 SysState::Startup | SysState::PoCheck | SysState::Syncing => {
                     pid_speed = SYNC_SPEEDO_SUBSTITUTE.lin_inter(setpoint);
-                    pid_params = &RPMPI_PARAMS_SYNCING;
+                    pid_params = &RPMPID_PARAMS_SYNCING;
                     pid_reset_i = true;
                 }
                 SysState::Running => {
                     pid_speed = speed_filt;
-                    pid_params = &RPMPI_PARAMS;
+                    pid_params = &RPMPID_PARAMS;
                     pid_reset_i = false;
                 }
             }
@@ -374,8 +320,8 @@ impl System {
                 m,
                 pid_params,
                 &PidIlim {
-                    pos: RPMPI_ILIM_POS.lin_inter(speed_filt.0),
-                    neg: RPMPI_ILIM_NEG.lin_inter(speed_filt.0),
+                    pos: RPMPID_ILIM_POS.lin_inter(speed_filt.0),
+                    neg: RPMPID_ILIM_NEG.lin_inter(speed_filt.0),
                 },
                 setpoint.0,
                 pid_speed.0,

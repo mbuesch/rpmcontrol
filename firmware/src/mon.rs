@@ -3,12 +3,13 @@
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
 use crate::{
+    calibration::MOT_HARD_LIMIT,
     debounce::Debounce,
     debug::Debug,
     freq::Freq,
     history::History,
     shutoff::Shutoff,
-    system::{MOT_HARD_LIMIT, rpm},
+    system::rpm,
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
 use avr_atomic::AvrAtomic;
