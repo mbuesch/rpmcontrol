@@ -15,6 +15,7 @@ use avr_context::{MainCtx, MainCtxCell};
 use avr_q::Q7p8;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum PoState {
     /// Initial check: Primary and secondary shutoff.
     CheckIdle = 0,
