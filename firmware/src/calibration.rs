@@ -4,7 +4,10 @@
 
 //! Calibration constants and tables.
 
-use crate::{freq::Freq, pid::PidParams, system::rpm, timer::RelLargeTimestamp};
+use crate::{
+    freq::Freq, mains::MAINS_HALFWAVE_DUR_MS, pid::PidParams, system::rpm, temp::celsius,
+    timer::RelLargeTimestamp,
+};
 use avr_q::{Q7p8, q7p8};
 use curveipo::Curve;
 
@@ -71,7 +74,6 @@ pub const SP_MIN_CUTOFF: Freq = rpm!(300);
 /// Temperature calibration constants and tables.
 pub mod temp {
     use super::*;
-    use crate::temp::celsius;
 
     /// High temperature limit for the motor, above which a shutoff will be triggered.
     pub const TEMP_LIMIT_HI: Q7p8 = celsius!(100);
@@ -102,4 +104,64 @@ pub mod temp {
         (q7p8!(const 440 / 8), celsius!(145)),
     ]);
 }
+
+/// Monitoring constants and tables.
+pub mod mon {
+    use super::*;
+
+    /// Distance between monitoring checks.
+    pub const CHECK_DIST: RelLargeTimestamp = RelLargeTimestamp::from_millis(20);
+    /// Immediate fault, if one actual monitoring distance is bigger than this.
+    pub const CHECK_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
+
+    /// Immediate fault, if mains zero crossing distance is bigger than this.
+    pub const MAINS_ZERO_CROSSING_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
+
+    /// Minimum amount of CPU stack space that must be free all the time.
+    /// Immediate fault, if less stack space is free.
+    pub const MIN_STACK_SPACE: u16 = 64;
+
+    /// Setpoint history.
+    /// Length = SP_HIST_DIST * SP_HIST_COUNT = 3 seconds
+    pub const SP_HIST_DIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(333333);
+    /// Number if elements in the setpoint history.
+    pub const SP_HIST_COUNT: usize = 9;
+
+    /// Don't run monitoring, if the setpoint gradient in history is bigger than this.
+    pub const SP_GRADIENT_THRES: Freq = rpm!(1000);
+
+    /// Step size for one error event.
+    pub const ERROR_DEBOUNCE_ERRSTEP: u8 = 3;
+    /// Debounce limit to enter fault state.
+    pub const ERROR_DEBOUNCE_LIMIT: u8 = 120;
+    /// Sticky -> fault state cannot be healed.
+    pub const ERROR_DEBOUNCE_STICKY: bool = true;
+
+    /// Setpoint vs. speedometer deviation threshold that is considered to be an unexpected mismatch.
+    pub const SPEEDO_TOLERANCE: Freq = rpm!(1000);
+    /// Monitoring activation threshold for speedometer input.
+    /// Monitoring is not active below this threshold.
+    pub const MON_ACTIVE_THRES: Freq = rpm!(7500);
+}
+
+/// Monitoring Power-On-Check constants and tables.
+pub mod mon_pocheck {
+    use super::*;
+
+    /// Duration of the `PoStatePart::Pre` part.
+    pub const DUR_PRE: RelLargeTimestamp = RelLargeTimestamp::from_millis(50);
+
+    /// Duration of the `PoStatePart::Check` part.
+    pub const DUR_CHECK: RelLargeTimestamp = RelLargeTimestamp::from_millis(400);
+
+    /// RPM below or equal to this limit are considered to be zero RPM.
+    pub const RPM_ZERO_LIMIT: Freq = rpm!(5);
+
+    /// Triac offset for the enabled-check.
+    pub const TRIAC_TRIG_OFFS_ENABLED_MS: Q7p8 = MAINS_HALFWAVE_DUR_MS.const_div(q7p8!(const 10));
+
+    /// Show state transitions on the debug pin?
+    pub const DEBUG_PIN_ENA: bool = false;
+}
+
 // vim: ts=4 sw=4 expandtab

@@ -3,53 +3,25 @@
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
 use crate::{
-    calibration::MOT_HARD_LIMIT,
+    calibration::{
+        MOT_HARD_LIMIT,
+        mon::{
+            CHECK_DIST, CHECK_TIMEOUT, ERROR_DEBOUNCE_ERRSTEP, ERROR_DEBOUNCE_LIMIT,
+            ERROR_DEBOUNCE_STICKY, MAINS_ZERO_CROSSING_TIMEOUT, MIN_STACK_SPACE, MON_ACTIVE_THRES,
+            SP_GRADIENT_THRES, SP_HIST_COUNT, SP_HIST_DIST, SPEEDO_TOLERANCE,
+        },
+    },
     debounce::Debounce,
     debug::Debug,
     freq::Freq,
     history::History,
     shutoff::Shutoff,
-    system::rpm,
-    timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
+    timer::{LargeTimestamp, timer_get_large},
 };
 use avr_atomic::AvrAtomic;
 use avr_context::{MainCtx, MainCtxCell};
 use avr_q::q7p8;
 use avr_stack::estimate_unused_stack_space;
-
-/// Distance between monitoring checks.
-const CHECK_DIST: RelLargeTimestamp = RelLargeTimestamp::from_millis(20);
-/// Immediate fault, if one actual monitoring distance is bigger than this.
-const CHECK_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
-
-/// Immediate fault, if mains zero crossing distance is bigger than this.
-const MAINS_ZERO_CROSSING_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
-
-/// Minimum amount of CPU stack space that must be free all the time.
-/// Immediate fault, if less stack space is free.
-const MIN_STACK_SPACE: u16 = 64;
-
-/// Setpoint history.
-/// Length = SP_HIST_DIST * SP_HIST_COUNT = 3 seconds
-const SP_HIST_DIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(333333);
-/// Number if elements in the setpoint history.
-const SP_HIST_COUNT: usize = 9;
-
-/// Don't run monitoring, if the setpoint gradient in history is bigger than this.
-const SP_GRADIENT_THRES: Freq = rpm!(1000);
-
-/// Step size for one error event.
-const ERROR_DEBOUNCE_ERRSTEP: u8 = 3;
-/// Debounce limit to enter fault state.
-const ERROR_DEBOUNCE_LIMIT: u8 = 120;
-/// Sticky -> fault state cannot be healed.
-const ERROR_DEBOUNCE_STICKY: bool = true;
-
-/// Setpoint vs. speedometer deviation threshold that is considered to be an unexpected mismatch.
-const SPEEDO_TOLERANCE: Freq = rpm!(1000);
-/// Monitoring activation threshold for speedometer input.
-/// Monitoring is not active below this threshold.
-const MON_ACTIVE_THRES: Freq = rpm!(7500);
 
 static ANALOG_FAILURE: AvrAtomic<bool> = AvrAtomic::new();
 

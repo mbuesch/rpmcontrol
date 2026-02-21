@@ -3,30 +3,16 @@
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
 use crate::{
-    freq::Freq,
-    mains::MAINS_HALFWAVE_DUR_MS,
+    calibration::mon_pocheck::{
+        DEBUG_PIN_ENA, DUR_CHECK, DUR_PRE, RPM_ZERO_LIMIT, TRIAC_TRIG_OFFS_ENABLED_MS,
+    },
     shutoff::Shutoff,
     speedo::MotorSpeed,
-    system::{debug_toggle, rpm},
-    timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
+    system::debug_toggle,
+    timer::{LargeTimestamp, timer_get_large},
 };
 use avr_context::{MainCtx, MainCtxCell};
-use avr_q::{Q7p8, q7p8};
-
-/// Duration of the `PoStatePart::Pre` part.
-const DUR_PRE: RelLargeTimestamp = RelLargeTimestamp::from_millis(50);
-
-/// Duration of the `PoStatePart::Check` part.
-const DUR_CHECK: RelLargeTimestamp = RelLargeTimestamp::from_millis(400);
-
-/// RPM below or equal to this limit are considered to be zero RPM.
-const RPM_ZERO_LIMIT: Freq = rpm!(5);
-
-/// Triac offset for the enabled-check.
-const TRIAC_TRIG_OFFS_ENABLED_MS: Q7p8 = MAINS_HALFWAVE_DUR_MS.const_div(q7p8!(const 10));
-
-/// Show state transitions on the debug pin?
-const DEBUG_PIN_ENA: bool = false;
+use avr_q::Q7p8;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum PoState {
