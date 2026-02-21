@@ -8,8 +8,10 @@ use avr_device::asm::nop3;
 use avr_q::{Q7p8, q7p8};
 use core::cell::Cell;
 
+/// Upper byte of the large timer value, which is incremented on every overflow of the lower byte.
 static TIMER_UPPER: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
+/// The number of microseconds per timer tick.
 pub const TIMER_TICK_US: u8 = 16; // 16 us per tick.
 
 #[rustfmt::skip]
