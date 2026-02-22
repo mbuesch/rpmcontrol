@@ -350,7 +350,8 @@ impl From<LargeTimestamp> for Timestamp {
 }
 
 impl RelLargeTimestamp {
-    pub fn from_ms_fixpt(ms: Q7p8) -> RelLargeTimestamp {
+    /// Convert a millisecond value in Q7p8 fixed-point format to a relative large timestamp.
+    pub fn from_millis_fixpt(ms: Q7p8) -> RelLargeTimestamp {
         // We must convert `ms` milliseconds to a corresponding number of ticks.
         //
         // Basically, we want to do:
@@ -378,7 +379,9 @@ impl RelLargeTimestamp {
 
         // The microseconds per tick value is embedded in the constants below.
         // See comment above.
-        assert_eq!(TIMER_TICK_US, 16);
+        const {
+            assert!(TIMER_TICK_US == 16);
+        }
 
         // First part: Q7p8 multiplication with bias.
         let fac = q7p8!(const 125 / 64); // 62.5 / 32

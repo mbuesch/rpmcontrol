@@ -152,7 +152,8 @@ impl Triac {
     /// Set the next triac trigger offset, in milliseconds.
     /// Relative to the mains zero crossing.
     pub fn set_phi_offs_ms(&self, m: &MainCtx<'_>, ms: Q7p8) {
-        self.phi_offs.set(m, RelLargeTimestamp::from_ms_fixpt(ms));
+        self.phi_offs
+            .set(m, RelLargeTimestamp::from_millis_fixpt(ms));
     }
 
     /// Set the next triac trigger offset to never trigger.
