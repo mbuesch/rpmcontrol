@@ -16,7 +16,9 @@ use std::{rc::Rc, sync::mpsc, thread, time::Duration};
 
 #[derive(Parser, Debug)]
 struct Opts {
-    port: Option<String>,
+    /// Serial port to use.
+    #[arg(default_value = "/dev/ttyUSB0")]
+    port: String,
 }
 
 fn app_fn(app: &gtk::Application, ser_notify_rx: Rc<mpsc::Receiver<SerDat>>) {
