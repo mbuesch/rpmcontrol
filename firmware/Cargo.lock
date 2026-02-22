@@ -45,7 +45,8 @@ checksum = "8f9565bb26618301cbf6fda364c206dbb8314e5b3d8fb070308201b3de0f0316"
 [[package]]
 name = "avr-context"
 version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-context.git?branch=main#2d475a136ba313f922cfed38cc8c8a01a22ffef3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e431ec5bfc035c65ecbd32f18c4720d34423ff86b3281dc1bf6ead6d81f3dc49"
 dependencies = [
  "bare-metal",
 ]
