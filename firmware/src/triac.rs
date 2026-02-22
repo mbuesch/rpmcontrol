@@ -124,7 +124,9 @@ fn calc_trig_count(trig_offs: RelLargeTimestamp) -> u8 {
 
     // Calculate the number of re-triggers needed
     // based on the re-trigger duration.
-    ((retrig_dur / pulse_len) as u8).max(1)
+    // Subtract 2 from the count to ensure that the last trigger happens well before the end of the halfwave.
+    // Minimum = 1 count.
+    ((retrig_dur / pulse_len) as u8).max(3) - 2
 }
 
 /// Trigger the triac now.
