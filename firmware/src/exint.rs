@@ -24,7 +24,8 @@ const PCINT_ENA_15: bool = false;
 
 #[allow(clippy::identity_op)]
 pub fn setup(c: &InitCtx) {
-    DP_EXINT.initctx(c).pcmsk0().write(|w| {
+    let exint = DP_EXINT.as_ref_with_initctx(c);
+    exint.pcmsk0().write(|w| {
         w.set(
             ((PCINT_ENA_0 as u8) << 0)
                 | ((PCINT_ENA_1 as u8) << 1)
@@ -36,7 +37,7 @@ pub fn setup(c: &InitCtx) {
                 | ((PCINT_ENA_7 as u8) << 7),
         )
     });
-    DP_EXINT.initctx(c).pcmsk1().write(|w| {
+    exint.pcmsk1().write(|w| {
         w.set(
             ((PCINT_ENA_8 as u8) << 0)
                 | ((PCINT_ENA_9 as u8) << 1)
@@ -48,8 +49,8 @@ pub fn setup(c: &InitCtx) {
                 | ((PCINT_ENA_15 as u8) << 7),
         )
     });
-    DP_EXINT.initctx(c).gifr().write(|w| w.pcif().set_bit());
-    DP_EXINT.initctx(c).gimsk().write(|w| w.pcie().set(0x3));
+    exint.gifr().write(|w| w.pcif().set_bit());
+    exint.gimsk().write(|w| w.pcie().set(0x3));
 }
 
 pub fn irq_handler_pcint(c: &IrqCtx) {

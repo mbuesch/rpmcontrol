@@ -12,9 +12,9 @@ test = false
 bench = false
 
 [dependencies]
-#avr-device = { path = "../../avr-device", features = [ "attiny861a", "rt" ] }
 avr-device = { version = "0.8", features = [ "attiny861a", "rt" ] }
-#avr-device = { git = "https://github.com/Rahix/avr-device.git", rev = "7818a35f63f221e7fa59c9f0b4cf284198f3436e", features = [ "attiny861a", "rt" ] }
+#avr-device = { path = "../../avr-device", features = [ "attiny861a", "rt" ] }
+#avr-device = { git = "https://github.com/Rahix/avr-device.git", rev = "...", features = [ "attiny861a", "rt" ] }
 
 avr-int24 = "1"
 #avr-int24 = { path = "../../avr-int24" }
@@ -37,6 +37,9 @@ avr-context = { git = "https://github.com/mbuesch/avr-context.git", branch = "ma
 avr-stack = { git = "https://github.com/mbuesch/avr-stack.git", branch = "main" }
 
 curveipo = "1"
+#curveipo = { path = "../../curveipors" }
+#curveipo = { git = "https://github.com/mbuesch/curveipors.git", branch = "main" }
+
 derive_more = { version = "2", default-features = false, features = [ "add", "add_assign" ] }
 
 [features]

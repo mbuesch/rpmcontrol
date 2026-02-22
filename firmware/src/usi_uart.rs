@@ -83,7 +83,8 @@ mod inner {
     static TXDATA: Mutex<Cell<u8>> = Mutex::new(Cell::new(0));
 
     pub fn setup(c: &InitCtx) {
-        DP_USI.initctx(c).usidr().write(|w| w.set(0xFF));
+        let usi = DP_USI.as_ref_with_initctx(c);
+        usi.usidr().write(|w| w.set(0xFF));
         //TODO enable PCINT
     }
 
@@ -101,15 +102,18 @@ mod inner {
     #[rustfmt::skip]
     pub fn irq_handler_usi_ovf(c: &IrqCtx) {
         let cs = c.cs();
+        let tc0 = DP_TC0.as_ref_with_irqctx(c);
+        let usi = DP_USI.as_ref_with_irqctx(c);
+
         let mode = MODE.borrow(cs);
         match mode.get() {
             Mode::Rx => {
-                let data = bit_rev(DP_USI.irqctx(c).usidr().read().bits());
+                let data = bit_rev(usi.usidr().read().bits());
 
-                DP_TC0.irqctx(c).tccr0b().write(|w| w);
+                tc0.tccr0b().write(|w| w);
 
-                DP_USI.irqctx(c).usicr().modify(|_, w| w.usioie().clear_bit());
-                DP_USI.irqctx(c).usisr().modify(|_, w| w.usioif().set_bit());
+                usi.usicr().modify(|_, w| w.usioie().clear_bit());
+                usi.usisr().modify(|_, w| w.usioif().set_bit());
 
                 //TODO
 
@@ -117,8 +121,8 @@ mod inner {
             }
             Mode::Tx0 => {
                 let data = TXDATA.borrow(cs).get();
-                DP_USI.irqctx(c).usidr().write(|w| w.set((data << 3) | 0x07));
-                DP_USI.irqctx(c).usisr().write(|w| {
+                usi.usidr().write(|w| w.set((data << 3) | 0x07));
+                usi.usisr().write(|w| {
                     w.usicnt().set(16 - 6)
                     .usioif().set_bit()
                 });
@@ -126,11 +130,11 @@ mod inner {
                 mode.set(Mode::Tx1);
             }
             Mode::Tx1 => {
-                DP_USI.irqctx(c).usidr().write(|w| w.set(0xFF));
-                DP_USI.irqctx(c).usicr().modify(|_, w| w.usioie().clear_bit());
-                DP_USI.irqctx(c).usisr().modify(|_, w| w.usioif().set_bit());
+                usi.usidr().write(|w| w.set(0xFF));
+                usi.usicr().modify(|_, w| w.usioie().clear_bit());
+                usi.usisr().modify(|_, w| w.usioif().set_bit());
 
-                DP_TC0.irqctx(c).tccr0b().write(|w| w);
+                DP_TC0.as_ref_with_irqctx(c).tccr0b().write(|w| w);
 
                 PORTB.set(c.cs(), PORTB_BIT, true);
                 PORTB.input(c.cs(), PORTB_BIT);
@@ -145,34 +149,37 @@ mod inner {
 
     #[rustfmt::skip]
     pub fn uart_tx_cs(cs: CriticalSection<'_>, mut data: u8) -> bool {
+        let tc0 = DP_TC0.as_ref_with_cs(cs);
+        let usi = DP_USI.as_ref_with_cs(cs);
+
         let mode = MODE.borrow(cs);
         match mode.get() {
             Mode::Rx => {
                 data = bit_rev(data);
                 TXDATA.borrow(cs).set(data);
 
-                DP_TC0.cs(cs).tccr0b().write(|w| w);
+                tc0.tccr0b().write(|w| w);
 
                 PORTB.set(cs, PORTB_BIT, true);
                 PORTB.output(cs, PORTB_BIT);
 
-                DP_USI.cs(cs).usidr().write(|w| w.set((data >> 2) | 0x80));
-                DP_USI.cs(cs).usisr().write(|w| {
+                usi.usidr().write(|w| w.set((data >> 2) | 0x80));
+                usi.usisr().write(|w| {
                     w.usicnt().set(16 - 5)
                     .usioif().set_bit()
                 });
-                DP_USI.cs(cs).usicr().write(|w| {
+                usi.usicr().write(|w| {
                     w.usioie().set_bit()
                     .usiwm().three_wire()
                     .usics().tc0()
                 });
-                DP_USI.cs(cs).usipp().write(|w| w);
+                usi.usipp().write(|w| w);
 
-                DP_TC0.cs(cs).tccr0a().write(|w| w.ctc0().set_bit());
-                DP_TC0.cs(cs).tcnt0h().write(|w| w);
-                DP_TC0.cs(cs).tcnt0l().write(|w| w);
-                DP_TC0.cs(cs).ocr0a().write(|w| w.set(TC0_OCR));
-                DP_TC0.cs(cs).tccr0b().write(|w| w.cs0().prescale_8());
+                tc0.tccr0a().write(|w| w.ctc0().set_bit());
+                tc0.tcnt0h().write(|w| w);
+                tc0.tcnt0l().write(|w| w);
+                tc0.ocr0a().write(|w| w.set(TC0_OCR));
+                tc0.tccr0b().write(|w| w.cs0().prescale_8());
 
                 mode.set(Mode::Tx0);
                 true

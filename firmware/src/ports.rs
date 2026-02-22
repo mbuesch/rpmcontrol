@@ -35,14 +35,14 @@ macro_rules! impl_port {
             #[allow(dead_code)]
             fn get(&self, cs: CriticalSection<'_>, bit: usize) -> bool {
                 match bit {
-                    0 => self.cs(cs).$pin().read().$bit0().bit(),
-                    1 => self.cs(cs).$pin().read().$bit1().bit(),
-                    2 => self.cs(cs).$pin().read().$bit2().bit(),
-                    3 => self.cs(cs).$pin().read().$bit3().bit(),
-                    4 => self.cs(cs).$pin().read().$bit4().bit(),
-                    5 => self.cs(cs).$pin().read().$bit5().bit(),
-                    6 => self.cs(cs).$pin().read().$bit6().bit(),
-                    7 => self.cs(cs).$pin().read().$bit7().bit(),
+                    0 => self.as_ref_with_cs(cs).$pin().read().$bit0().bit(),
+                    1 => self.as_ref_with_cs(cs).$pin().read().$bit1().bit(),
+                    2 => self.as_ref_with_cs(cs).$pin().read().$bit2().bit(),
+                    3 => self.as_ref_with_cs(cs).$pin().read().$bit3().bit(),
+                    4 => self.as_ref_with_cs(cs).$pin().read().$bit4().bit(),
+                    5 => self.as_ref_with_cs(cs).$pin().read().$bit5().bit(),
+                    6 => self.as_ref_with_cs(cs).$pin().read().$bit6().bit(),
+                    7 => self.as_ref_with_cs(cs).$pin().read().$bit7().bit(),
                     _ => unreachable!(),
                 }
             }
@@ -51,14 +51,14 @@ macro_rules! impl_port {
             #[allow(dead_code)]
             fn set(&self, cs: CriticalSection<'_>, bit: usize, value: bool) {
                 match bit {
-                    0 => self.cs(cs).$port().modify(|_, w| w.$bit0().bit(value)),
-                    1 => self.cs(cs).$port().modify(|_, w| w.$bit1().bit(value)),
-                    2 => self.cs(cs).$port().modify(|_, w| w.$bit2().bit(value)),
-                    3 => self.cs(cs).$port().modify(|_, w| w.$bit3().bit(value)),
-                    4 => self.cs(cs).$port().modify(|_, w| w.$bit4().bit(value)),
-                    5 => self.cs(cs).$port().modify(|_, w| w.$bit5().bit(value)),
-                    6 => self.cs(cs).$port().modify(|_, w| w.$bit6().bit(value)),
-                    7 => self.cs(cs).$port().modify(|_, w| w.$bit7().bit(value)),
+                    0 => self.as_ref_with_cs(cs).$port().modify(|_, w| w.$bit0().bit(value)),
+                    1 => self.as_ref_with_cs(cs).$port().modify(|_, w| w.$bit1().bit(value)),
+                    2 => self.as_ref_with_cs(cs).$port().modify(|_, w| w.$bit2().bit(value)),
+                    3 => self.as_ref_with_cs(cs).$port().modify(|_, w| w.$bit3().bit(value)),
+                    4 => self.as_ref_with_cs(cs).$port().modify(|_, w| w.$bit4().bit(value)),
+                    5 => self.as_ref_with_cs(cs).$port().modify(|_, w| w.$bit5().bit(value)),
+                    6 => self.as_ref_with_cs(cs).$port().modify(|_, w| w.$bit6().bit(value)),
+                    7 => self.as_ref_with_cs(cs).$port().modify(|_, w| w.$bit7().bit(value)),
                     _ => unreachable!(),
                 };
             }
@@ -67,14 +67,14 @@ macro_rules! impl_port {
             #[allow(dead_code)]
             fn toggle(&self, cs: CriticalSection<'_>, bit: usize) {
                 match bit {
-                    0 => self.cs(cs).$pin().modify(|_, w| w.$bit0().set_bit()),
-                    1 => self.cs(cs).$pin().modify(|_, w| w.$bit1().set_bit()),
-                    2 => self.cs(cs).$pin().modify(|_, w| w.$bit2().set_bit()),
-                    3 => self.cs(cs).$pin().modify(|_, w| w.$bit3().set_bit()),
-                    4 => self.cs(cs).$pin().modify(|_, w| w.$bit4().set_bit()),
-                    5 => self.cs(cs).$pin().modify(|_, w| w.$bit5().set_bit()),
-                    6 => self.cs(cs).$pin().modify(|_, w| w.$bit6().set_bit()),
-                    7 => self.cs(cs).$pin().modify(|_, w| w.$bit7().set_bit()),
+                    0 => self.as_ref_with_cs(cs).$pin().modify(|_, w| w.$bit0().set_bit()),
+                    1 => self.as_ref_with_cs(cs).$pin().modify(|_, w| w.$bit1().set_bit()),
+                    2 => self.as_ref_with_cs(cs).$pin().modify(|_, w| w.$bit2().set_bit()),
+                    3 => self.as_ref_with_cs(cs).$pin().modify(|_, w| w.$bit3().set_bit()),
+                    4 => self.as_ref_with_cs(cs).$pin().modify(|_, w| w.$bit4().set_bit()),
+                    5 => self.as_ref_with_cs(cs).$pin().modify(|_, w| w.$bit5().set_bit()),
+                    6 => self.as_ref_with_cs(cs).$pin().modify(|_, w| w.$bit6().set_bit()),
+                    7 => self.as_ref_with_cs(cs).$pin().modify(|_, w| w.$bit7().set_bit()),
                     _ => unreachable!(),
                 };
             }
@@ -83,14 +83,14 @@ macro_rules! impl_port {
             #[allow(dead_code)]
             fn output(&self, cs: CriticalSection<'_>, bit: usize) {
                 match bit {
-                    0 => self.cs(cs).$ddr().modify(|_, w| w.$bit0().set_bit()),
-                    1 => self.cs(cs).$ddr().modify(|_, w| w.$bit1().set_bit()),
-                    2 => self.cs(cs).$ddr().modify(|_, w| w.$bit2().set_bit()),
-                    3 => self.cs(cs).$ddr().modify(|_, w| w.$bit3().set_bit()),
-                    4 => self.cs(cs).$ddr().modify(|_, w| w.$bit4().set_bit()),
-                    5 => self.cs(cs).$ddr().modify(|_, w| w.$bit5().set_bit()),
-                    6 => self.cs(cs).$ddr().modify(|_, w| w.$bit6().set_bit()),
-                    7 => self.cs(cs).$ddr().modify(|_, w| w.$bit7().set_bit()),
+                    0 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit0().set_bit()),
+                    1 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit1().set_bit()),
+                    2 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit2().set_bit()),
+                    3 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit3().set_bit()),
+                    4 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit4().set_bit()),
+                    5 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit5().set_bit()),
+                    6 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit6().set_bit()),
+                    7 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit7().set_bit()),
                     _ => unreachable!(),
                 };
             }
@@ -99,14 +99,14 @@ macro_rules! impl_port {
             #[allow(dead_code)]
             fn input(&self, cs: CriticalSection<'_>, bit: usize) {
                 match bit {
-                    0 => self.cs(cs).$ddr().modify(|_, w| w.$bit0().clear_bit()),
-                    1 => self.cs(cs).$ddr().modify(|_, w| w.$bit1().clear_bit()),
-                    2 => self.cs(cs).$ddr().modify(|_, w| w.$bit2().clear_bit()),
-                    3 => self.cs(cs).$ddr().modify(|_, w| w.$bit3().clear_bit()),
-                    4 => self.cs(cs).$ddr().modify(|_, w| w.$bit4().clear_bit()),
-                    5 => self.cs(cs).$ddr().modify(|_, w| w.$bit5().clear_bit()),
-                    6 => self.cs(cs).$ddr().modify(|_, w| w.$bit6().clear_bit()),
-                    7 => self.cs(cs).$ddr().modify(|_, w| w.$bit7().clear_bit()),
+                    0 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit0().clear_bit()),
+                    1 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit1().clear_bit()),
+                    2 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit2().clear_bit()),
+                    3 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit3().clear_bit()),
+                    4 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit4().clear_bit()),
+                    5 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit5().clear_bit()),
+                    6 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit6().clear_bit()),
+                    7 => self.as_ref_with_cs(cs).$ddr().modify(|_, w| w.$bit7().clear_bit()),
                     _ => unreachable!(),
                 };
             }
@@ -144,9 +144,12 @@ fn pin_pullup(bit: usize) -> u8 {
 }
 
 pub fn setup(c: &InitCtx) {
+    let porta = PORTA.as_ref_with_initctx(c);
+    let portb = PORTB.as_ref_with_initctx(c);
+
     // SAFETY: Called with interrupts disabled. Ensured by &InitCtx.
     unsafe {
-        PORTA.initctx(c).porta().write(|w| {
+        porta.porta().write(|w| {
             w.bits(
                 pin_floating(0) | // setpoint, single ended ADC
                 pin_floating(1) | // vsense
@@ -158,7 +161,7 @@ pub fn setup(c: &InitCtx) {
                 pin_floating(7), // speedo, AD comparator neg
             )
         });
-        PORTA.initctx(c).ddra().write(|w| {
+        porta.ddra().write(|w| {
             w.bits(
                 pin_input(0) | // setpoint, single ended ADC
                 pin_input(1) | // vsense
@@ -174,7 +177,7 @@ pub fn setup(c: &InitCtx) {
 
     // SAFETY: Called with interrupts disabled. Ensured by &InitCtx.
     unsafe {
-        PORTB.initctx(c).portb().write(|w| {
+        portb.portb().write(|w| {
             w.bits(
                 pin_pullup(0) | // ISP MOSI + UART DI
                 pin_high(1) | // ISP MISO + UART DO
@@ -186,7 +189,7 @@ pub fn setup(c: &InitCtx) {
                 pin_floating(7), // RESET, Debug-Wire
             )
         });
-        PORTB.initctx(c).ddrb().write(|w| {
+        portb.ddrb().write(|w| {
             w.bits(
                 pin_input(0) | // ISP MOSI + UART DI
                 pin_output(1) | // ISP MISO + UART DO
