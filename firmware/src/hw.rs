@@ -8,8 +8,10 @@ pub use avr_device::{attiny861a as mcu, interrupt};
 
 use crate::{
     analog::irq_handler_ana_comp, exint::irq_handler_pcint, timer::irq_handler_timer1_compa,
-    usi_uart::irq_handler_usi_ovf,
 };
+
+#[cfg(feature = "debug")]
+use crate::usi_uart::irq_handler_usi_ovf;
 
 define_isr! {
     device: attiny861a,

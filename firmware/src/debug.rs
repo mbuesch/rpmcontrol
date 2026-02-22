@@ -6,6 +6,7 @@ use crate::timer::RelLargeTimestamp;
 use avr_context::{InitCtx, IrqCtx};
 use avr_q::Q7p8;
 
+#[cfg_attr(not(feature = "debug"), allow(dead_code))]
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Debug {
@@ -19,48 +20,52 @@ pub enum Debug {
     MaxRt,
     MinStack,
 }
-#[allow(dead_code)]
+#[cfg_attr(not(feature = "debug"), allow(dead_code))]
 const NRVALUES: usize = 9;
 
-#[allow(dead_code)]
-#[allow(unused_variables)]
+#[cfg_attr(not(feature = "debug"), allow(dead_code))]
+#[cfg_attr(not(feature = "debug"), allow(unused_variables))]
 pub fn rx_complete_callback(c: &IrqCtx, data: u8) {
     #[cfg(feature = "debug")]
     inner::rx_complete_callback(c, data);
 }
 
-#[allow(dead_code)]
-#[allow(unused_variables)]
+#[cfg_attr(not(feature = "debug"), allow(dead_code))]
+#[cfg_attr(not(feature = "debug"), allow(unused_variables))]
 pub fn tx_complete_callback(c: &IrqCtx) {
     #[cfg(feature = "debug")]
     inner::tx_complete_callback(c);
 }
 
 impl Debug {
-    #[allow(unused_variables)]
+    #[cfg_attr(not(feature = "debug"), allow(unused_variables))]
     pub fn log_u16(&self, value: u16) {
         #[cfg(feature = "debug")]
         inner::log_u16(*self as u16, value);
     }
 
+    #[cfg_attr(not(feature = "debug"), allow(dead_code))]
     pub fn log_i16(&self, value: i16) {
         self.log_u16(value as u16);
     }
 
+    #[cfg_attr(not(feature = "debug"), allow(dead_code))]
     pub fn log_u8(&self, value: u8) {
         self.log_u16(value.into());
     }
 
+    #[cfg_attr(not(feature = "debug"), allow(dead_code))]
     pub fn log_fixpt(&self, value: Q7p8) {
         self.log_u16(value.to_q() as _);
     }
 
+    #[cfg_attr(not(feature = "debug"), allow(dead_code))]
     pub fn log_rel_large_timestamp(&self, value: RelLargeTimestamp) {
         self.log_i16(value.into());
     }
 }
 
-#[allow(unused_variables)]
+#[cfg_attr(not(feature = "debug"), allow(unused_variables))]
 pub fn setup(c: &InitCtx) {
     #[cfg(feature = "debug")]
     inner::setup(c);

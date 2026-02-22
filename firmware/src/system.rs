@@ -12,21 +12,27 @@ use crate::{
     debug::Debug,
     filter::Filter,
     freq::Freq,
-    hw::{interrupt, mcu},
+    hw::mcu,
     mains::{MAINS_QUARTERWAVE_DUR, Mains, PhaseUpdate},
     mon::Mon,
     mon_pocheck::{PoCheck, PoState},
     pid::{Pid, PidIlim},
-    ports::{PORTB, PortOps as _},
     shutoff::{Shutoff, set_secondary_shutoff},
     snap::Snap,
     speedo::{MotorSpeed, Speedo},
     temp::{Temp, TempAdc},
-    timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
+    timer::{LargeTimestamp, timer_get_large},
     triac::Triac,
 };
 use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8, q15p8};
+
+#[cfg(feature = "debug")]
+use crate::{
+    hw::interrupt,
+    ports::{PORTB, PortOps as _},
+    timer::RelLargeTimestamp,
+};
 
 macro_rules! rpm {
     ($rpm: expr) => {

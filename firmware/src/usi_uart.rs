@@ -4,28 +4,28 @@
 
 use avr_context::{CriticalSection, InitCtx, IrqCtx};
 
-#[allow(unused_variables)]
+#[cfg_attr(not(feature = "debug"), allow(unused_variables))]
 pub fn setup(c: &InitCtx) {
     #[cfg(feature = "debug")]
     inner::setup(c);
 }
 
-#[allow(dead_code)]
-#[allow(unused_variables)]
+#[cfg_attr(not(feature = "debug"), allow(dead_code))]
+#[cfg_attr(not(feature = "debug"), allow(unused_variables))]
 pub fn irq_handler_pcint(c: &IrqCtx) {
     #[cfg(feature = "debug")]
     inner::irq_handler_pcint(c);
 }
 
-#[allow(dead_code)]
-#[allow(unused_variables)]
+#[cfg_attr(not(feature = "debug"), allow(dead_code))]
+#[cfg_attr(not(feature = "debug"), allow(unused_variables))]
 pub fn irq_handler_usi_ovf(c: &IrqCtx) {
     #[cfg(feature = "debug")]
     inner::irq_handler_usi_ovf(c);
 }
 
-#[allow(dead_code)]
-#[allow(unused_variables)]
+#[cfg_attr(not(feature = "debug"), allow(dead_code))]
+#[cfg_attr(not(feature = "debug"), allow(unused_variables))]
 pub fn uart_tx_cs(cs: CriticalSection<'_>, data: u8) -> bool {
     #[cfg(feature = "debug")]
     let ret = inner::uart_tx_cs(cs, data);
@@ -37,7 +37,7 @@ pub fn uart_tx_cs(cs: CriticalSection<'_>, data: u8) -> bool {
 }
 
 #[allow(dead_code)]
-#[allow(unused_variables)]
+#[cfg_attr(not(feature = "debug"), allow(unused_variables))]
 pub fn uart_tx(data: u8) -> bool {
     #[cfg(feature = "debug")]
     let ret = inner::uart_tx(data);
