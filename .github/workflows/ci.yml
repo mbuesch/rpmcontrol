@@ -10,16 +10,8 @@ env:
   CARGO_INCREMENTAL: 0
 
 jobs:
-  install_dependencies:
-    name: Install dependencies
-    runs-on: ubuntu-latest
-    steps:
-      - run: sudo apt-get update
-      - run: sudo apt-get install -y gcc-avr binutils-avr avr-libc avrdude libglib2.0-dev libgtk-4-dev pkgconf
-
   rpmcontrol_firmware:
     name: rpmcontrol firmware
-    needs: install_dependencies
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -38,6 +30,9 @@ jobs:
           path: ~/.cargo
           key: cargo-${{ runner.os }}-nightly
 
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y gcc-avr binutils-avr avr-libc avrdude
+
       - run: rustup update nightly
       - run: rustup default nightly
       - run: rustup component add clippy
@@ -51,7 +46,6 @@ jobs:
 
   motmock_firmware:
     name: motmock firmware
-    needs: install_dependencies
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -70,6 +64,9 @@ jobs:
           path: ~/.cargo
           key: cargo-${{ runner.os }}-nightly
 
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y gcc-avr binutils-avr avr-libc avrdude
+
       - run: rustup update nightly
       - run: rustup default nightly
       - run: rustup component add clippy
@@ -80,7 +77,6 @@ jobs:
 
   debugtool:
     name: Debug tool
-    needs: install_dependencies
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -98,6 +94,9 @@ jobs:
         with:
           path: ~/.cargo
           key: cargo-${{ runner.os }}-stable
+
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y libglib2.0-dev libgtk-4-dev pkgconf
 
       - run: rustup update stable
       - run: rustup default stable
