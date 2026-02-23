@@ -96,7 +96,7 @@ jobs:
           key: cargo-${{ runner.os }}-stable
 
       - run: sudo apt-get update
-      - run: sudo apt-get install -y libglib2.0-dev libgtk-4-dev pkgconf
+      - run: sudo apt-get install -y libglib2.0-dev libgtk-4-dev libudev-dev pkgconf
 
       - run: rustup update stable
       - run: rustup default stable
