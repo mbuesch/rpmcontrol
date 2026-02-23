@@ -95,7 +95,9 @@ impl Mon {
 
             // If the motor speed is above the hard limit, then we have a problem.
             if speedo_hz >= MOT_HARD_LIMIT {
-                self.error_deb.error(m);
+                if cfg!(feature = "monitoring") {
+                    self.error_deb.error(m);
+                }
             } else {
                 // The motor speed is inside of the allowed range.
 
@@ -115,7 +117,9 @@ impl Mon {
                         // we might have an error.
                         // Debounce the error.
                         if diff > SPEEDO_TOLERANCE {
-                            self.error_deb.error(m);
+                            if cfg!(feature = "monitoring") {
+                                self.error_deb.error(m);
+                            }
                         } else {
                             self.error_deb.ok(m);
                         }
@@ -146,7 +150,7 @@ impl Mon {
         Debug::MinStack.log_u16(unused_stack_bytes);
         Debug::MonDebounce.log_u8(self.error_deb.count(m));
 
-        if self.error_deb.is_ok(m) || cfg!(not(feature = "monitoring")) {
+        if self.error_deb.is_ok(m) {
             Shutoff::MachineRunning
         } else {
             Shutoff::MachineShutoff
