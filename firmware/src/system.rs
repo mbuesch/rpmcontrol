@@ -5,9 +5,9 @@
 use crate::{
     analog::{Ac, Adc, AdcChannel},
     calibration::{
-        MAX_RPM, MOT_SOFT_LIMIT, RPM_SYNC_THRES, RPMPID_ILIM_NEG, RPMPID_ILIM_POS, RPMPID_PARAMS,
-        RPMPID_PARAMS_SYNCING, SP_MIN_CUTOFF, SPEED_FILTER_DIV, STARTUP_DELAY,
-        SYNC_SPEEDO_SUBSTITUTE,
+        MAX_RPM, MOT_SOFT_LIMIT, NO_SPEED_TIMEOUT, RPM_SYNC_THRES, RPMPID_ILIM_NEG,
+        RPMPID_ILIM_POS, RPMPID_PARAMS, RPMPID_PARAMS_SYNCING, SP_MIN_CUTOFF, SPEED_FILTER_DIV,
+        STARTUP_DELAY, SYNC_SPEEDO_SUBSTITUTE,
     },
     debug::Debug,
     filter::Filter,
@@ -100,6 +100,7 @@ pub struct System {
     setpoint_snap: Snap<Freq>,
     speedo: Speedo,
     speed_filter: Filter,
+    prev_valid_speed: MainCtxCell<LargeTimestamp>,
     temp: Temp,
     mains: Mains,
     rpm_pid: Pid,
@@ -123,6 +124,7 @@ impl System {
             setpoint_snap: Snap::new(Freq(q7p8!(const 0))),
             speedo: Speedo::new(),
             speed_filter: Filter::new(),
+            prev_valid_speed: MainCtxCell::new(LargeTimestamp::new()),
             temp: Temp::new(),
             mains: Mains::new(),
             rpm_pid: Pid::new(),
@@ -241,24 +243,28 @@ impl System {
         phase_update: PhaseUpdate,
         speed: Option<MotorSpeed>,
     ) -> Shutoff {
+        let now = timer_get_large();
         let mut triac_shutoff = Shutoff::MachineRunning;
 
         // Interpret and filter the motor speed.
         let speed_filt = if let Some(speed) = speed {
             // We are sync'd now. Leave sync state.
             self.state.set(m, SysState::Running);
+            self.prev_valid_speed.set(m, now);
             // Filter the speed.
             Freq(
                 self.speed_filter
                     .run(m, speed.as_freq().0, SPEED_FILTER_DIV),
             )
-        } else if self.state.get(m) == SysState::Running {
-            // No new speed from speedometer and system state is running.
-            // Use the current filtered speed.
+        } else if self.state.get(m) == SysState::Running
+            && now - self.prev_valid_speed.get(m) < NO_SPEED_TIMEOUT
+        {
+            // No valid speed measurement.
+            // We had a valid speed measurement recently. Use it.
             Freq(self.speed_filter.get(m))
         } else {
-            // No new speed from speedometer and not in running system state.
-            // Assume zero.
+            // Drop out of running state.
+            self.state.set(m, SysState::Syncing);
             self.speed_filter.reset(m);
             Freq(q7p8!(const 0))
         };

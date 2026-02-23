@@ -17,8 +17,8 @@ pub const STARTUP_DELAY: RelLargeTimestamp = RelLargeTimestamp::from_millis(300)
 /// RPM PID parameters for normal operation.
 pub const RPMPID_PARAMS: PidParams = PidParams {
     kp: q7p8!(const 5 / 1),
-    ki: q7p8!(const 1 / 4),
-    kd: q7p8!(const 0),
+    ki: q7p8!(const 1 / 8),
+    kd: q7p8!(const 1 / 32),
 };
 
 /// RPM PID parameters for speedometer syncing.
@@ -66,7 +66,10 @@ pub const MOT_HARD_LIMIT: Freq = rpm!(MAX_RPM + 1500);
 pub const RPM_SYNC_THRES: Freq = rpm!(1000);
 
 /// Speedometer filter divider.
-pub const SPEED_FILTER_DIV: Q7p8 = q7p8!(const 2 / 1);
+pub const SPEED_FILTER_DIV: Q7p8 = q7p8!(const 2);
+
+/// Maximum amount of time we can live without a valid speedometer.
+pub const NO_SPEED_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
 
 /// Minimum setpoint below which the triac will be shut off.
 pub const SP_MIN_CUTOFF: Freq = rpm!(300);
