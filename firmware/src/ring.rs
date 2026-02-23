@@ -5,6 +5,10 @@
 use avr_context::{CriticalSection, Mutex};
 use core::cell::Cell;
 
+const fn is_power_of_two(x: usize) -> bool {
+    (x > 0) && ((x & (x - 1)) == 0)
+}
+
 pub struct Ring<T, const SIZE: usize> {
     buf: [Mutex<Cell<T>>; SIZE],
     wr: Mutex<Cell<u8>>,
@@ -15,6 +19,9 @@ impl<T, const SIZE: usize> Ring<T, SIZE> {
     const MASK: u8 = (SIZE - 1) as u8;
 
     pub const fn new(buf: [Mutex<Cell<T>>; SIZE]) -> Self {
+        const {
+            assert!(is_power_of_two(SIZE), "SIZE must be a power of two");
+        }
         Self {
             buf,
             wr: Mutex::new(Cell::new(0)),
