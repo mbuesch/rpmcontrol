@@ -44,7 +44,14 @@ derive_more = { version = "2", default-features = false, features = [ "add", "ad
 
 [features]
 default = [ "monitoring", "debug" ]
+
+# The monitoring feature enables the safety monitoring of the RPM control loop.
+# Warning: Disabling this feature can lead to dangerous behavior of the system.
+#          Only disable this feature if you know what you are doing.
 monitoring = []
+
+# The debug feature enables various debug features, such as UART and debug pin.
+# This feature is no effect on the safety of the system, but can be useful for debugging and development.
 debug = []
 
 [profile.dev]

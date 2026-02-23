@@ -15,7 +15,6 @@ use avr_context::{MainCtx, MainCtxCell};
 use avr_q::Q7p8;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-#[allow(dead_code)]
 pub enum PoState {
     /// Initial check: Primary and secondary shutoff.
     CheckIdle = 0,
@@ -46,7 +45,6 @@ enum PoStatePart {
 
 impl PoState {
     pub fn next(&self) -> Self {
-        #[cfg(feature = "monitoring")]
         match self {
             PoState::CheckIdle => PoState::CheckSecondaryShutoff,
             PoState::CheckSecondaryShutoff => PoState::CheckPrimaryShutoff,
@@ -54,9 +52,6 @@ impl PoState {
             PoState::Error => PoState::Error, // never leave error state.
             PoState::DoneOk => PoState::DoneOk, // never leave done state.
         }
-
-        #[cfg(not(feature = "monitoring"))]
-        PoState::DoneOk
     }
 }
 
@@ -131,42 +126,58 @@ impl PoCheck {
             | PoState::CheckPrimaryShutoff
             | PoState::Error
             | PoState::DoneOk => {
-                let rpm_is_zero = speedo_hz
-                    .map(|s| s.as_freq() <= RPM_ZERO_LIMIT)
-                    .unwrap_or(true);
-                // RPM must always be zero throughout the whole test.
-                !rpm_is_zero
+                if cfg!(feature = "monitoring") {
+                    let rpm_is_zero = speedo_hz
+                        .map(|s| s.as_freq() <= RPM_ZERO_LIMIT)
+                        .unwrap_or(true);
+                    // RPM must always be zero throughout the whole test.
+                    !rpm_is_zero
+                } else {
+                    false
+                }
             }
         }
     }
 
     pub fn get_triac_phi_offs_ms(&self, m: &MainCtx<'_>) -> Option<Q7p8> {
-        match self.state.get(m) {
-            PoState::CheckIdle => None,
-            PoState::CheckSecondaryShutoff => Some(TRIAC_TRIG_OFFS_ENABLED_MS),
-            PoState::CheckPrimaryShutoff => Some(TRIAC_TRIG_OFFS_ENABLED_MS),
-            PoState::Error => None,
-            PoState::DoneOk => None,
+        if cfg!(feature = "monitoring") {
+            match self.state.get(m) {
+                PoState::CheckIdle => None,
+                PoState::CheckSecondaryShutoff => Some(TRIAC_TRIG_OFFS_ENABLED_MS),
+                PoState::CheckPrimaryShutoff => Some(TRIAC_TRIG_OFFS_ENABLED_MS),
+                PoState::Error => None,
+                PoState::DoneOk => None,
+            }
+        } else {
+            None
         }
     }
 
     pub fn get_triac_shutoff(&self, m: &MainCtx<'_>) -> Shutoff {
-        match self.state.get(m) {
-            PoState::CheckIdle => Shutoff::MachineShutoff,
-            PoState::CheckSecondaryShutoff => Shutoff::MachineRunning,
-            PoState::CheckPrimaryShutoff => Shutoff::MachineShutoff,
-            PoState::Error => Shutoff::MachineShutoff,
-            PoState::DoneOk => Shutoff::MachineRunning,
+        if cfg!(feature = "monitoring") {
+            match self.state.get(m) {
+                PoState::CheckIdle => Shutoff::MachineShutoff,
+                PoState::CheckSecondaryShutoff => Shutoff::MachineRunning,
+                PoState::CheckPrimaryShutoff => Shutoff::MachineShutoff,
+                PoState::Error => Shutoff::MachineShutoff,
+                PoState::DoneOk => Shutoff::MachineRunning,
+            }
+        } else {
+            Shutoff::MachineRunning
         }
     }
 
     pub fn get_secondary_shutoff(&self, m: &MainCtx<'_>) -> Shutoff {
-        match self.state.get(m) {
-            PoState::CheckIdle => Shutoff::MachineShutoff,
-            PoState::CheckSecondaryShutoff => Shutoff::MachineShutoff,
-            PoState::CheckPrimaryShutoff => Shutoff::MachineRunning,
-            PoState::Error => Shutoff::MachineShutoff,
-            PoState::DoneOk => Shutoff::MachineRunning,
+        if cfg!(feature = "monitoring") {
+            match self.state.get(m) {
+                PoState::CheckIdle => Shutoff::MachineShutoff,
+                PoState::CheckSecondaryShutoff => Shutoff::MachineShutoff,
+                PoState::CheckPrimaryShutoff => Shutoff::MachineRunning,
+                PoState::Error => Shutoff::MachineShutoff,
+                PoState::DoneOk => Shutoff::MachineRunning,
+            }
+        } else {
+            Shutoff::MachineRunning
         }
     }
 }
