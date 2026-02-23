@@ -30,10 +30,11 @@ jobs:
           path: ~/.cargo
           key: cargo-${{ runner.os }}-nightly
 
-      - run: sudo apt install gcc-avr binutils-avr avr-libc avrdude
+      - run: sudo apt-get install gcc-avr binutils-avr avr-libc avrdude
       - run: rustup update nightly
       - run: rustup default nightly
       - run: rustup component add clippy
+      - run: cargo install --git https://github.com/mbuesch/avr-postprocess.git --branch main
 
       - run: cargo clippy -- --deny warnings
       - run: cargo clippy --tests -- --deny warnings
@@ -61,7 +62,7 @@ jobs:
           path: ~/.cargo
           key: cargo-${{ runner.os }}-nightly
 
-      - run: sudo apt install gcc-avr binutils-avr avr-libc avrdude
+      - run: sudo apt-get install gcc-avr binutils-avr avr-libc avrdude
       - run: rustup update nightly
       - run: rustup default nightly
       - run: rustup component add clippy
@@ -90,6 +91,7 @@ jobs:
           path: ~/.cargo
           key: cargo-${{ runner.os }}-stable
 
+      - run: sudo apt-get install libglib2.0-dev libgtk-4-dev
       - run: rustup update stable
       - run: rustup default stable
       - run: rustup component add clippy
