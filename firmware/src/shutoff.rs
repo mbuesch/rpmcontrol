@@ -16,6 +16,7 @@ pub enum Shutoff {
 impl core::ops::BitOr for Shutoff {
     type Output = Self;
 
+    #[inline(always)]
     fn bitor(self, other: Self) -> Self {
         if self == Self::MachineShutoff || other == Self::MachineShutoff {
             Self::MachineShutoff
@@ -26,6 +27,7 @@ impl core::ops::BitOr for Shutoff {
 }
 
 impl core::ops::BitOrAssign for Shutoff {
+    #[inline(always)]
     fn bitor_assign(&mut self, other: Self) {
         *self = *self | other;
     }
