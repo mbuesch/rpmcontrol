@@ -211,11 +211,11 @@ pub fn setup_didr(ADC: &mcu::ADC) {
         w.adc0d().set_bit() // PA0: setpoint ADC
          .adc1d().clear_bit()
          .adc2d().clear_bit()
-         .arefd().clear_bit()
+         .arefd().set_bit() // PA3: AREF
          .adc3d().clear_bit()
-         .adc4d().clear_bit()
+         .adc4d().set_bit() // PA5: motor temperature ADC
          .adc5d().set_bit() // PA6: speedo positive
-         .adc6d().set_bit() // PA7: speedo positive
+         .adc6d().set_bit() // PA7: speedo negative
     });
     ADC.didr1().write(|w| {
         w.adc7d().clear_bit()
