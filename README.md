@@ -28,12 +28,14 @@ It is written in Rust for AVR.
 To build the firmware, you need the following tools:
 
 - Rust AVR compiler: A `nightly` compiler is required.
-- `avr-libc` AVR specific C library.
+- [avr-libc](https://github.com/avrdudes/avr-libc) AVR specific C library.
 - `avr-gcc` + `avr-binutils` toolchain (for linking and binary processing: `avr-ld`, `avr-objcopy`, `avr-size`, etc.)
+- [avr-postprocess](https://github.com/mbuesch/avr-postprocess) for post-processing the compiled AVR machine code.
+- [avra](https://github.com/Ro5bert/avra) for assembling AVR assembly code.
 - Gnu `make`.
-- [dwdebug](https://github.com/mbuesch/dwire-debug) and `avrdude` for flashing.
+- [avrdude](https://github.com/avrdudes/avrdude) and [dwdebug](https://github.com/mbuesch/dwire-debug) (optional) for flashing.
 
-Once the toolchains are installed, you can build the firmware by running `make`:
+Once the toolchain is installed, you can build the firmware by running `make`:
 
 ```bash
 cd firmware
