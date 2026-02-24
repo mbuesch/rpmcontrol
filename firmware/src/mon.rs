@@ -7,8 +7,8 @@ use crate::{
         MOT_HARD_LIMIT,
         mon::{
             CHECK_DIST, CHECK_TIMEOUT, ERROR_DEBOUNCE_ERRSTEP, ERROR_DEBOUNCE_LIMIT,
-            ERROR_DEBOUNCE_STICKY, MAINS_ZERO_CROSSING_TIMEOUT, MIN_STACK_SPACE, MON_ACTIVE_THRES,
-            SP_GRADIENT_THRES, SP_HIST_COUNT, SP_HIST_DIST, SPEEDO_TOLERANCE,
+            ERROR_DEBOUNCE_STICKY, MAINS_ZERO_CROSSING_TIMEOUT, MAX_MAIN_RT_LIMIT, MIN_STACK_SPACE,
+            MON_ACTIVE_THRES, SP_GRADIENT_THRES, SP_HIST_COUNT, SP_HIST_DIST, SPEEDO_TOLERANCE,
         },
     },
     debounce::Debounce,
@@ -16,7 +16,7 @@ use crate::{
     freq::Freq,
     history::History,
     shutoff::Shutoff,
-    timer::{LargeTimestamp, timer_get_large},
+    timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large},
 };
 use avr_atomic::AvrAtomic;
 use avr_context::{MainCtx, MainCtxCell};
@@ -31,6 +31,8 @@ pub struct Mon {
     prev_sp: MainCtxCell<LargeTimestamp>,
     error_deb: Debounce<ERROR_DEBOUNCE_ERRSTEP, ERROR_DEBOUNCE_LIMIT, ERROR_DEBOUNCE_STICKY>,
     sp_hist: History<Freq, SP_HIST_COUNT>,
+    prev_main_rt_stamp: MainCtxCell<LargeTimestamp>,
+    max_main_rt: MainCtxCell<RelLargeTimestamp>,
 }
 
 impl Mon {
@@ -51,6 +53,8 @@ impl Mon {
                 MainCtxCell::new(Freq(q7p8!(const 0))),
                 MainCtxCell::new(Freq(q7p8!(const 0))),
             ]),
+            prev_main_rt_stamp: MainCtxCell::new(LargeTimestamp::new()),
+            max_main_rt: MainCtxCell::new(RelLargeTimestamp::new()),
         }
     }
 
@@ -58,6 +62,7 @@ impl Mon {
         self.prev_check.set(m, now);
         self.prev_mains_90deg.set(m, now);
         self.prev_sp.set(m, now);
+        self.prev_main_rt_stamp.set(m, now);
     }
 
     pub fn check(
@@ -139,11 +144,19 @@ impl Mon {
         let unused_stack_bytes = estimate_unused_stack_space();
         let stack_failure = unused_stack_bytes < MIN_STACK_SPACE;
 
+        // Check if the main loop execution time was too long.
+        let max_main_rt_failure = self.max_main_rt.get(m) > MAX_MAIN_RT_LIMIT;
+
         // Analog value processing failed.
         let analog_failure = ANALOG_FAILURE.load();
 
         // Raise an immediate error without debouncing on certain hard failures.
-        if stack_failure || mon_check_dist_failure || analog_failure || mains_90deg_dist_failure {
+        if stack_failure
+            || mon_check_dist_failure
+            || analog_failure
+            || mains_90deg_dist_failure
+            || max_main_rt_failure
+        {
             self.error_deb.error_no_debounce(m);
         }
 
@@ -155,6 +168,19 @@ impl Mon {
         } else {
             Shutoff::MachineShutoff
         }
+    }
+
+    /// Measure the main loop runtime.
+    pub fn meas_main_runtime(&self, m: &MainCtx<'_>) {
+        let now = timer_get_large();
+
+        let runtime = now - self.prev_main_rt_stamp.get(m);
+        self.prev_main_rt_stamp.set(m, now);
+
+        let max_main_rt = self.max_main_rt.get(m).max(runtime);
+        self.max_main_rt.set(m, max_main_rt);
+
+        Debug::MaxRt.log_rel_large_timestamp(max_main_rt);
     }
 }
 

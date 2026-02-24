@@ -124,6 +124,10 @@ pub mod mon {
     /// Immediate fault, if less stack space is free.
     pub const MIN_STACK_SPACE: u16 = 64;
 
+    /// Maximum allowed main loop execution time.
+    /// Immediate fault, if the main loop execution time is bigger than this.
+    pub const MAX_MAIN_RT_LIMIT: RelLargeTimestamp = RelLargeTimestamp::from_millis(5);
+
     /// Setpoint history.
     /// Length = SP_HIST_DIST * SP_HIST_COUNT = 3 seconds
     pub const SP_HIST_DIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(333333);

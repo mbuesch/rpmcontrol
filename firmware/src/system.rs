@@ -31,7 +31,6 @@ use avr_q::{Q7p8, q7p8, q15p8};
 use crate::{
     hw::interrupt,
     ports::{PORTB, PortOps as _},
-    timer::RelLargeTimestamp,
 };
 
 macro_rules! rpm {
@@ -106,10 +105,6 @@ pub struct System {
     rpm_pid: Pid,
     mains_90deg_done: MainCtxCell<bool>,
     triac: Triac,
-    #[cfg(feature = "debug")]
-    prev_time: MainCtxCell<LargeTimestamp>,
-    #[cfg(feature = "debug")]
-    max_rt: MainCtxCell<RelLargeTimestamp>,
 }
 
 impl System {
@@ -130,10 +125,6 @@ impl System {
             rpm_pid: Pid::new(),
             mains_90deg_done: MainCtxCell::new(false),
             triac: Triac::new(),
-            #[cfg(feature = "debug")]
-            prev_time: MainCtxCell::new(LargeTimestamp::new()),
-            #[cfg(feature = "debug")]
-            max_rt: MainCtxCell::new(RelLargeTimestamp::new()),
         }
     }
 
@@ -166,23 +157,6 @@ impl System {
 
         self.mon.init(m, now);
         self.temp.init(m, now);
-    }
-
-    /// Measure the main loop runtime.
-    #[allow(unused_variables)]
-    fn meas_runtime(&self, m: &MainCtx<'_>) {
-        #[cfg(feature = "debug")]
-        {
-            let now = timer_get_large();
-
-            let runtime = now - self.prev_time.get(m);
-            self.prev_time.set(m, now);
-
-            let max_rt = self.max_rt.get(m).max(runtime);
-            self.max_rt.set(m, max_rt);
-
-            Debug::MaxRt.log_rel_large_timestamp(max_rt);
-        }
     }
 
     /// Run the initial startup delay.
@@ -378,7 +352,7 @@ impl System {
     /// Main loop.
     #[allow(non_snake_case)]
     pub fn run(&self, m: &MainCtx<'_>, ADC: &mcu::ADC) {
-        self.meas_runtime(m);
+        self.mon.meas_main_runtime(m);
 
         let state = self.state.get(m);
         if state == SysState::Startup {
