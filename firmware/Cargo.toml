@@ -45,13 +45,19 @@ derive_more = { version = "2", default-features = false, features = [ "add", "ad
 [features]
 default = [ "monitoring", "debug" ]
 
-# The monitoring feature enables the safety monitoring of the RPM control loop.
+# The monitoring feature fully enables the safety monitoring of the RPM control loop.
+#
 # Warning: Disabling this feature can lead to dangerous behavior of the system.
 #          Only disable this feature if you know what you are doing.
+#
+# Note that disabling the monitoring feature does *not* disable all safety features of the system.
+# This feature is meant to be swiched off for testing and development purposes in `motmock` environments.
+# This feature must be kept enabled for production builds.
 monitoring = []
 
 # The debug feature enables various debug features, such as UART and debug pin.
 # This feature is no effect on the safety of the system, but can be useful for debugging and development.
+# It is recommended to keep this feature enabled even for production builds.
 debug = []
 
 [profile.dev]
