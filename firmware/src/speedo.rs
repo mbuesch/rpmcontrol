@@ -57,12 +57,7 @@ impl Speedo {
         Self {
             ok_count: MainCtxCell::new(0),
             prev_stamp: MainCtxCell::new(LargeTimestamp::new()),
-            dur: [
-                MainCtxCell::new(0),
-                MainCtxCell::new(0),
-                MainCtxCell::new(0),
-                MainCtxCell::new(0),
-            ],
+            dur: MainCtxCell::new_array(0),
         }
     }
 

@@ -28,9 +28,9 @@ avr-atomic = "1"
 #avr-atomic = { path = "../../avr-atomic" }
 #avr-atomic = { git = "https://github.com/mbuesch/avr-atomic.git", branch = "main" }
 
-avr-context = "1"
+#avr-context = "1"
 #avr-context = { path = "../../avr-context" }
-#avr-context = { git = "https://github.com/mbuesch/avr-context.git", branch = "main" }
+avr-context = { git = "https://github.com/mbuesch/avr-context.git", branch = "main" }
 
 #avr-stack = "1"
 #avr-stack = { path = "../../avr-stack" }

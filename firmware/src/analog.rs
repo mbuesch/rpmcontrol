@@ -48,11 +48,7 @@ impl Adc {
             chan: MainCtxCell::new(AdcChannel::Setpoint),
             settled: MainCtxCell::new(false),
             running: MainCtxCell::new(false),
-            result: [
-                MainCtxCell::new(0),
-                MainCtxCell::new(0),
-                MainCtxCell::new(0),
-            ],
+            result: MainCtxCell::new_array(0),
             ok: MainCtxCell::new(0),
         }
     }

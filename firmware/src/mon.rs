@@ -42,17 +42,7 @@ impl Mon {
             prev_mains_90deg: MainCtxCell::new(LargeTimestamp::new()),
             prev_sp: MainCtxCell::new(LargeTimestamp::new()),
             error_deb: Debounce::new(),
-            sp_hist: History::new([
-                MainCtxCell::new(Freq(q7p8!(const 0))),
-                MainCtxCell::new(Freq(q7p8!(const 0))),
-                MainCtxCell::new(Freq(q7p8!(const 0))),
-                MainCtxCell::new(Freq(q7p8!(const 0))),
-                MainCtxCell::new(Freq(q7p8!(const 0))),
-                MainCtxCell::new(Freq(q7p8!(const 0))),
-                MainCtxCell::new(Freq(q7p8!(const 0))),
-                MainCtxCell::new(Freq(q7p8!(const 0))),
-                MainCtxCell::new(Freq(q7p8!(const 0))),
-            ]),
+            sp_hist: History::new(MainCtxCell::new_array(Freq(q7p8!(const 0)))),
             prev_main_rt_stamp: MainCtxCell::new(LargeTimestamp::new()),
             max_main_rt: MainCtxCell::new(RelLargeTimestamp::new()),
         }
