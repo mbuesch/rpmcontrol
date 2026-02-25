@@ -77,6 +77,18 @@ cd firmware
 make dw-flash
 ```
 
+## Safety
+
+Note that the AVR microcontroller is **not** a safety certified controller.
+Therefore, this project should not be used in any safety critical application.
+
+This project implements many safety features that should make it practically safe to use in many applications.
+However, the safety features are not guaranteed to be sufficient for all applications and all failure modes and the usual functional safety standards are **not** followed.
+
+**YOU ARE RESPONSIBLE FOR THE SAFETY OF YOUR APPLICATION.**
+
+If you think there is a safety issue with the project, then do not use it.
+
 ## License
 
 This project is dual-licensed under either of the following:
