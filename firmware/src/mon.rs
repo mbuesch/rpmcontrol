@@ -52,7 +52,6 @@ impl Mon {
         self.prev_check.set(m, now);
         self.prev_mains_90deg.set(m, now);
         self.prev_sp.set(m, now);
-        self.prev_main_rt_stamp.set(m, now);
     }
 
     pub fn check(
