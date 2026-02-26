@@ -82,18 +82,24 @@ impl Temp {
         if let Some(temp_mot) = temp_adc.mot {
             let temp_mot_volts = mot_adc_to_volts(temp_mot);
             let temp_mot_kohms = mot_volts_to_kohms(temp_mot_volts);
-            let temp_mot_cel = mot_kohms_to_celsius_double(temp_mot_kohms);
+            let temp_mot_cel;
 
-            let temp_mot_cel = self.filter_mot.run(m, temp_mot_cel, TEMP_FILTER_DIV);
-
-            if temp_mot_cel > TEMP_LIMIT_HI
-                || temp_mot_kohms >= TEMP_MOT_KOHMS_LIM_HI
-                || temp_mot_kohms <= TEMP_MOT_KOHMS_LIM_LO
-            {
+            if temp_mot_kohms >= TEMP_MOT_KOHMS_LIM_HI || temp_mot_kohms <= TEMP_MOT_KOHMS_LIM_LO {
                 must_shutoff = true;
-            }
-            if temp_mot_cel >= TEMP_LIMIT_LO {
-                may_restart = false;
+                temp_mot_cel = celsius!(-20);
+            } else {
+                temp_mot_cel = self.filter_mot.run(
+                    m,
+                    mot_kohms_to_celsius_double(temp_mot_kohms),
+                    TEMP_FILTER_DIV,
+                );
+
+                if temp_mot_cel > TEMP_LIMIT_HI {
+                    must_shutoff = true;
+                }
+                if temp_mot_cel >= TEMP_LIMIT_LO {
+                    may_restart = false;
+                }
             }
 
             Debug::TempMot.log_fixpt(temp_mot_cel);
