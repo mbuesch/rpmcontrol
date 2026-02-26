@@ -8,13 +8,13 @@ It is written in Rust for AVR.
 
 - PID controller for motor RPM regulation.
 - Triac control for AC motor speed adjustment.
-- Speed measurement from a magnet based speedometer generator.
+- Speed measurement from a magnet-based speedometer generator.
 - Temperature sensing for motor and microcontroller.
 - Safety monitoring and safety shutoff.
 
 ## Restrictions
 
-- The system is currently restricted 50 Hz mains frequency.
+- The system is currently restricted to 50 Hz mains frequency.
   This limit can be lifted, if needed.
   Please open an issue if you need support for 60 Hz mains.
 
@@ -28,7 +28,7 @@ It is written in Rust for AVR.
 To build the firmware, you need the following tools:
 
 - Rust AVR compiler: A `nightly` compiler is required.
-- [avr-libc](https://github.com/avrdudes/avr-libc) AVR specific C library.
+- [avr-libc](https://github.com/avrdudes/avr-libc) AVR-specific C library.
 - `avr-gcc` + `avr-binutils` toolchain (for linking and binary processing: `avr-ld`, `avr-objcopy`, `avr-size`, etc.)
 - [avr-postprocess](https://github.com/mbuesch/avr-postprocess) for post-processing the compiled AVR machine code.
 - [avra](https://github.com/Ro5bert/avra) for assembling AVR assembly code.
@@ -79,8 +79,8 @@ make dw-flash
 
 ## Safety
 
-Note that the AVR microcontroller is **not** a safety certified controller.
-Therefore, this project should not be used in any safety critical application.
+Note that the AVR microcontroller is **not** a safety-certified controller.
+Therefore, this project should not be used in any safety-critical application.
 
 This project implements many safety features that should make it practically safe to use in many applications.
 However, the safety features are not guaranteed to be sufficient for all applications and all failure modes and the usual functional safety standards are **not** followed.
