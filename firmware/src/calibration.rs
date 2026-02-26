@@ -168,7 +168,7 @@ pub mod mon_pocheck {
     pub const TRIAC_TRIG_OFFS_ENABLED_MS: Q7p8 = MAINS_HALFWAVE_DUR_MS.const_div(q7p8!(const 10));
 
     /// Show state transitions on the debug pin?
-    pub const DEBUG_PIN_ENA: bool = false;
+    pub const DEBUG_PIN_ENA: bool = true;
 }
 
 // vim: ts=4 sw=4 expandtab
