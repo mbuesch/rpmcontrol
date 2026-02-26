@@ -3,7 +3,10 @@
 // Copyright (C) 2025 Michael Büsch <m@bues.ch>
 
 use crate::{
-    calibration::temp::{NTC_CURVE, TEMP_FILTER_DIV, TEMP_LIMIT_HI, TEMP_LIMIT_LO, UC_CURVE},
+    calibration::temp::{
+        NTC_CURVE, TEMP_FILTER_DIV, TEMP_LIMIT_HI, TEMP_LIMIT_LO, TEMP_MOT_KOHMS_LIM_HI,
+        TEMP_MOT_KOHMS_LIM_LO, UC_CURVE,
+    },
     debug::Debug,
     filter::Filter,
     shutoff::Shutoff,
@@ -73,8 +76,8 @@ impl Temp {
     }
 
     pub fn run(&self, m: &MainCtx<'_>, temp_adc: TempAdc) {
-        let mut below_lo = false;
-        let mut above_hi = false;
+        let mut must_shutoff = false;
+        let mut may_restart = true;
 
         if let Some(temp_mot) = temp_adc.mot {
             let temp_mot_volts = mot_adc_to_volts(temp_mot);
@@ -83,13 +86,19 @@ impl Temp {
 
             let temp_mot_cel = self.filter_mot.run(m, temp_mot_cel, TEMP_FILTER_DIV);
 
-            if temp_mot_cel > TEMP_LIMIT_HI {
-                above_hi = true;
-            } else if temp_mot_cel < TEMP_LIMIT_LO {
-                below_lo = true;
+            if temp_mot_cel > TEMP_LIMIT_HI
+                || temp_mot_kohms >= TEMP_MOT_KOHMS_LIM_HI
+                || temp_mot_kohms <= TEMP_MOT_KOHMS_LIM_LO
+            {
+                must_shutoff = true;
+            }
+            if temp_mot_cel >= TEMP_LIMIT_LO {
+                may_restart = false;
             }
 
             Debug::TempMot.log_fixpt(temp_mot_cel);
+        } else {
+            may_restart = false;
         }
 
         if let Some(temp_uc) = temp_adc.uc {
@@ -98,19 +107,21 @@ impl Temp {
             let temp_uc_cel = self.filter_uc.run(m, temp_uc_cel, TEMP_FILTER_DIV);
 
             if temp_uc_cel > TEMP_LIMIT_HI {
-                above_hi = true;
-            } else if temp_uc_cel < TEMP_LIMIT_LO {
-                below_lo = true;
+                must_shutoff = true;
+            }
+            if temp_uc_cel >= TEMP_LIMIT_LO {
+                may_restart = false;
             }
 
             Debug::TempUc.log_fixpt(temp_uc_cel);
+        } else {
+            may_restart = false;
         }
 
-        if below_lo {
-            self.shutoff.set(m, Shutoff::MachineRunning);
-        }
-        if above_hi {
+        if must_shutoff {
             self.shutoff.set(m, Shutoff::MachineShutoff);
+        } else if may_restart {
+            self.shutoff.set(m, Shutoff::MachineRunning);
         }
     }
 

@@ -99,6 +99,12 @@ pub mod temp {
         (q7p8!(const 1000 / 100), celsius!(25)),
     ]);
 
+    /// Maximum kOhms for the motor NTC, above which a shutoff will immediately be triggered.
+    pub const TEMP_MOT_KOHMS_LIM_HI: Q7p8 = q7p8!(const 120);
+
+    /// Minimum kOhms for the motor NTC, below which a shutoff will immediately be triggered.
+    pub const TEMP_MOT_KOHMS_LIM_LO: Q7p8 = q7p8!(const 1 / 10);
+
     /// Microcontroller temperature curve.
     pub const UC_CURVE: Curve<Q7p8, (Q7p8, Q7p8), 3> = Curve::new([
         // (adc / 8, double deg Celsius)
