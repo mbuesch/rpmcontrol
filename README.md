@@ -52,6 +52,19 @@ The final hex file for flashing is
 
 The `Makefile` provides targets for flashing the firmware using `avrdude` (for ISP) or `dwdebug` (for debugWire).
 
+### SAFETY PRECAUTIONS: Electrically connecting the programmer device (ISP or debugWire)
+
+**WARNING**:
+There is a serious safety risk when connecting the programmer to the microcontroller.
+The microcontroller operates at mains voltage, which can be lethal if not handled properly.
+The circuit does **not** have galvanic isolation, so there is a direct electrical connection between the ISP/debugWire and the mains voltage.
+
+**BEFORE CONNECTING THE PROGRAMMER:**
+Make sure to power the circuit from a safe isolation transformer instead of directly from the mains.
+This will provide galvanic isolation from mains voltage.
+
+**IF YOU DON'T FOLLOW THESE SAFETY PRECAUTIONS, YOU RISK SERIOUS ELECTRIC SHOCK, INJURY, DEATH or damage to your equipment.**
+
 ### ISP Flashing
 
 First, set the fuses (this only needs to be done once):
@@ -77,7 +90,7 @@ cd firmware
 make dw-flash
 ```
 
-## Safety
+## Functional Safety during operation
 
 Note that the AVR microcontroller is **not** a safety-certified controller.
 Therefore, this project should not be used in any safety-critical application.
@@ -88,6 +101,12 @@ However, the safety features are not guaranteed to be sufficient for all applica
 **YOU ARE RESPONSIBLE FOR THE SAFETY OF YOUR APPLICATION.**
 
 If you think there is a safety issue with the project, then do not use it.
+
+## Electrical Safety
+
+**THIS PROJECT OPERATES AT MAINS VOLTAGE AND CAN BE LETHAL IF NOT HANDLED PROPERLY.**
+
+If you are not an expert certified in working with mains voltage, then do not use this project.
 
 ## License
 
