@@ -1,6 +1,6 @@
 // -*- coding: utf-8 -*-
 // SPDX-License-Identifier: Apache-2.0 OR MIT
-// Copyright (C) 2025 Michael Büsch <m@bues.ch>
+// Copyright (C) 2025 - 2026 Michael Büsch <m@bues.ch>
 
 use crate::{DP_TC1, hw::interrupt, triac::triac_timer_interrupt};
 use avr_context::{CriticalSection, InitCtx, IrqCtx, Mutex};

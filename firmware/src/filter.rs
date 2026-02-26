@@ -1,6 +1,6 @@
 // -*- coding: utf-8 -*-
 // SPDX-License-Identifier: Apache-2.0 OR MIT
-// Copyright (C) 2025 Michael Büsch <m@bues.ch>
+// Copyright (C) 2025 - 2026 Michael Büsch <m@bues.ch>
 
 use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, Q15p8, q7p8, q15p8};
