@@ -59,7 +59,7 @@ pub unsafe extern "C" fn wdt_init() {
     core::arch::naked_asm!(
         "ldi r16, 0x10", // WDCE=1
         "out {WDTCR}, r16",
-        "ldi r16, 0x19", // WDCE=1, WDE=1, WDP2=0, WDP1=0, WDP0=1
+        "ldi r16, 0x09", // WDCE=0, WDE=1, WDP2=0, WDP1=0, WDP0=1
         "out {WDTCR}, r16",
         WDTCR = const 0x21,
     );
