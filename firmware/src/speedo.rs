@@ -37,12 +37,11 @@ impl MotorSpeed {
         const FACT: i16 = Freq::FACT.to_int() as i16;
 
         let dur: i16 = dur.into();
-        let dur = dur.min(i16::MAX / (FACT * 2)); // avoid mul overflow.
+        let dur = dur.min(i16::MAX / FACT); // avoid mul overflow.
         let dur = dur.max(1); // avoid div by zero.
 
-        // fact 2 to avoid rounding error.
-        let num = (1_000_000 / (TIMER_TICK_US as u32 * (SPEEDO_FACT / 2))) as i16;
-        let denom = dur * FACT * 2;
+        let num = (1_000_000 / (TIMER_TICK_US as u32 * SPEEDO_FACT)) as i16;
+        let denom = dur * FACT;
 
         Self::from_freq(Freq(q7p8!(num / denom)))
     }
