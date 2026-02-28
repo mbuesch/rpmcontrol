@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright (C) 2025 - 2026 Michael Büsch <m@bues.ch>
 
-use avr_q::Q7p8;
+use avr_q::{Q7p8, q7p8};
 use derive_more as dm;
 
 /// Frequency in 4-Hz. (Hz divided by 4)
@@ -13,7 +13,7 @@ use derive_more as dm;
 pub struct Freq(pub Q7p8);
 
 impl Freq {
-    pub const FACT_HZ4: i16 = 4;
+    pub const FACT: Q7p8 = q7p8!(const 4);
 }
 
 // Project to inner.

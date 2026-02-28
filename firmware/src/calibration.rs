@@ -8,7 +8,7 @@ use crate::{
     freq::Freq, mains::MAINS_HALFWAVE_DUR_MS, pid::PidParams, system::rpm, temp::celsius,
     timer::RelLargeTimestamp,
 };
-use avr_q::{Q7p8, q7p8, Q15p8, q15p8};
+use avr_q::{Q7p8, Q15p8, q7p8, q15p8};
 use curveipo::Curve;
 
 /// Initial delay after startup, before any actuation or monitoring is active.

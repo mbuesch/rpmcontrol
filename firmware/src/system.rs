@@ -41,10 +41,9 @@ macro_rules! rpm {
             use $crate::freq::Freq;
 
             const RPM: i16 = $rpm;
-            const FACT: i16 = Freq::FACT_HZ4;
 
     let rps = q15p8!(const RPM / 60);
-    let freq = rps.const_div(q15p8!(const FACT));
+            let freq = rps.const_div(Freq::FACT.to_q15p8());
 
             Freq(freq.to_q7p8())
         }
