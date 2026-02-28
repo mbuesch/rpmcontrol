@@ -96,6 +96,7 @@ mod inner {
 
     pub fn rx_complete_callback(_c: &IrqCtx, _data: u8) {}
 
+    #[allow(clippy::collapsible_match)]
     pub fn tx_complete_callback(c: &IrqCtx) {
         let cs = c.cs();
         let index = INDEX.borrow(cs).get();
