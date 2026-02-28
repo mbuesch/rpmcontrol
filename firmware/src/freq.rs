@@ -12,8 +12,13 @@ use derive_more as dm;
 )]
 pub struct Freq(pub Q7p8);
 
+const FREQ_FACT_NUM: i16 = Freq::FACT_NUM;
+const FREQ_FACT_DEN: i16 = Freq::FACT_DEN;
+
 impl Freq {
-    pub const FACT: Q7p8 = q7p8!(const 4);
+    pub const FACT_NUM: i16 = 4;
+    pub const FACT_DEN: i16 = 1;
+    pub const FACT: Q7p8 = q7p8!(const FREQ_FACT_NUM / FREQ_FACT_DEN);
 }
 
 // Project to inner.

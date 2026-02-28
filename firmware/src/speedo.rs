@@ -10,7 +10,7 @@ use crate::{
 };
 use avr_context::{MainCtx, MainCtxCell};
 use avr_int24::I24;
-use avr_q::q7p8;
+use avr_q::q15p8;
 
 /// 4 speedometer edges per motor revolution
 const SPEEDO_FACT: u32 = 4;
@@ -34,16 +34,19 @@ impl MotorSpeed {
     }
 
     pub fn from_period_dur(dur: RelLargeTimestamp) -> Self {
-        const FACT: i16 = Freq::FACT.to_int() as i16;
+        const DUR_LIM: i16 =
+            ((i16::MAX as i32 * Freq::FACT_DEN as i32) / (Freq::FACT_NUM as i32)) as i16;
 
         let dur: i16 = dur.into();
-        let dur = dur.min(i16::MAX / FACT); // avoid mul overflow.
+        let dur = dur.min(DUR_LIM);
         let dur = dur.max(1); // avoid div by zero.
 
         let num = (1_000_000 / (TIMER_TICK_US as u32 * SPEEDO_FACT)) as i16;
-        let denom = dur * FACT;
+        let denom = dur;
 
-        Self::from_freq(Freq(q7p8!(num / denom)))
+        let freq = q15p8!(num / denom) / Freq::FACT.to_q15p8();
+
+        Self::from_freq(Freq(freq.to_q7p8()))
     }
 }
 
