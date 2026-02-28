@@ -42,8 +42,8 @@ pub const RPMPID_ILIM_POS: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
     // (speedo, I-limit)
     (rpm!(0).0, q7p8!(const 0)),
     (rpm!(1000).0, q7p8!(const 0)),
-    (rpm!(1001).0, q7p8!(const 64)),
-    (rpm!(MAX_RPM).0, q7p8!(const 64)),
+    (rpm!(1001).0, q7p8!(const 80)),
+    (rpm!(MAX_RPM).0, q7p8!(const 80)),
 ]);
 
 /// Substitute speedometer value curve for syncing, if the actual speedometer input is invalid.

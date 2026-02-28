@@ -33,8 +33,9 @@ fn hz_to_rpm(val: f64) -> f64 {
     val * 60.0
 }
 
-fn hz4_to_hz(val: f64) -> f64 {
-    val * 4.0
+fn freq_to_hz(val: f64) -> f64 {
+    const FREQ_FACT: f64 = 10.0 / 3.0; // Freq::FACT
+    val * FREQ_FACT
 }
 
 fn double_celsius_to_celsius(val: f64) -> f64 {
@@ -46,7 +47,7 @@ fn fixpt_to_f64(val: u16) -> f64 {
 }
 
 fn fixpt_to_rpm(val: u16) -> f64 {
-    hz_to_rpm(hz4_to_hz(fixpt_to_f64(val)))
+    hz_to_rpm(freq_to_hz(fixpt_to_f64(val)))
 }
 
 fn fixpt_to_celsius(val: u16) -> f64 {

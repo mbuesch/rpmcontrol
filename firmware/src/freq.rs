@@ -5,7 +5,8 @@
 use avr_q::{Q7p8, q7p8};
 use derive_more as dm;
 
-/// Frequency in 4-Hz. (Hz divided by 4)
+/// Frequency with internal representation in Q7.8 format.
+/// The actual frequency in Hz is `freq.0 * Freq::FACT`.
 #[repr(transparent)]
 #[derive(
     Copy, Clone, PartialEq, Eq, PartialOrd, Ord, dm::Add, dm::AddAssign, dm::Sub, dm::SubAssign,
@@ -16,8 +17,8 @@ const FREQ_FACT_NUM: i16 = Freq::FACT_NUM;
 const FREQ_FACT_DEN: i16 = Freq::FACT_DEN;
 
 impl Freq {
-    pub const FACT_NUM: i16 = 4;
-    pub const FACT_DEN: i16 = 1;
+    pub const FACT_NUM: i16 = 10;
+    pub const FACT_DEN: i16 = 3;
     pub const FACT: Q7p8 = q7p8!(const FREQ_FACT_NUM / FREQ_FACT_DEN);
 }
 

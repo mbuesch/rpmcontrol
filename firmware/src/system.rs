@@ -51,23 +51,29 @@ macro_rules! rpm {
 }
 pub(crate) use rpm;
 
-/// Convert 0..0x3FF to 0..400 Hz to 0..100 4-Hz
+/// Convert 0..0x3FF to 0..400 Hz to 0..x Freq
 fn setpoint_to_f(adc: u16) -> Freq {
+    const MAX_FREQ: i16 = rpm!(MAX_RPM).0.to_int() as i16;
+
     let adc = adc as i16;
-    let freq = q15p8!(adc) / q15p8!(const 256 / 25);
+    let freq = q15p8!(adc) / q15p8!(0x3FF / MAX_FREQ);
+
     Freq(freq.to_q7p8())
 }
 
 /// Clamp negative frequency to 0.
-/// Convert 0..100 4-Hz into pi..0 radians.
+/// Convert 0..x Freq into pi..0 radians.
 /// Convert pi..0 radians into 10..0 ms.
 fn f_to_trig_offs(f: Freq) -> Q7p8 {
+    const MAX_FREQ: i16 = rpm!(MAX_RPM).0.to_int() as i16;
+
     let fmin = Q7p8::from_int(0);
     let fmax = rpm!(MAX_RPM).0;
     let f = f.0;
     let f = f.max(fmin);
     let f = f.min(fmax);
-    (fmax - f) * q7p8!(const 10 / 100)
+
+    (fmax - f) * q7p8!(const 10 / MAX_FREQ)
 }
 
 /// Toggle the debug pin.
