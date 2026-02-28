@@ -24,13 +24,13 @@ impl Filter {
     }
 
     #[inline(never)]
-    pub fn run(&self, m: &MainCtx<'_>, input: Q7p8, div: Q7p8) -> Q7p8 {
+    pub fn run(&self, m: &MainCtx<'_>, input: Q7p8, div: Q15p8) -> Q7p8 {
         let mut buf = self.buf.get(m);
         buf -= self.out.get(m).into();
         buf += input.into();
         self.buf.set(m, buf);
 
-        let out = (buf / div.into()).into();
+        let out = (buf / div).into();
         self.out.set(m, out);
 
         out
