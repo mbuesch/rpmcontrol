@@ -5,7 +5,11 @@
 //! Calibration constants and tables.
 
 use crate::{
-    freq::Freq, mains::MAINS_HALFWAVE_DUR_MS, pid::PidParams, system::rpm, temp::celsius,
+    freq::Freq,
+    mains::{MAINS_HALFWAVE_DUR, MAINS_HALFWAVE_DUR_MS},
+    pid::PidParams,
+    system::rpm,
+    temp::celsius,
     timer::RelLargeTimestamp,
 };
 use avr_q::{Q7p8, Q15p8, q7p8, q15p8};
@@ -73,6 +77,20 @@ pub const NO_SPEED_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(1
 
 /// Minimum setpoint below which the triac will be shut off.
 pub const SP_MIN_CUTOFF: Freq = rpm!(300);
+
+/// Mains zero crossing detection.
+pub mod mains {
+    use super::*;
+
+    /// Mains frequency in Hz.
+    pub const MAINS_HZ: u8 = 50;
+
+    /// Next mains capture relative to the previous successful capture.
+    /// This is used to filter out spurious captures due to electrical noise.
+    /// Captures before this time has passed since the previous capture are ignored.
+    pub const MAINS_NEXT_CAPTURE: RelLargeTimestamp =
+        RelLargeTimestamp::from_micros(MAINS_HALFWAVE_DUR.to_micros() * 98 / 100);
+}
 
 /// Temperature calibration constants and tables.
 pub mod temp {

@@ -3,6 +3,7 @@
 // Copyright (C) 2025 - 2026 Michael Büsch <m@bues.ch>
 
 use crate::{
+    calibration::mains::{MAINS_HZ, MAINS_NEXT_CAPTURE},
     hw::interrupt,
     ports::{PORTA, PortOps as _},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large, timer_get_large_cs},
@@ -11,10 +12,10 @@ use avr_context::{CriticalSection, IrqCtx, MainCtx, MainCtxCell, Mutex};
 use avr_q::{Q7p8, q7p8};
 use core::cell::Cell;
 
-/// Mains sine wave period (50 Hz).
-pub const MAINS_PERIOD_MS: Q7p8 = q7p8!(const 20);
-/// Mains sine wave period (50 Hz).
-pub const MAINS_PERIOD: RelLargeTimestamp = RelLargeTimestamp::from_millis(20);
+/// Mains sine wave period.
+pub const MAINS_PERIOD_MS: Q7p8 = get_mains_period_ms_q();
+/// Mains sine wave period.
+pub const MAINS_PERIOD: RelLargeTimestamp = get_mains_period_timestamp();
 
 /// Mains sine wave half-wave length.
 pub const MAINS_HALFWAVE_DUR_MS: Q7p8 = MAINS_PERIOD_MS.const_div(q7p8!(const 2));
@@ -24,9 +25,19 @@ pub const MAINS_HALFWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(2);
 /// Mains sine wave quarter-wave length.
 pub const MAINS_QUARTERWAVE_DUR: RelLargeTimestamp = MAINS_PERIOD.div(4);
 
-/// Next mains capture.
-const MAINS_NEXT_CAPTURE: RelLargeTimestamp =
-    RelLargeTimestamp::from_micros(MAINS_HALFWAVE_DUR.to_micros() * 98 / 100);
+const fn get_mains_period_ms_q() -> Q7p8 {
+    match MAINS_HZ {
+        50 => q7p8!(const 20),
+        _ => panic!("Unsupported mains frequency."),
+    }
+}
+
+const fn get_mains_period_timestamp() -> RelLargeTimestamp {
+    match MAINS_HZ {
+        50 => RelLargeTimestamp::from_millis(20),
+        _ => panic!("Unsupported mains frequency."),
+    }
+}
 
 fn read_vsense(cs: CriticalSection<'_>) -> bool {
     PORTA.get(cs, 1)
