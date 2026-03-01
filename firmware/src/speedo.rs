@@ -5,11 +5,11 @@
 use crate::{
     analog::ac_capture_get,
     debug::Debug,
+    filter::FilterI16,
     freq::Freq,
     timer::{LargeTimestamp, RelLargeTimestamp, TIMER_TICK_US, timer_get_large},
 };
 use avr_context::{MainCtx, MainCtxCell};
-use avr_int24::I24;
 use avr_q::q15p8;
 
 /// 4 speedometer edges per motor revolution
@@ -20,6 +20,9 @@ const OK_THRES: u8 = 5;
 
 /// If no speedometer edge is detected for this long, consider the speed invalid.
 const TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(50);
+
+/// Speedometer filter shift.
+const FILTER_SHIFT: u8 = 4;
 
 #[derive(Copy, Clone)]
 pub struct MotorSpeed(Freq);
@@ -53,7 +56,7 @@ impl MotorSpeed {
 pub struct Speedo {
     ok_count: MainCtxCell<u8>,
     prev_stamp: MainCtxCell<LargeTimestamp>,
-    dur: [MainCtxCell<i16>; 4],
+    dur_filter: FilterI16,
 }
 
 impl Speedo {
@@ -61,7 +64,7 @@ impl Speedo {
         Self {
             ok_count: MainCtxCell::new(0),
             prev_stamp: MainCtxCell::new(LargeTimestamp::new()),
-            dur: MainCtxCell::new_array(0),
+            dur_filter: FilterI16::new(),
         }
     }
 
@@ -78,20 +81,22 @@ impl Speedo {
     }
 
     fn get_dur(&self, m: &MainCtx<'_>) -> RelLargeTimestamp {
-        let a = I24::from_i16(self.dur[0].get(m));
-        let b = I24::from_i16(self.dur[1].get(m));
-        let c = I24::from_i16(self.dur[2].get(m));
-        let d = I24::from_i16(self.dur[3].get(m));
-        let dur = ((a + b + c + d) >> 2).to_i16();
-        dur.into()
+        self.dur_filter.get(m).into()
     }
 
     fn new_duration(&self, m: &MainCtx<'_>, dur: RelLargeTimestamp) {
-        let dur: i16 = dur.into();
-        self.dur[0].set(m, self.dur[1].get(m));
-        self.dur[1].set(m, self.dur[2].get(m));
-        self.dur[2].set(m, self.dur[3].get(m));
-        self.dur[3].set(m, dur);
+        // First real duration?
+        if self.ok_count.get(m) <= 1 {
+            // Just store.
+            self.dur_filter.set(m, dur.into(), FILTER_SHIFT);
+        } else {
+            // Filter duration.
+            self.dur_filter.run(m, dur.into(), FILTER_SHIFT);
+        }
+        self.inc_ok(m);
+    }
+
+    fn inc_ok(&self, m: &MainCtx<'_>) {
         self.ok_count.set(m, self.ok_count.get(m).saturating_add(1));
     }
 
@@ -100,8 +105,11 @@ impl Speedo {
 
         // Process all new AC captures.
         while let Some(ac) = ac_capture_get() {
-            // prev_stamp is valid?
-            if self.ok_count.get(m) > 0 {
+            // prev_stamp is invalid?
+            if self.ok_count.get(m) == 0 {
+                // first edge, just store prev_stamp and increment ok_count.
+                self.inc_ok(m);
+            } else {
                 // ac stamp is valid?
                 if ac >= prev_stamp {
                     let dur = ac - prev_stamp;
@@ -110,9 +118,6 @@ impl Speedo {
                     // invalid stamp.
                     self.ok_count.set(m, 0);
                 }
-            } else {
-                // first edge, just store prev_stamp and increment ok_count.
-                self.new_duration(m, RelLargeTimestamp::from_millis(0));
             }
             prev_stamp = ac;
         }

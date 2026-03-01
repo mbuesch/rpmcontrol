@@ -569,7 +569,6 @@ dependencies = [
  "avr-atomic",
  "avr-context",
  "avr-device",
- "avr-int24",
  "avr-q",
  "avr-stack",
  "curveipo",
