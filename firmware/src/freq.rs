@@ -9,7 +9,17 @@ use derive_more as dm;
 /// The actual frequency in Hz is `freq.0 * Freq::FACT`.
 #[repr(transparent)]
 #[derive(
-    Copy, Clone, PartialEq, Eq, PartialOrd, Ord, dm::Add, dm::AddAssign, dm::Sub, dm::SubAssign,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    dm::Add,
+    dm::AddAssign,
+    dm::Sub,
+    dm::SubAssign,
+    dm::Neg,
 )]
 pub struct Freq(pub Q7p8);
 
@@ -20,6 +30,12 @@ impl Freq {
     pub const FACT_NUM: i16 = 10;
     pub const FACT_DEN: i16 = 3;
     pub const FACT: Q7p8 = q7p8!(const FREQ_FACT_NUM / FREQ_FACT_DEN);
+
+    /// Get the absolute value.
+    #[inline(always)]
+    pub const fn abs(self) -> Self {
+        Self(self.0.abs())
+    }
 }
 
 // Project to inner.

@@ -36,7 +36,7 @@ curveipo = "1"
 #curveipo = { path = "../../curveipors" }
 #curveipo = { git = "https://github.com/mbuesch/curveipors.git", branch = "main" }
 
-derive_more = { version = "2", default-features = false, features = [ "add", "add_assign" ] }
+derive_more = { version = "2", default-features = false, features = [ "add", "add_assign", "not" ] }
 
 [features]
 default = [ "monitoring", "debug" ]
