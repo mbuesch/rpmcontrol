@@ -4,12 +4,12 @@
 
 use crate::{
     calibration::{
-        MOT_HARD_LIMIT,
         mon::{
             CHECK_DIST, CHECK_TIMEOUT, ERROR_DEBOUNCE_ERRSTEP, ERROR_DEBOUNCE_LIMIT,
             ERROR_DEBOUNCE_STICKY, MAINS_ZERO_CROSSING_TIMEOUT, MAX_MAIN_RT_LIMIT, MIN_STACK_SPACE,
             MON_ACTIVE_THRES, SP_GRADIENT_THRES, SP_HIST_COUNT, SP_HIST_DIST, SPEEDO_TOLERANCE,
         },
+        system::MOT_HARD_LIMIT,
     },
     debounce::Debounce,
     debug::Debug,

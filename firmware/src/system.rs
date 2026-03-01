@@ -5,10 +5,10 @@
 use crate::{
     analog::{Ac, Adc, AdcChannel},
     calibration::{
-        MAX_RPM, MOT_SOFT_LIMIT, RPMPID_ILIM_NEG, RPMPID_ILIM_POS, RPMPID_PARAMS,
-        RPMPID_PARAMS_SYNCING, STARTUP_DELAY,
+        rpm_pid::{RPMPID_ILIM_NEG, RPMPID_ILIM_POS, RPMPID_PARAMS, RPMPID_PARAMS_SYNCING},
         setpoint::{SP_MIN_CUTOFF, SP_STEPS, SP_SYNC_THRES},
         speedo::{NO_SPEED_TIMEOUT, SPEED_FILTER_DIV, SYNC_SPEEDO_SUBSTITUTE},
+        system::{MAX_RPM, MOT_SOFT_LIMIT, STARTUP_DELAY},
     },
     debug::Debug,
     filter::Filter,

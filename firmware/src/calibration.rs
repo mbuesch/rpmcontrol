@@ -15,49 +15,60 @@ use crate::{
 use avr_q::{Q7p8, Q15p8, q7p8, q15p8};
 use curveipo::Curve;
 
-/// Initial delay after startup, before any actuation or monitoring is active.
-pub const STARTUP_DELAY: RelLargeTimestamp = RelLargeTimestamp::from_millis(300);
+/// Basic system parameters.
+pub mod system {
+    use super::*;
 
-/// RPM PID parameters for normal operation.
-pub const RPMPID_PARAMS: PidParams = PidParams {
-    kp: q7p8!(const 8 / 5),
-    ki: q7p8!(const 3 / 32),
-    kd: q7p8!(const 1 / 80),
-};
+    /// Initial delay after startup, before any actuation or monitoring is active.
+    pub const STARTUP_DELAY: RelLargeTimestamp = RelLargeTimestamp::from_millis(300);
 
-/// RPM PID parameters for speedometer syncing.
-pub const RPMPID_PARAMS_SYNCING: PidParams = PidParams {
-    kp: q7p8!(const 2 / 1),
-    ki: q7p8!(const 0),
-    kd: q7p8!(const 0),
-};
+    /// Nominal maximum motor RPM.
+    pub const MAX_RPM: i16 = 24000;
 
-/// Negative I-limit curve for the RPM PID controller.
-pub const RPMPID_ILIM_NEG: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
-    // (speedo, I-limit)
-    (rpm!(0).0, q7p8!(const 0)),
-    (rpm!(1000).0, q7p8!(const 0)),
-    (rpm!(1001).0, q7p8!(const -10)),
-    (rpm!(MAX_RPM).0, q7p8!(const -10)),
-]);
+    /// Maximum motor RPM that will trigger a hard triac inhibit.
+    pub const MOT_SOFT_LIMIT: Freq = rpm!(MAX_RPM + 500);
 
-/// Positive I-limit curve for the RPM PID controller.
-pub const RPMPID_ILIM_POS: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
-    // (speedo, I-limit)
-    (rpm!(0).0, q7p8!(const 0)),
-    (rpm!(1000).0, q7p8!(const 0)),
-    (rpm!(1001).0, q7p8!(const 80)),
-    (rpm!(MAX_RPM).0, q7p8!(const 80)),
-]);
+    /// Maximum motor RPM that will trigger a monitoring fault.
+    pub const MOT_HARD_LIMIT: Freq = rpm!(MAX_RPM + 1500);
+}
 
-/// Nominal maximum motor RPM.
-pub const MAX_RPM: i16 = 24000;
+/// RPM PID controller parameters.
+pub mod rpm_pid {
+    use super::system::MAX_RPM;
+    use super::*;
 
-/// Maximum motor RPM that will trigger a hard triac inhibit.
-pub const MOT_SOFT_LIMIT: Freq = rpm!(MAX_RPM + 500);
+    /// RPM PID parameters for normal operation.
+    pub const RPMPID_PARAMS: PidParams = PidParams {
+        kp: q7p8!(const 8 / 5),
+        ki: q7p8!(const 3 / 32),
+        kd: q7p8!(const 1 / 80),
+    };
 
-/// Maximum motor RPM that will trigger a monitoring fault.
-pub const MOT_HARD_LIMIT: Freq = rpm!(MAX_RPM + 1500);
+    /// RPM PID parameters for speedometer syncing.
+    pub const RPMPID_PARAMS_SYNCING: PidParams = PidParams {
+        kp: q7p8!(const 2 / 1),
+        ki: q7p8!(const 0),
+        kd: q7p8!(const 0),
+    };
+
+    /// Negative I-limit curve for the RPM PID controller.
+    pub const RPMPID_ILIM_NEG: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
+        // (speedo, I-limit)
+        (rpm!(0).0, q7p8!(const 0)),
+        (rpm!(1000).0, q7p8!(const 0)),
+        (rpm!(1001).0, q7p8!(const -10)),
+        (rpm!(MAX_RPM).0, q7p8!(const -10)),
+    ]);
+
+    /// Positive I-limit curve for the RPM PID controller.
+    pub const RPMPID_ILIM_POS: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
+        // (speedo, I-limit)
+        (rpm!(0).0, q7p8!(const 0)),
+        (rpm!(1000).0, q7p8!(const 0)),
+        (rpm!(1001).0, q7p8!(const 80)),
+        (rpm!(MAX_RPM).0, q7p8!(const 80)),
+    ]);
+}
 
 /// Setpoint measurement and processing.
 pub mod setpoint {
