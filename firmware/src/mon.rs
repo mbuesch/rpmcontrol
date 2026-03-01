@@ -5,10 +5,10 @@
 use crate::{
     calibration::{
         mon::{
-            CHECK_DIST, CHECK_TIMEOUT, ERROR_DEBOUNCE_ERRSTEP, ERROR_DEBOUNCE_LIMIT,
-            ERROR_DEBOUNCE_STICKY, HIST_COUNT, HIST_DIST, MAINS_ZERO_CROSSING_TIMEOUT,
-            MAX_MAIN_RT_LIMIT, MIN_STACK_SPACE, MON_ACTIVE_THRES, SP_GRADIENT_THRES,
-            SPEEDO_TOLERANCE,
+            ACCELERATION_GRADIENT_LO_THRES, CHECK_DIST, CHECK_TIMEOUT, ERROR_DEBOUNCE_ERRSTEP,
+            ERROR_DEBOUNCE_LIMIT, ERROR_DEBOUNCE_STICKY, HIST_COUNT, HIST_DIST,
+            MAINS_ZERO_CROSSING_TIMEOUT, MAX_MAIN_RT_LIMIT, MIN_STACK_SPACE, MON_ACTIVE_THRES,
+            SP_GRADIENT_THRES, SPEEDO_TOLERANCE,
         },
         system::MOT_HARD_LIMIT,
     },
@@ -152,45 +152,62 @@ impl Mon {
 
     /// Do the main periodic monitoring checks.
     fn mon_main_checks(&self, m: &MainCtx<'_>, ctrl_state: &MonControllerState) {
-        // If the motor speed is above the hard limit, then we have a problem.
-        if ctrl_state.speedo >= MOT_HARD_LIMIT {
-            if cfg!(feature = "monitoring") {
-                self.error_deb.error(m);
-            }
-        } else {
-            // The motor speed is inside of the allowed range.
+        // If the motor speed is above the hard limit, then we have a major problem.
+        if ctrl_state.speedo >= MOT_HARD_LIMIT && cfg!(feature = "monitoring") {
+            // We already know that we have an error.
+            // Do not run the remaining checks.
+            self.error_deb.error(m);
+            return;
+        }
+        // The motor speed is not above the hard limit or the hard limit check is disabled.
 
-            // Get the setpoint gradient between
-            // current setpoint and oldest setpoint from history buffer.
-            let sp_grad = Freq((ctrl_state.setpoint - self.hist.oldest(m).setpoint).0.abs());
+        // Get the oldest entry from the history buffer.
+        let oldest_hist_entry = self.hist.oldest(m);
 
-            // Only do the monitoring checks,
-            // if the setpoint didn't change much recently.
-            if sp_grad <= SP_GRADIENT_THRES {
-                // Check if we are above the monitoring activation RPM threshold.
-                if ctrl_state.speedo >= MON_ACTIVE_THRES {
-                    // Get the difference between measured speed and speed setpoint.
-                    let diff = Freq((ctrl_state.speedo - ctrl_state.setpoint).0.abs());
+        // Get the setpoint gradient between
+        // the oldest setpoint from history buffer and the current setpoint.
+        let sp_grad = ctrl_state.setpoint - oldest_hist_entry.setpoint;
 
-                    // If the speed difference is above a threshold,
-                    // we might have an error.
-                    // Debounce the error.
-                    if diff > SPEEDO_TOLERANCE {
-                        if cfg!(feature = "monitoring") {
-                            self.error_deb.error(m);
-                        }
-                    } else {
-                        self.error_deb.ok(m);
-                    }
-                } else {
-                    // We are below the monitoring activation threshold.
-                    // The machine is running with slow speed.
-                    // Assume everything is fine.
-                    self.error_deb.ok(m);
+        // Get the speedometer gradient between
+        // the oldest speedometer value from history buffer and the current speedometer value.
+        let speedo_grad = ctrl_state.speedo - oldest_hist_entry.speedo;
+
+        // Only do the monitoring checks,
+        // if the setpoint didn't change much recently.
+        if sp_grad.abs() > SP_GRADIENT_THRES {
+            // We just wait until the user stopped changing the setpoint.
+            // Do not run the monitoring checks and do *not* debounce to Ok here,
+            // because we don't know the state of the system until the setpoint has settled.
+            return;
+        }
+
+        if speedo_grad < ACCELERATION_GRADIENT_LO_THRES {
+            // The machine is decelerating.
+            // We cannot actively control the deceleration, because the machine does not have actively controlled braking.
+            // Therefore, don't run the monitoring checks during deceleration.
+            return;
+        }
+
+        // Check if we are above the monitoring activation RPM threshold.
+        if ctrl_state.speedo >= MON_ACTIVE_THRES {
+            // Get the absolute difference between measured speed and speed setpoint.
+            let diff = (ctrl_state.speedo - ctrl_state.setpoint).abs();
+
+            // If the speed difference is above a threshold,
+            // we might have an error.
+            // Debounce the error.
+            if diff > SPEEDO_TOLERANCE {
+                if cfg!(feature = "monitoring") {
+                    self.error_deb.error(m);
                 }
             } else {
-                // We just wait until the user stopped changing the setpoint.
+                self.error_deb.ok(m);
             }
+        } else {
+            // We are below the monitoring activation threshold.
+            // The machine is running with slow speed.
+            // Assume everything is fine.
+            self.error_deb.ok(m);
         }
     }
 
@@ -217,6 +234,7 @@ impl Mon {
             self.mon_main_checks(m, &ctrl_state);
         }
 
+        // Run the remaining hard failure checks.
         self.mon_mains_90deg(m, now, mains_90deg, &mut hard_failures);
         self.mon_check_stack_usage(m, &mut hard_failures);
         self.mon_check_main_runtime(m, &mut hard_failures);

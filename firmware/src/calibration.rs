@@ -194,14 +194,21 @@ pub mod mon {
     /// Immediate fault, if the main loop execution time is bigger than this.
     pub const MAX_MAIN_RT_LIMIT: RelLargeTimestamp = RelLargeTimestamp::from_millis(5);
 
-    /// Setpoint and speedometer history.
+    /// Setpoint and speedometer history buffer.
+    /// Distance between history buffer elements.
     /// Length = HIST_DIST * HIST_COUNT = 3 seconds
     pub const HIST_DIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(333333);
-    /// Number if elements in the history.
+    /// Number of elements in the history buffer.
     pub const HIST_COUNT: usize = 9;
 
-    /// Don't run monitoring, if the setpoint gradient in history is bigger than this.
+    /// Don't run monitoring,
+    /// if the setpoint gradient in history buffer (first to last element) is bigger than this.
     pub const SP_GRADIENT_THRES: Freq = rpm!(1000);
+
+    /// Don't run monitoring,
+    /// if the acceleration gradient in history buffer (first to last element) is lower than this.
+    /// Values less than zero mean deceleration.
+    pub const ACCELERATION_GRADIENT_LO_THRES: Freq = rpm!(-5000);
 
     /// Step size for one error event.
     pub const ERROR_DEBOUNCE_ERRSTEP: u8 = 3;
