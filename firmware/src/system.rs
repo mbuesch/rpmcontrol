@@ -5,10 +5,10 @@
 use crate::{
     analog::{Ac, Adc, AdcChannel},
     calibration::{
-        MAX_RPM, MOT_SOFT_LIMIT, RPM_SYNC_THRES, RPMPID_ILIM_NEG, RPMPID_ILIM_POS, RPMPID_PARAMS,
-        RPMPID_PARAMS_SYNCING, STARTUP_DELAY, SYNC_SPEEDO_SUBSTITUTE,
-        setpoint::{SP_MIN_CUTOFF, SP_STEPS},
-        speedo::{NO_SPEED_TIMEOUT, SPEED_FILTER_DIV},
+        MAX_RPM, MOT_SOFT_LIMIT, RPMPID_ILIM_NEG, RPMPID_ILIM_POS, RPMPID_PARAMS,
+        RPMPID_PARAMS_SYNCING, STARTUP_DELAY,
+        setpoint::{SP_MIN_CUTOFF, SP_STEPS, SP_SYNC_THRES},
+        speedo::{NO_SPEED_TIMEOUT, SPEED_FILTER_DIV, SYNC_SPEEDO_SUBSTITUTE},
     },
     debug::Debug,
     filter::Filter,
@@ -296,7 +296,7 @@ impl System {
                 },
             );
 
-            if setpoint <= RPM_SYNC_THRES {
+            if setpoint <= SP_SYNC_THRES {
                 self.state.set(m, SysState::Syncing);
             }
 

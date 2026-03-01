@@ -50,13 +50,6 @@ pub const RPMPID_ILIM_POS: Curve<Q7p8, (Q7p8, Q7p8), 4> = Curve::new([
     (rpm!(MAX_RPM).0, q7p8!(const 80)),
 ]);
 
-/// Substitute speedometer value curve for syncing, if the actual speedometer input is invalid.
-pub const SYNC_SPEEDO_SUBSTITUTE: Curve<Freq, (Freq, Freq), 2> = Curve::new([
-    // (setpoint, speedo-substitute)
-    (rpm!(0), rpm!(0)),
-    (rpm!(1000), rpm!(800)),
-]);
-
 /// Nominal maximum motor RPM.
 pub const MAX_RPM: i16 = 24000;
 
@@ -66,9 +59,7 @@ pub const MOT_SOFT_LIMIT: Freq = rpm!(MAX_RPM + 500);
 /// Maximum motor RPM that will trigger a monitoring fault.
 pub const MOT_HARD_LIMIT: Freq = rpm!(MAX_RPM + 1500);
 
-/// Motor speed below this threshold will trigger speedometer re-syncing.
-pub const RPM_SYNC_THRES: Freq = rpm!(1000);
-
+/// Setpoint measurement and processing.
 pub mod setpoint {
     use super::*;
 
@@ -78,8 +69,12 @@ pub mod setpoint {
     /// The number of virtual steps in the setpoint.
     /// The setpoint potentiometer reading snaps to these descrete virtual steps.
     pub const SP_STEPS: i16 = 100;
+
+    /// Setpoint below this threshold will enforce speedometer re-syncing.
+    pub const SP_SYNC_THRES: Freq = rpm!(1000);
 }
 
+/// Speedometer measurement and filtering.
 pub mod speedo {
     use super::*;
 
@@ -105,6 +100,13 @@ pub mod speedo {
     /// Physical layout.
     /// Number of speedometer edges per motor revolution.
     pub const SPEEDO_FACT: u32 = 4;
+
+    /// Substitute speedometer value curve during syncing when the actual speedometer input is invalid.
+    pub const SYNC_SPEEDO_SUBSTITUTE: Curve<Freq, (Freq, Freq), 2> = Curve::new([
+        // (setpoint, speedo-substitute)
+        (rpm!(0), rpm!(0)),
+        (rpm!(1000), rpm!(800)),
+    ]);
 }
 
 /// Mains zero crossing detection.
