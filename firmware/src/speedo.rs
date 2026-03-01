@@ -4,6 +4,7 @@
 
 use crate::{
     analog::ac_capture_get,
+    calibration::speedo::{FILTER_SHIFT, OK_THRES, SPEEDO_FACT, SPEEDO_LOWLEVEL_TIMEOUT},
     debug::Debug,
     filter::FilterI16,
     freq::Freq,
@@ -11,18 +12,6 @@ use crate::{
 };
 use avr_context::{MainCtx, MainCtxCell};
 use avr_q::q15p8;
-
-/// 4 speedometer edges per motor revolution
-const SPEEDO_FACT: u32 = 4;
-
-/// Need at least this many valid speedometer edges in a row to consider the speed valid.
-const OK_THRES: u8 = 5;
-
-/// If no speedometer edge is detected for this long, consider the speed invalid.
-const TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(50);
-
-/// Speedometer filter shift.
-const FILTER_SHIFT: u8 = 4;
 
 #[derive(Copy, Clone)]
 pub struct MotorSpeed(Freq);
@@ -124,7 +113,7 @@ impl Speedo {
 
         // Check if prev_stamp is too old.
         let now = timer_get_large();
-        if now - prev_stamp >= TIMEOUT {
+        if now - prev_stamp >= SPEEDO_LOWLEVEL_TIMEOUT {
             self.ok_count.set(m, 0);
         }
 

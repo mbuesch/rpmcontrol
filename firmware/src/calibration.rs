@@ -22,7 +22,7 @@ pub const STARTUP_DELAY: RelLargeTimestamp = RelLargeTimestamp::from_millis(300)
 pub const RPMPID_PARAMS: PidParams = PidParams {
     kp: q7p8!(const 8 / 5),
     ki: q7p8!(const 3 / 32),
-    kd: q7p8!(const 1 / 32),
+    kd: q7p8!(const 1 / 80),
 };
 
 /// RPM PID parameters for speedometer syncing.
@@ -69,12 +69,6 @@ pub const MOT_HARD_LIMIT: Freq = rpm!(MAX_RPM + 1500);
 /// Motor speed below this threshold will trigger speedometer re-syncing.
 pub const RPM_SYNC_THRES: Freq = rpm!(1000);
 
-/// Speedometer filter divider.
-pub const SPEED_FILTER_DIV: Q15p8 = q15p8!(const 100);
-
-/// Maximum amount of time we can live without a valid speedometer.
-pub const NO_SPEED_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
-
 pub mod setpoint {
     use super::*;
 
@@ -84,6 +78,33 @@ pub mod setpoint {
     /// The number of virtual steps in the setpoint.
     /// The setpoint potentiometer reading snaps to these descrete virtual steps.
     pub const SP_STEPS: i16 = 100;
+}
+
+pub mod speedo {
+    use super::*;
+
+    /// High level speed filter divider.
+    pub const SPEED_FILTER_DIV: Q15p8 = q15p8!(const 2);
+
+    /// High level timeout.
+    /// Maximum amount of time the system can live without a valid speedometer reading.
+    pub const NO_SPEED_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
+
+    /// Low level timeout.
+    /// If no speedometer edge is detected for this long, reset the speedometer Ok count.
+    pub const SPEEDO_LOWLEVEL_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(50);
+
+    /// Low level Ok counter threshold.
+    /// Need at least this many valid speedometer edges in a row to consider the speed valid for the first time.
+    pub const OK_THRES: u8 = 5;
+
+    /// Low level filter shift.
+    /// Filters the measured low level speedometer edge durations.
+    pub const FILTER_SHIFT: u8 = 5;
+
+    /// Physical layout.
+    /// Number of speedometer edges per motor revolution.
+    pub const SPEEDO_FACT: u32 = 4;
 }
 
 /// Mains zero crossing detection.
