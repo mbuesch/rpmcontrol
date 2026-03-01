@@ -6,8 +6,9 @@ use crate::{
     analog::{Ac, Adc, AdcChannel},
     calibration::{
         MAX_RPM, MOT_SOFT_LIMIT, NO_SPEED_TIMEOUT, RPM_SYNC_THRES, RPMPID_ILIM_NEG,
-        RPMPID_ILIM_POS, RPMPID_PARAMS, RPMPID_PARAMS_SYNCING, SP_MIN_CUTOFF, SPEED_FILTER_DIV,
-        STARTUP_DELAY, SYNC_SPEEDO_SUBSTITUTE,
+        RPMPID_ILIM_POS, RPMPID_PARAMS, RPMPID_PARAMS_SYNCING, SPEED_FILTER_DIV, STARTUP_DELAY,
+        SYNC_SPEEDO_SUBSTITUTE,
+        setpoint::{SP_MIN_CUTOFF, SP_STEPS},
     },
     debug::Debug,
     filter::Filter,
@@ -257,9 +258,9 @@ impl System {
         let setpoint = if let Some(setpoint) = self.adc.get_result(m, AdcChannel::Setpoint) {
             self.setpoint_snap.update(
                 m,
-                rpm!(0),             // min
-                rpm!(MAX_RPM),       // max
-                rpm!(MAX_RPM / 256), // hyst
+                rpm!(0),                  // min
+                rpm!(MAX_RPM),            // max
+                rpm!(MAX_RPM / SP_STEPS), // hyst
                 setpoint_to_f(setpoint),
             )
         } else {

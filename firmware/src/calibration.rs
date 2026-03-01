@@ -75,8 +75,16 @@ pub const SPEED_FILTER_DIV: Q15p8 = q15p8!(const 100);
 /// Maximum amount of time we can live without a valid speedometer.
 pub const NO_SPEED_TIMEOUT: RelLargeTimestamp = RelLargeTimestamp::from_millis(100);
 
-/// Minimum setpoint below which the triac will be shut off.
-pub const SP_MIN_CUTOFF: Freq = rpm!(300);
+pub mod setpoint {
+    use super::*;
+
+    /// Minimum setpoint below which the triac will be shut off.
+    pub const SP_MIN_CUTOFF: Freq = rpm!(300);
+
+    /// The number of virtual steps in the setpoint.
+    /// The setpoint potentiometer reading snaps to these descrete virtual steps.
+    pub const SP_STEPS: i16 = 100;
+}
 
 /// Mains zero crossing detection.
 pub mod mains {
