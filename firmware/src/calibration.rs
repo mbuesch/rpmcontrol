@@ -194,11 +194,11 @@ pub mod mon {
     /// Immediate fault, if the main loop execution time is bigger than this.
     pub const MAX_MAIN_RT_LIMIT: RelLargeTimestamp = RelLargeTimestamp::from_millis(5);
 
-    /// Setpoint history.
-    /// Length = SP_HIST_DIST * SP_HIST_COUNT = 3 seconds
-    pub const SP_HIST_DIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(333333);
-    /// Number if elements in the setpoint history.
-    pub const SP_HIST_COUNT: usize = 9;
+    /// Setpoint and speedometer history.
+    /// Length = HIST_DIST * HIST_COUNT = 3 seconds
+    pub const HIST_DIST: RelLargeTimestamp = RelLargeTimestamp::from_micros(333333);
+    /// Number if elements in the history.
+    pub const HIST_COUNT: usize = 9;
 
     /// Don't run monitoring, if the setpoint gradient in history is bigger than this.
     pub const SP_GRADIENT_THRES: Freq = rpm!(1000);
