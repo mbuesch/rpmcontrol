@@ -248,6 +248,8 @@ impl System {
             self.speed_filter.reset(m);
             Freq(q7p8!(const 0))
         };
+        // Raw speedo signal is considered ok if we have a valid speed measurement.
+        let raw_speedo_signal_is_ok = speed.is_some();
 
         // If the motor is too fast, turn the triac off.
         if speed_filt > MOT_SOFT_LIMIT {
@@ -340,7 +342,13 @@ impl System {
         let mut safety_shutoff = self.temp.get_shutoff(m);
 
         // Safety monitoring check.
-        safety_shutoff |= self.mon.check(m, setpoint, speed_filt, mains_90deg_trigger);
+        safety_shutoff |= self.mon.check(
+            m,
+            setpoint,
+            speed_filt,
+            raw_speedo_signal_is_ok,
+            mains_90deg_trigger,
+        );
 
         // Secondary shutoff path.
         if safety_shutoff == Shutoff::MachineShutoff {

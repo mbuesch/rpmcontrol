@@ -8,8 +8,9 @@ use crate::{
             ACCELERATION_GRADIENT_LO_THRES, CHECK_DIST, CHECK_TIMEOUT, ERROR_DEBOUNCE_ERRSTEP,
             ERROR_DEBOUNCE_LIMIT, ERROR_DEBOUNCE_STICKY, HIST_COUNT, HIST_DIST,
             MAINS_ZERO_CROSSING_TIMEOUT, MAX_MAIN_RT_LIMIT, MIN_STACK_SPACE, MON_ACTIVE_THRES,
-            SP_GRADIENT_THRES, SPEEDO_TOLERANCE,
+            MON_NO_SPEED_TIMEOUT_COUNT_THRES, SP_GRADIENT_THRES, SPEEDO_TOLERANCE,
         },
+        speedo::NO_SPEED_TIMEOUT,
         system::MOT_HARD_LIMIT,
     },
     debounce::Debounce,
@@ -37,6 +38,7 @@ struct MonControllerState {
 #[derive(Clone, Default)]
 struct MonHardFailures {
     mains_90deg_dist_failure: bool,
+    speedo_ok_failure: bool,
     mon_check_dist_failure: bool,
     stack_failure: bool,
     max_main_rt_failure: bool,
@@ -47,7 +49,9 @@ struct MonHardFailures {
 pub struct Mon {
     prev_check: MainCtxCell<LargeTimestamp>,
     prev_mains_90deg: MainCtxCell<LargeTimestamp>,
+    prev_speedo: MainCtxCell<LargeTimestamp>,
     prev_hist: MainCtxCell<LargeTimestamp>,
+    no_speed_count: MainCtxCell<u8>,
     error_deb: Debounce<ERROR_DEBOUNCE_ERRSTEP, ERROR_DEBOUNCE_LIMIT, ERROR_DEBOUNCE_STICKY>,
     hist: History<MonControllerState, HIST_COUNT>,
     prev_main_rt_stamp: MainCtxCell<LargeTimestamp>,
@@ -60,7 +64,9 @@ impl Mon {
         Self {
             prev_check: MainCtxCell::new(LargeTimestamp::new()),
             prev_mains_90deg: MainCtxCell::new(LargeTimestamp::new()),
+            prev_speedo: MainCtxCell::new(LargeTimestamp::new()),
             prev_hist: MainCtxCell::new(LargeTimestamp::new()),
+            no_speed_count: MainCtxCell::new(0),
             error_deb: Debounce::new(),
             hist: History::new(MainCtxCell::new_array(MonControllerState {
                 setpoint: Freq(q7p8!(const 0)),
@@ -75,6 +81,7 @@ impl Mon {
     pub fn init(&self, m: &MainCtx<'_>, now: LargeTimestamp) {
         self.prev_check.set(m, now);
         self.prev_mains_90deg.set(m, now);
+        self.prev_speedo.set(m, now);
         self.prev_hist.set(m, now);
     }
 
@@ -111,7 +118,7 @@ impl Mon {
     }
 
     /// Check the distance between mains zero crossings.
-    fn mon_mains_90deg(
+    fn mon_check_mains_90deg(
         &self,
         m: &MainCtx<'_>,
         now: LargeTimestamp,
@@ -126,6 +133,38 @@ impl Mon {
         // Check if the distance between mains 90deg crossings is too big.
         hard_failures.mains_90deg_dist_failure =
             now > self.prev_mains_90deg.get(m) + MAINS_ZERO_CROSSING_TIMEOUT;
+    }
+
+    /// Check the distance between valid speedometer readings.
+    fn mon_check_speedo_ok(
+        &self,
+        m: &MainCtx<'_>,
+        now: LargeTimestamp,
+        ctrl_state: &MonControllerState,
+        speedo_ok: bool,
+        hard_failures: &mut MonHardFailures,
+    ) {
+        let mut count = self.no_speed_count.get(m);
+
+        // Increment the no-speed counter, if we didn't have a valid speedometer for a while.
+        if now > self.prev_speedo.get(m) + NO_SPEED_TIMEOUT {
+            self.prev_speedo.set(m, now);
+            count = count.saturating_add(1);
+        }
+
+        // If we just had a valid speedometer reading,
+        // or if we are below the monitoring activation threshold, then
+        // reset the no-speed state.
+        if speedo_ok || ctrl_state.speedo < MON_ACTIVE_THRES {
+            self.prev_speedo.set(m, now);
+            count = 0;
+        }
+
+        // If we did not have a valid speedometer for too long,
+        // then we have a hard failure.
+        hard_failures.speedo_ok_failure = count >= MON_NO_SPEED_TIMEOUT_COUNT_THRES;
+
+        self.no_speed_count.set(m, count);
     }
 
     /// Check the CPU stack usage.
@@ -217,6 +256,7 @@ impl Mon {
         m: &MainCtx<'_>,
         setpoint: Freq,
         speedo: Freq,
+        speedo_ok: bool,
         mains_90deg: bool,
     ) -> Shutoff {
         let mut hard_failures = MonHardFailures::default();
@@ -235,7 +275,8 @@ impl Mon {
         }
 
         // Run the remaining hard failure checks.
-        self.mon_mains_90deg(m, now, mains_90deg, &mut hard_failures);
+        self.mon_check_mains_90deg(m, now, mains_90deg, &mut hard_failures);
+        self.mon_check_speedo_ok(m, now, &ctrl_state, speedo_ok, &mut hard_failures);
         self.mon_check_stack_usage(m, &mut hard_failures);
         self.mon_check_main_runtime(m, &mut hard_failures);
         self.mon_check_analog_failure(m, &mut hard_failures);
@@ -245,6 +286,7 @@ impl Mon {
             || hard_failures.mon_check_dist_failure
             || hard_failures.analog_failure
             || hard_failures.mains_90deg_dist_failure
+            || hard_failures.speedo_ok_failure
             || hard_failures.max_main_rt_failure
         {
             // We have a hard failure.

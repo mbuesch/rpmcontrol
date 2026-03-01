@@ -222,6 +222,12 @@ pub mod mon {
     /// Monitoring activation threshold for speedometer input.
     /// Monitoring is not active below this threshold.
     pub const MON_ACTIVE_THRES: Freq = rpm!(7500);
+
+    /// If the setpoint is above `MON_ACTIVE_THRES`, but the speedometer is invalid
+    /// for this number of `NO_SPEED_TIMEOUT` times, then a hard monitoring fault is triggered.
+    /// So the monitoring timeout for the speedometer is roughly
+    /// `NO_SPEED_TIMEOUT` * `MON_NO_SPEED_TIMEOUT_COUNT_THRES`.
+    pub const MON_NO_SPEED_TIMEOUT_COUNT_THRES: u8 = 20;
 }
 
 /// Monitoring Power-On-Check constants and tables.
