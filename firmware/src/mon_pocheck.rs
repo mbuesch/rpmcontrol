@@ -101,13 +101,13 @@ impl PoCheck {
                             if DEBUG_PIN_ENA {
                                 debug_toggle();
                             }
-                        }
-
-                        // Run the actual machine state check.
-                        if self.is_error_condition(state, speedo_hz) {
-                            // Error detected.
-                            // Shutoff everything.
-                            state = PoState::Error;
+                        } else {
+                            // Run the actual machine state check.
+                            if self.is_error_condition(state, speedo_hz) {
+                                // Error detected.
+                                // Shutoff everything.
+                                state = PoState::Error;
+                            }
                         }
                     }
                 }
