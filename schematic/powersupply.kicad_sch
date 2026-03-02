@@ -1405,16 +1405,6 @@
 			(embedded_fonts no)
 		)
 	)
-	(text "TVS"
-		(exclude_from_sim no)
-		(at 210.058 66.548 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "4c87dc7e-8239-4fa1-b6ab-7ca602ed0be7")
-	)
 	(text "+19 V rail"
 		(exclude_from_sim no)
 		(at 144.526 40.64 0)
@@ -1434,16 +1424,6 @@
 			)
 		)
 		(uuid "d142590c-a12c-41a7-8004-08ab03706493")
-	)
-	(text "TVS"
-		(exclude_from_sim no)
-		(at 210.058 129.794 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "f1bdcd89-6f73-4476-a9e3-3eb5251b6571")
 	)
 	(junction
 		(at 205.74 115.57)
@@ -2662,7 +2642,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "3c31c4cc-4ead-4c33-b0fb-aeb9a4f14c6a")
 		(property "Reference" "D10"
 			(at 208.28 60.9599 90)
@@ -2682,7 +2661,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Diode_THT:D_DO-201AE_P15.24mm_Horizontal"
+		(property "Footprint" ""
 			(at 210.82 62.23 0)
 			(effects
 				(font
@@ -2691,7 +2670,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "https://www.vishay.com/docs/88301/15ke.pdf"
+		(property "Datasheet" ""
 			(at 205.74 62.23 0)
 			(effects
 				(font
@@ -2700,13 +2679,12 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "1500W bidirectional TRANSZORB® Transient Voltage Suppressor, DO-201AE"
-			(at 205.74 62.23 0)
+		(property "Description" "TVS"
+			(at 210.058 66.04 90)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(hide yes)
 			)
 		)
 		(pin "1"
@@ -2872,7 +2850,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "6fad0a3d-ba54-4d19-a31f-8bee4f519792")
 		(property "Reference" "D11"
 			(at 208.28 124.4599 90)
@@ -2910,13 +2887,12 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "1500W (10/1000 μs) Unidirectional TVS Diode, VRM = 5V (IRM = 300 μA at 25°C), VBR = 6V, DO-201AE"
-			(at 199.136 125.73 0)
+		(property "Description" "TVS"
+			(at 210.312 129.54 90)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(hide yes)
 			)
 		)
 		(pin "2"

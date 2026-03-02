@@ -3045,16 +3045,6 @@
 			(embedded_fonts no)
 		)
 	)
-	(text "TVS"
-		(exclude_from_sim no)
-		(at 199.39 34.544 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "258a5b44-9c97-466b-ba9d-4bd9feb4af99")
-	)
 	(text "snubber"
 		(exclude_from_sim no)
 		(at 245.364 52.832 0)
@@ -3094,16 +3084,6 @@
 			)
 		)
 		(uuid "e2c48dc4-b2e3-4165-923f-e59f8e037278")
-	)
-	(text "TVS"
-		(exclude_from_sim no)
-		(at 161.798 38.354 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-		)
-		(uuid "eb67e4e4-a814-4e17-9cfa-21ea53a4f2a3")
 	)
 	(text "Primary control"
 		(exclude_from_sim no)
@@ -5775,7 +5755,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "2.2 nF / 300 V / Y2"
+		(property "Value" "2.2 nF / 300 V"
 			(at 57.15 36.8299 0)
 			(effects
 				(font
@@ -5802,13 +5782,12 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Unpolarized capacitor"
-			(at 60.96 35.56 0)
+		(property "Description" "Y2"
+			(at 39.116 36.83 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(hide yes)
 			)
 		)
 		(pin "2"
@@ -5852,7 +5831,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-247-3_Vertical"
+		(property "Footprint" ""
 			(at 121.285 25.4 0)
 			(effects
 				(font
@@ -5863,7 +5842,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "https://www.infineon.com/dgdl/irfp4468pbf.pdf?fileId=5546d462533600a40153562c73472019"
+		(property "Datasheet" ""
 			(at 123.19 25.4 0)
 			(effects
 				(font
@@ -5873,7 +5852,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "195A Id, 100V Vds, N-Channel Power MOSFET, TO-247"
+		(property "Description" ""
 			(at 119.38 30.48 0)
 			(effects
 				(font
@@ -5908,7 +5887,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "3c247137-7647-4ddb-a0ac-179704284e28")
 		(property "Reference" "D4"
 			(at 199.39 36.83 0)
@@ -5944,13 +5922,12 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "1500W (10/1000 μs) Unidirectional TVS Diode, VRM = 5V (IRM = 300 μA at 25°C), VBR = 6V, DO-201AE"
-			(at 199.39 36.576 0)
+		(property "Description" "TVS"
+			(at 199.39 34.544 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(hide yes)
 			)
 		)
 		(pin "2"
@@ -6534,7 +6511,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "2.2 nF / 300 V / Y2"
+		(property "Value" "2.2 nF / 300 V"
 			(at 57.15 69.8499 0)
 			(effects
 				(font
@@ -6561,13 +6538,12 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Unpolarized capacitor"
-			(at 60.96 68.58 0)
+		(property "Description" "Y2"
+			(at 39.116 69.85 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(hide yes)
 			)
 		)
 		(pin "2"
@@ -6593,10 +6569,9 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "613a6150-b1b9-4297-80d0-0237c947e8a0")
 		(property "Reference" "C8"
-			(at 243.84 57.1499 0)
+			(at 243.84 55.8799 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6604,8 +6579,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "47 nF / 400 V / X2"
-			(at 243.84 59.6899 0)
+		(property "Value" "47 nF / 400 V"
+			(at 243.84 58.4199 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6631,13 +6606,13 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Unpolarized capacitor"
-			(at 240.03 58.42 0)
+		(property "Description" "X2"
+			(at 259.842 58.42 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(hide yes)
+				(justify left)
 			)
 		)
 		(pin "2"
@@ -6813,7 +6788,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "220 nF / 300 V / X2"
+		(property "Value" "220 nF / 300 V"
 			(at 85.09 54.6099 0)
 			(effects
 				(font
@@ -6831,7 +6806,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "~"
+		(property "Datasheet" ""
 			(at 88.9 53.34 0)
 			(effects
 				(font
@@ -6840,13 +6815,12 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "Unpolarized capacitor"
-			(at 88.9 53.34 0)
+		(property "Description" "X2"
+			(at 66.04 54.61 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(hide yes)
 			)
 		)
 		(pin "2"
@@ -6958,7 +6932,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-247-3_Vertical"
+		(property "Footprint" ""
 			(at 172.085 25.4 0)
 			(effects
 				(font
@@ -6969,7 +6943,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "https://www.infineon.com/dgdl/irfp4468pbf.pdf?fileId=5546d462533600a40153562c73472019"
+		(property "Datasheet" ""
 			(at 170.18 25.4 0)
 			(effects
 				(font
@@ -6979,7 +6953,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "195A Id, 100V Vds, N-Channel Power MOSFET, TO-247"
+		(property "Description" ""
 			(at 173.99 30.48 0)
 			(effects
 				(font
@@ -7239,7 +7213,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
+		(property "Footprint" ""
 			(at 176.53 56.515 0)
 			(effects
 				(font
@@ -7250,7 +7224,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "http://www.vishay.com/docs/70209/70209.pdf"
+		(property "Datasheet" ""
 			(at 176.53 58.42 0)
 			(effects
 				(font
@@ -7260,7 +7234,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "-0.18A Id, -45V Vds, P-Channel MOSFET, TO-92"
+		(property "Description" ""
 			(at 171.45 54.61 0)
 			(effects
 				(font
@@ -8446,7 +8420,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "e122b8bc-65db-4c14-93e3-0a4f4f09c3cf")
 		(property "Reference" "D1"
 			(at 160.02 33.0199 90)
@@ -8484,13 +8457,12 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "1500W bidirectional TRANSZORB® Transient Voltage Suppressor, DO-201AE"
-			(at 157.48 34.29 0)
+		(property "Description" "TVS"
+			(at 161.798 38.1 90)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(hide yes)
 			)
 		)
 		(pin "1"
