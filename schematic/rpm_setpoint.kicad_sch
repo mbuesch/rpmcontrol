@@ -402,9 +402,9 @@
 			(embedded_fonts no)
 		)
 	)
-	(text "WARNING:\nPot spindles reaching touchable surfaces\nmust be non-metal\nand must be capable of insulating 400 V."
+	(text "WARNING:\nAll voltages (+5V and GND) are at/near mains potential (w.r.t. earth-ground reference)!\n\nPot spindles reaching touchable surfaces\nmust be non-metal\nand must be capable of insulating 400 V."
 		(exclude_from_sim no)
-		(at 149.606 109.474 0)
+		(at 145.288 118.618 0)
 		(effects
 			(font
 				(size 2.54 2.54)

@@ -414,7 +414,7 @@
 	)
 	(text "WARNING WARNING WARNING"
 		(exclude_from_sim no)
-		(at 147.828 42.164 0)
+		(at 147.828 25.908 0)
 		(effects
 			(font
 				(size 12.7 12.7)
@@ -422,25 +422,15 @@
 		)
 		(uuid "848fd29f-ddd7-41c1-bbd3-f3911702473f")
 	)
-	(text "This circuit is **NOT** electrically isolated from mains L and N!\nNEVER connect an ISP programmer/computer directly!"
+	(text "This circuit is **NOT** electrically isolated from mains L and N!\nNEVER connect an ISP/DW programmer/computer without galvanic isolation!\nIF YOU DON'T FOLLOW THE SAFETY PRECAUTIONS,\nYOU RISK SERIOUS ELECTRIC SHOCK, INJURY, DEATH\nor damage to your equipment.\n\nUse an isolation transformer *before* connecting ISP/DW.\nRead the documentation about how to connect ISP/DW first."
 		(exclude_from_sim no)
-		(at 144.78 61.722 0)
+		(at 147.828 69.596 0)
 		(effects
 			(font
-				(size 5.08 5.08)
+				(size 4.572 4.572)
 			)
 		)
 		(uuid "930cc434-924e-4767-bfa5-99fa79006b19")
-	)
-	(text "WARNING WARNING WARNING"
-		(exclude_from_sim no)
-		(at 148.336 79.502 0)
-		(effects
-			(font
-				(size 12.7 12.7)
-			)
-		)
-		(uuid "960080a9-fbb4-4e05-831c-c08c8e8ce4a4")
 	)
 	(junction
 		(at 156.21 119.38)
