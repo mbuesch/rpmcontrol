@@ -4,7 +4,7 @@
 
 use avr_context::define_isr;
 
-pub use avr_device::{attiny861a as mcu, interrupt};
+pub use avr_device::attiny861a as mcu;
 
 use crate::{
     analog::irq_handler_ana_comp, exint::irq_handler_pcint, timer::irq_handler_timer1_compa,

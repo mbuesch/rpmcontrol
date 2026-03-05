@@ -44,10 +44,10 @@ checksum = "8f9565bb26618301cbf6fda364c206dbb8314e5b3d8fb070308201b3de0f0316"
 
 [[package]]
 name = "avr-context"
-version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-context.git?branch=main#c922f96ce1cfcc65da9d779f4e3aea67986835e6"
+version = "2.0.0"
+source = "git+https://github.com/mbuesch/avr-context.git?branch=main#63239b5c1b44aded064bcaa027676d22f001b3f1"
 dependencies = [
- "bare-metal",
+ "critical-section",
 ]
 
 [[package]]
@@ -505,9 +505,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.44"
+version = "1.0.45"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21b2ebcf727b7760c461f091f9f0f539b77b8e87f2fd88131e7f1b433b3cece4"
+checksum = "41f2619966050689382d2b44f664f4bc593e129785a36d6ee376ddf37259b924"
 dependencies = [
  "proc-macro2",
 ]

@@ -53,10 +53,9 @@ mod inner {
     use super::*;
     use crate::{
         DP_TC0, DP_USI, debug,
-        hw::interrupt,
         ports::{PORTB, PortOps as _},
     };
-    use avr_context::Mutex;
+    use avr_context::{Mutex, with_cs};
     use core::cell::Cell;
 
     const FCPU: u32 = 16_000_000;
@@ -189,7 +188,7 @@ mod inner {
     }
 
     pub fn uart_tx(data: u8) -> bool {
-        interrupt::free(|cs| uart_tx_cs(cs, data))
+        with_cs(|cs| uart_tx_cs(cs, data))
     }
 }
 

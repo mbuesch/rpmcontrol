@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright (C) 2025 - 2026 Michael Büsch <m@bues.ch>
 
-use crate::{DP_TC1, hw::interrupt, triac::triac_timer_interrupt};
-use avr_context::{CriticalSection, InitCtx, IrqCtx, Mutex};
+use crate::{DP_TC1, triac::triac_timer_interrupt};
+use avr_context::{CriticalSection, InitCtx, IrqCtx, Mutex, with_cs};
 use avr_device::asm::nop3;
 use avr_q::{Q7p8, q7p8};
 use core::cell::Cell;
@@ -59,7 +59,7 @@ pub fn timer_get_large_cs(cs: CriticalSection<'_>) -> LargeTimestamp {
 
 #[inline(never)]
 pub fn timer_get_large() -> LargeTimestamp {
-    interrupt::free(timer_get_large_cs)
+    with_cs(timer_get_large_cs)
 }
 
 // Wait for register write to synchronize to timer hardware.

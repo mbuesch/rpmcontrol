@@ -3,13 +3,13 @@
 // Copyright (C) 2025 - 2026 Michael Büsch <m@bues.ch>
 
 use crate::{
-    hw::{interrupt, mcu},
+    hw::mcu,
     mon::mon_report_analog_failure,
     ports::setup_didr,
     ring::Ring,
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large_cs},
 };
-use avr_context::{IrqCtx, MainCtx, MainCtxCell, Mutex};
+use avr_context::{IrqCtx, MainCtx, MainCtxCell, Mutex, with_cs};
 use core::cell::Cell;
 
 #[derive(Clone, Copy)]
@@ -236,7 +236,7 @@ pub fn irq_handler_ana_comp(c: &IrqCtx) {
 }
 
 pub fn ac_capture_get() -> Option<LargeTimestamp> {
-    interrupt::free(|cs| AC_CAPTURE_RING.get(cs))
+    with_cs(|cs| AC_CAPTURE_RING.get(cs))
 }
 
 // vim: ts=4 sw=4 expandtab

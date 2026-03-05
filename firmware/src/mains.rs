@@ -4,11 +4,10 @@
 
 use crate::{
     calibration::mains::{MAINS_HZ, MAINS_NEXT_CAPTURE},
-    hw::interrupt,
     ports::{PORTA, PortOps as _},
     timer::{LargeTimestamp, RelLargeTimestamp, timer_get_large, timer_get_large_cs},
 };
-use avr_context::{CriticalSection, IrqCtx, MainCtx, MainCtxCell, Mutex};
+use avr_context::{CriticalSection, IrqCtx, MainCtx, MainCtxCell, Mutex, with_cs};
 use avr_q::{Q7p8, q7p8};
 use core::cell::Cell;
 
@@ -80,7 +79,7 @@ impl Mains {
         let mut ret = PhaseUpdate::NotChanged;
 
         let (vsense, vsense_stamp) =
-            interrupt::free(|cs| (VSENSE.borrow(cs).get(), VSENSE_STAMP.borrow(cs).get()));
+            with_cs(|cs| (VSENSE.borrow(cs).get(), VSENSE_STAMP.borrow(cs).get()));
 
         match self.phase.get(m) {
             Phase::Notsync | Phase::NegHalfwave => {

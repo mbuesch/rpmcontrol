@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 // Copyright (C) 2025 - 2026 Michael Büsch <m@bues.ch>
 
-use crate::{
-    hw::interrupt,
-    ports::{PORTA, PortOps as _},
-};
+use crate::ports::{PORTA, PortOps as _};
+use avr_context::with_cs;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum Shutoff {
@@ -39,7 +37,7 @@ pub fn set_secondary_shutoff(state: Shutoff) {
         Shutoff::MachineShutoff => false,
         Shutoff::MachineRunning => true,
     };
-    interrupt::free(|cs| PORTA.set(cs, 4, n_shutoff));
+    with_cs(|cs| PORTA.set(cs, 4, n_shutoff));
 }
 
 // vim: ts=4 sw=4 expandtab

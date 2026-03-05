@@ -74,8 +74,8 @@ pub fn setup(c: &InitCtx) {
 #[cfg(feature = "debug")]
 mod inner {
     use super::*;
-    use crate::{hw::interrupt, usi_uart::uart_tx_cs};
-    use avr_context::Mutex;
+    use crate::usi_uart::uart_tx_cs;
+    use avr_context::{Mutex, with_cs};
     use core::cell::Cell;
 
     const INDEXSHIFT: usize = 2;
@@ -135,7 +135,7 @@ mod inner {
     }
 
     pub fn log_u16(id: u16, value: u16) {
-        interrupt::free(|cs| {
+        with_cs(|cs| {
             let id = id as usize;
             let values = VALUES.borrow(cs);
             if id < values.len() {

@@ -29,10 +29,7 @@ use avr_context::{MainCtx, MainCtxCell};
 use avr_q::{Q7p8, q7p8, q15p8};
 
 #[cfg(feature = "debug")]
-use crate::{
-    hw::interrupt,
-    ports::{PORTB, PortOps as _},
-};
+use crate::ports::{PORTB, PortOps as _};
 
 macro_rules! rpm {
     ($rpm: expr) => {
@@ -80,7 +77,7 @@ fn f_to_trig_offs(f: Freq) -> Q7p8 {
 /// Toggle the debug pin.
 pub fn debug_toggle() {
     #[cfg(feature = "debug")]
-    interrupt::free(|cs| PORTB.toggle(cs, 6));
+    avr_context::with_cs(|cs| PORTB.toggle(cs, 6));
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]

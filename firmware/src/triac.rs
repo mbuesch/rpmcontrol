@@ -3,7 +3,6 @@
 // Copyright (C) 2025 - 2026 Michael Büsch <m@bues.ch>
 
 use crate::{
-    hw::interrupt,
     mains::{MAINS_HALFWAVE_DUR, Phase, PhaseUpdate},
     ports::{PORTB, PortOps as _},
     shutoff::Shutoff,
@@ -12,7 +11,7 @@ use crate::{
         timer_interrupt_a_arm, timer_interrupt_a_cancel,
     },
 };
-use avr_context::{CriticalSection, IrqCtx, MainCtx, MainCtxCell, Mutex};
+use avr_context::{CriticalSection, IrqCtx, MainCtx, MainCtxCell, Mutex, with_cs};
 use avr_q::Q7p8;
 use core::{
     cell::Cell,
@@ -159,7 +158,7 @@ impl Triac {
     /// Set the next triac trigger offset to never trigger.
     #[inline(never)]
     pub fn set_phi_offs_shutoff(&self, m: &MainCtx<'_>) {
-        interrupt::free(triac_timer_cancel);
+        with_cs(triac_timer_cancel);
         self.phi_offs.set(m, MAINS_HALFWAVE_DUR);
     }
 
@@ -172,7 +171,7 @@ impl Triac {
         phaseref: LargeTimestamp,
         shutoff: Shutoff,
     ) {
-        interrupt::free(|cs| {
+        with_cs(|cs| {
             // Don't trigger if we're not sync'd to mains
             // or if we have a shutoff request.
             if phase == Phase::Notsync || shutoff == Shutoff::MachineShutoff {

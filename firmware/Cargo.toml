@@ -12,9 +12,9 @@ test = false
 bench = false
 
 [dependencies]
-avr-device = { version = "0.8", features = [ "attiny861a", "rt" ] }
-#avr-device = { path = "../../avr-device", features = [ "attiny861a", "rt" ] }
-#avr-device = { git = "https://github.com/Rahix/avr-device.git", rev = "...", features = [ "attiny861a", "rt" ] }
+avr-device = { version = "0.8", features = [ "attiny861a", "rt", "critical-section" ] }
+#avr-device = { path = "../../avr-device", features = [ "attiny861a", "rt", "critical-section" ] }
+#avr-device = { git = "https://github.com/Rahix/avr-device.git", rev = "...", features = [ "attiny861a", "rt", "critical-section" ] }
 
 avr-q = "1"
 #avr-q = { path = "../../avr-q" }
