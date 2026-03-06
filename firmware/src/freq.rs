@@ -27,8 +27,13 @@ const FREQ_FACT_NUM: i16 = Freq::FACT_NUM;
 const FREQ_FACT_DEN: i16 = Freq::FACT_DEN;
 
 impl Freq {
+    /// Numerator of frequency factor to convert from internal representation to Hz.
     pub const FACT_NUM: i16 = 10;
+
+    /// Denominator of frequency factor to convert from internal representation to Hz.
     pub const FACT_DEN: i16 = 3;
+
+    /// Frequency factor to convert from internal representation to Hz.
     pub const FACT: Q7p8 = q7p8!(const FREQ_FACT_NUM / FREQ_FACT_DEN);
 
     /// Get the absolute value.

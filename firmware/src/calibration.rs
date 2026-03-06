@@ -89,8 +89,10 @@ pub mod setpoint {
 pub mod speedo {
     use super::*;
 
-    /// High level speed filter divider.
-    pub const SPEED_FILTER_DIV: Q15p8 = q15p8!(const 2);
+    /// High level speed filter divider 1st order.
+    pub const SPEED_FILTER_DIV_1ST: Q15p8 = q15p8!(const 4 / 2);
+    /// High level speed filter divider 2nd order.
+    pub const SPEED_FILTER_DIV_2ND: Q15p8 = q15p8!(const 3 / 2);
 
     /// High level timeout.
     /// Maximum amount of time the system can live without a valid speedometer reading.

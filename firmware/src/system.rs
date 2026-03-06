@@ -7,7 +7,9 @@ use crate::{
     calibration::{
         rpm_pid::{RPMPID_ILIM_NEG, RPMPID_ILIM_POS, RPMPID_PARAMS, RPMPID_PARAMS_SYNCING},
         setpoint::{SP_MIN_CUTOFF, SP_STEPS, SP_SYNC_THRES},
-        speedo::{NO_SPEED_TIMEOUT, SPEED_FILTER_DIV, SYNC_SPEEDO_SUBSTITUTE},
+        speedo::{
+            NO_SPEED_TIMEOUT, SPEED_FILTER_DIV_1ST, SPEED_FILTER_DIV_2ND, SYNC_SPEEDO_SUBSTITUTE,
+        },
         system::{MAX_RPM, MOT_SOFT_LIMIT, STARTUP_DELAY},
     },
     debug::Debug,
@@ -101,7 +103,7 @@ pub struct System {
     adc: Adc,
     setpoint_snap: Snap<Freq>,
     speedo: Speedo,
-    speed_filter: Filter,
+    speed_filter: [Filter; 2],
     prev_valid_speed: MainCtxCell<LargeTimestamp>,
     temp: Temp,
     mains: Mains,
@@ -121,7 +123,7 @@ impl System {
             adc: Adc::new(),
             setpoint_snap: Snap::new(Freq(q7p8!(const 0))),
             speedo: Speedo::new(),
-            speed_filter: Filter::new(),
+            speed_filter: [Filter::new(), Filter::new()],
             prev_valid_speed: MainCtxCell::new(LargeTimestamp::new()),
             temp: Temp::new(),
             mains: Mains::new(),
@@ -229,20 +231,21 @@ impl System {
             self.state.set(m, SysState::Running);
             self.prev_valid_speed.set(m, now);
             // Filter the speed.
-            Freq(
-                self.speed_filter
-                    .run(m, speed.as_freq().0, SPEED_FILTER_DIV),
-            )
+            let mut filt;
+            filt = self.speed_filter[0].run(m, speed.as_freq().0, SPEED_FILTER_DIV_1ST);
+            filt = self.speed_filter[1].run(m, filt, SPEED_FILTER_DIV_2ND);
+            Freq(filt)
         } else if self.state.get(m) == SysState::Running
             && now - self.prev_valid_speed.get(m) < NO_SPEED_TIMEOUT
         {
             // No valid speed measurement.
             // We had a valid speed measurement recently. Use it.
-            Freq(self.speed_filter.get(m))
+            Freq(self.speed_filter[1].get(m))
         } else {
             // Drop out of running state.
             self.state.set(m, SysState::Syncing);
-            self.speed_filter.reset(m);
+            self.speed_filter[0].reset(m);
+            self.speed_filter[1].reset(m);
             Freq(q7p8!(const 0))
         };
         // Raw speedo signal is considered ok if we have a valid speed measurement.
