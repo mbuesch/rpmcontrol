@@ -44,9 +44,9 @@ checksum = "8f9565bb26618301cbf6fda364c206dbb8314e5b3d8fb070308201b3de0f0316"
 
 [[package]]
 name = "avr-context"
-version = "2.0.0"
+version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91560286ef6f25e5429d43cd08419204ceb88e8db3237562c2d78091d9a8fcb8"
+checksum = "b683e0948f64fa25b62ee6e13d44f5e7fdd2a96fd984bedc826020467eed27bf"
 dependencies = [
  "critical-section",
 ]
@@ -102,7 +102,8 @@ dependencies = [
 [[package]]
 name = "avr-stack"
 version = "1.0.0"
-source = "git+https://github.com/mbuesch/avr-stack.git?branch=main#37379cfa6f046109bc186539623a4acaacc34696"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a62c3a6d0ca7c5c00c26fb6c9191624e5dd0ebf32ff957441f577be3cfd2f7a"
 
 [[package]]
 name = "bare-metal"
