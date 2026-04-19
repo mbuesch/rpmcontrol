@@ -1045,7 +1045,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 130.81 123.952 90)
 			(hide yes)
 			(show_name no)

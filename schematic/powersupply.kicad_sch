@@ -2522,7 +2522,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 133.35 72.898 90)
 			(hide yes)
 			(show_name no)
@@ -2602,7 +2602,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 133.35 137.668 90)
 			(hide yes)
 			(show_name no)
@@ -2682,7 +2682,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 123.19 72.898 90)
 			(hide yes)
 			(show_name no)
@@ -2762,7 +2762,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 123.19 137.668 90)
 			(hide yes)
 			(show_name no)
@@ -3161,7 +3161,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:CP_Radial_D8.0mm_P5.00mm"
 			(at 173.0248 129.54 0)
 			(hide yes)
 			(show_name no)
@@ -3321,7 +3321,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:CP_Radial_D8.0mm_P5.00mm"
 			(at 173.0248 66.04 0)
 			(hide yes)
 			(show_name no)
@@ -3402,7 +3402,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Diode_THT:D_DO-201AE_P15.24mm_Horizontal"
+		(property "Footprint" "Diode_THT:D_DO-201AE_P5.08mm_Vertical_CathodeUp"
 			(at 197.104 125.73 0)
 			(hide yes)
 			(show_name no)
@@ -3724,7 +3724,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:CP_Radial_D8.0mm_P5.00mm"
 			(at 181.3052 129.54 0)
 			(hide yes)
 			(show_name no)
@@ -3964,7 +3964,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Diode_THT:D_DO-35_SOD27_P2.54mm_Vertical_CathodeUp"
 			(at 147.32 130.81 0)
 			(hide yes)
 			(show_name no)
@@ -4146,7 +4146,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Diode_THT:D_DO-35_SOD27_P2.54mm_Vertical_CathodeUp"
 			(at 147.32 55.88 0)
 			(hide yes)
 			(show_name no)

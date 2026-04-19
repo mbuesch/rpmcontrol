@@ -5439,7 +5439,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm"
 			(at 148.2852 38.1 0)
 			(hide yes)
 			(show_name no)
@@ -5519,7 +5519,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm"
 			(at 99.06 115.8748 0)
 			(hide yes)
 			(show_name no)
@@ -5601,7 +5601,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 160.782 59.69 90)
 			(hide yes)
 			(show_name no)
@@ -5840,7 +5840,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal"
+		(property "Footprint" "Diode_THT:D_DO-41_SOD81_P2.54mm_Vertical_CathodeUp"
 			(at 165.1 112.395 0)
 			(hide yes)
 			(show_name no)
@@ -6102,7 +6102,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 135.382 34.29 90)
 			(hide yes)
 			(show_name no)
@@ -6263,7 +6263,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Package_TO_SOT_THT:TO-247-3_Vertical"
 			(at 121.285 25.4 0)
 			(hide yes)
 			(show_name no)
@@ -6348,7 +6348,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Diode_THT:D_DO-201AE_P15.24mm_Horizontal"
+		(property "Footprint" "Diode_THT:D_DO-201AE_P5.08mm_Vertical_CathodeUp"
 			(at 199.39 34.544 0)
 			(hide yes)
 			(show_name no)
@@ -6429,7 +6429,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 214.122 52.07 90)
 			(hide yes)
 			(show_name no)
@@ -6588,7 +6588,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm"
 			(at 33.02 168.6052 0)
 			(hide yes)
 			(show_name no)
@@ -6668,7 +6668,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 185.42 109.982 90)
 			(hide yes)
 			(show_name no)
@@ -6750,7 +6750,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 203.962 35.56 90)
 			(hide yes)
 			(show_name no)
@@ -6832,7 +6832,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 137.922 66.04 90)
 			(hide yes)
 			(show_name no)
@@ -7232,7 +7232,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:C_Disc_D4.3mm_W1.9mm_P5.00mm"
 			(at 78.74 115.8748 0)
 			(hide yes)
 			(show_name no)
@@ -7312,7 +7312,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Package_TO_SOT_THT:TO-220-3_Vertical"
 			(at 219.075 26.035 90)
 			(hide yes)
 			(show_name no)
@@ -7476,7 +7476,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 97.79 150.368 90)
 			(hide yes)
 			(show_name no)
@@ -7556,7 +7556,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Package_TO_SOT_THT:TO-247-3_Vertical"
 			(at 172.085 25.4 0)
 			(hide yes)
 			(show_name no)
@@ -7644,7 +7644,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 125.222 34.29 90)
 			(hide yes)
 			(show_name no)
@@ -7803,7 +7803,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_THT:R_Axial_DIN0207_L6.3mm_D2.5mm_P2.54mm_Vertical"
 			(at 176.53 109.982 90)
 			(hide yes)
 			(show_name no)
@@ -7885,7 +7885,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline_Wide"
 			(at 176.53 56.515 0)
 			(hide yes)
 			(show_name no)
@@ -7971,7 +7971,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Diode_THT:D_DO-41_SOD81_P10.16mm_Horizontal"
+		(property "Footprint" "Diode_THT:D_DO-41_SOD81_P2.54mm_Vertical_CathodeUp"
 			(at 165.1 120.015 0)
 			(hide yes)
 			(show_name no)
@@ -8152,7 +8152,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Crystal:Crystal_HC49-U_Vertical"
 			(at 85.09 116.84 0)
 			(hide yes)
 			(show_name no)
@@ -9155,7 +9155,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline"
+		(property "Footprint" "Package_TO_SOT_THT:TO-92_Inline_Wide"
 			(at 152.4 62.865 0)
 			(hide yes)
 			(show_name no)
@@ -9319,7 +9319,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Diode_THT:D_DO-201AE_P15.24mm_Horizontal"
+		(property "Footprint" "Diode_THT:D_DO-201AE_P3.81mm_Vertical_CathodeUp"
 			(at 162.56 34.29 0)
 			(hide yes)
 			(show_name no)
